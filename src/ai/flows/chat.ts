@@ -100,15 +100,6 @@ const chatPrompt = ai.definePrompt({
   `,
 });
 
-const escapeHtml = (unsafe: string): string => {
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
-}
-
 const chatFlow = ai.defineFlow(
   {
     name: 'chatFlow',
@@ -116,6 +107,15 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async input => {
+    const escapeHtml = (unsafe: string): string => {
+        return unsafe
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
     const internalInput = {
       ...input,
       escapedDocumentContent: escapeHtml(input.documentContent),
