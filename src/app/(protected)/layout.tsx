@@ -39,7 +39,7 @@ const menuItems = [
   },
 ];
 
-export default function DashboardLayout({
+export default function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -47,7 +47,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
 
   return (
-      <div className="flex">
+      <div className="flex min-h-screen w-full">
          <Sidebar>
             <SidebarHeader>
                 <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
@@ -77,7 +77,7 @@ export default function DashboardLayout({
                 <UserMenu />
             </SidebarFooter>
         </Sidebar>
-        <main className="flex-1">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
             {children}
         </main>
       </div>
