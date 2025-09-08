@@ -109,21 +109,21 @@ export async function createDocument({ name, userId, userName }: { name: string,
 }
 
 
-export async function updateDocument(id: string, data: { name?: string; content?: string, collaborators?: any }, user: { uid: string, displayName: string | null}) {
+export async function updateDocument(id: string, data: { name?: string; content?: string; collaborators?: any }, user: { uid: string, displayName: string | null}) {
     if (!user) {
         throw new Error("You must be logged in to update a document.");
     }
     const docRef = doc(db, "documents", id);
     
     let updateData: any = {
-        ...data,
         lastModified: serverTimestamp(),
         lastModifiedBy: user.displayName || 'Anonymous'
     };
 
-    if (data.collaborators) {
-        updateData.collaborators = data.collaborators;
-    }
+    if (data.name) updateData.name = data.name;
+    if (data.content) updateData.content = data.content;
+    if (data.collaborators) updateData.collaborators = data.collaborators;
+    
 
     await updateDoc(docRef, updateData);
     

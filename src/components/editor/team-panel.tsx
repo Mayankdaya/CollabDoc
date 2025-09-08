@@ -25,7 +25,7 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
     if (uids.length === 0) return [];
     try {
         const usersRef = collection(db, 'users');
-        // Firestore 'in' query is limited to 10 items. We may need to batch this for >10 collaborators
+        // Firestore 'in' query is limited to 30 items. We may need to batch this for >30 collaborators
         const q = query(usersRef, where('uid', 'in', uids));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(doc => doc.data() as UserProfile);
@@ -107,7 +107,7 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
     <div className="flex h-full flex-col">
        <div className='p-4 border-b border-white/30'>
           <h2 className="font-headline text-lg font-semibold">Team</h2>
-          <p className="text-sm text-muted-foreground">See who has access to this document.</p>
+          <p className="text-sm text-muted-foreground">Manage who has access to this document.</p>
        </div>
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {isLoading ? (
@@ -146,31 +146,6 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
                         </span>
                     </div>
                 ))}
-
-                {otherUsers.length > 0 && (
-                    <>
-                        <Separator className="my-4" />
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">Other Users</p>
-                         {otherUsers.map(person => (
-                            <div key={person.uid} className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="font-semibold">{person.displayName}</p>
-                                        <div className='flex items-center gap-2'>
-                                            <p className="text-sm text-muted-foreground">{person.email}</p>
-                                            {isUserOnline(person) && (
-                                                <span title="Online" className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </>
-                )}
             </>
         )}
         {!isLoading && peopleWithAccess.length === 0 && otherUsers.length === 0 && (

@@ -118,6 +118,7 @@ export default function Dashboard() {
             lastModified: lastModifiedDate.toISOString(),
             lastModifiedBy: data.lastModifiedBy || 'Unknown',
             userId: data.userId,
+            collaborators: data.collaborators || [],
         } as Document;
       });
 
