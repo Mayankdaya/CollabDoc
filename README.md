@@ -45,14 +45,18 @@ Make sure you have Node.js (v18 or higher) and npm installed.
     ```
 
 3.  **Set up environment variables:**
-    Create a `.env` file in the root of the project and add your Firebase configuration details from your Firebase project settings.
+    Create a `.env` file in the root of the project and add your Firebase configuration and Gemini API Key.
     ```env
+    # Firebase Config
     NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
     NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
     NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
     NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
     NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+    
+    # Gemini API Key
+    GEMINI_API_KEY=your_gemini_api_key
     ```
 
 4.  **Run the development server:**
