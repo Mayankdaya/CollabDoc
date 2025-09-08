@@ -58,6 +58,14 @@ const chatPrompt = ai.definePrompt({
     appendToDocument,
     clearDocument,
   ],
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_NONE',
+      },
+    ],
+  },
   prompt: `You are a sophisticated AI assistant integrated into a professional document editor.
   Your goal is to help users by creating high-quality, well-structured, and visually stunning content, or by directly modifying the document on their command.
 
