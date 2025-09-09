@@ -58,72 +58,41 @@ export class YFireProvider {
     const unsubscribeDoc = onSnapshot(this.updatesDocRef, (snapshot) => {
       if (snapshot.exists()) {
         const remoteUpdate = snapshot.data()?.['data'];
-        if (remoteUpdate) {
-          Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
+        if (remoteUpdate && remoteUpdate.toUint8Array) {
+            Y.applyUpdate(this.doc, remoteUpdate.toUint8Array(), 'firestore');
+        } else if (remoteUpdate instanceof Uint8Array) {
+            Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
         }
       }
     });
     this.unsubscribes.push(unsubscribeDoc);
 
     // Subscribe to awareness changes
-    const unsubscribeAwareness = onSnapshot(
-      this.awarenessDocRef,
-      (snapshot) => {
+    const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
         if (snapshot.exists()) {
-          const data = snapshot.data();
-          if (data) {
-            const clients = Object.keys(data).map(Number);
-            const states = clients
-              .map((clientID) => {
-                const state = data[clientID];
-                if (state) {
-                  return [clientID, state] as const;
+            const data = snapshot.data();
+            if (data) {
+                const clients = Object.keys(data).map(Number);
+                const states = new Map(clients.map(clientID => [clientID, data[clientID]]));
+                
+                const awarenessUpdate = new Awareness(new Y.Doc());
+                // Manually set states on the temporary awareness instance
+                for (const [clientID, state] of states.entries()) {
+                    awarenessUpdate.setLocalStateField(clientID.toString(), state);
                 }
-                return null;
-              })
-              .filter((s): s is [number, any] => s !== null);
 
-            const newStates = new Map(states);
-            const localStates = this.awareness.getStates();
-
-            const statesToApply = new Map<number, any>();
-            const statesToRemove: number[] = [];
-
-            // Add or update states
-            newStates.forEach((state, clientID) => {
-              const localState = localStates.get(clientID);
-              if (
-                !localState ||
-                JSON.stringify(localState) !== JSON.stringify(state)
-              ) {
-                statesToApply.set(clientID, state);
-              }
-            });
-
-            // Remove states
-            localStates.forEach((_, clientID) => {
-              if (!newStates.has(clientID)) {
-                statesToRemove.push(clientID);
-              }
-            });
-            
-            // Manually build an update to apply
-            if(statesToApply.size > 0 || statesToRemove.length > 0) {
-              const fakeAwareness = new Awareness(new Y.Doc());
-              fakeAwareness.setStates(statesToApply, 'remote');
-              
-              const update = encodeAwarenessUpdate(fakeAwareness, Array.from(statesToApply.keys()));
-              applyAwarenessUpdate(this.awareness, update, 'firestore');
+                // This is a workaround since y-protocols doesn't have a direct setStates.
+                // We create a temporary awareness instance, set its states, and then encode an update from it.
+                // It is a bit hacky but it is how many providers do it.
+                const awarenessStates = awarenessUpdate.getStates();
+                const updatedClients = Array.from(awarenessStates.keys());
+                
+                const encodedUpdate = encodeAwarenessUpdate(awarenessUpdate, updatedClients);
+                applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
             }
-
-
-            if (statesToRemove.length > 0) {
-              removeAwarenessStates(this.awareness, statesToRemove, 'firestore');
-            }
-          }
         }
-      }
-    );
+    });
+
     this.unsubscribes.push(unsubscribeAwareness);
 
     this.doc.on('update', this.onDocUpdate.bind(this));
@@ -186,8 +155,12 @@ export class YFireProvider {
     // Load Yjs document data
     const updatesSnapshot = await getDoc(this.updatesDocRef);
     if (updatesSnapshot.exists()) {
-      const update = updatesSnapshot.data() as { data: Uint8Array };
-      Y.applyUpdate(this.doc, update.data);
+      const remoteUpdate = updatesSnapshot.data()?.['data'];
+       if (remoteUpdate && remoteUpdate.toUint8Array) {
+            Y.applyUpdate(this.doc, remoteUpdate.toUint8Array(), 'firestore');
+        } else if (remoteUpdate instanceof Uint8Array) {
+            Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
+        }
     }
 
     // Load and apply awareness states
@@ -196,8 +169,25 @@ export class YFireProvider {
       const data = awarenessSnapshot.data();
       if (data) {
         const clients = Object.keys(data).map(Number);
-        const update = encodeAwarenessUpdate(this.awareness, clients);
-        applyAwarenessUpdate(this.awareness, update, 'firestore');
+        
+        // Create a temporary awareness instance to build the update from.
+        const tempAwareness = new Awareness(new Y.Doc());
+        for (const clientID of clients) {
+          const state = data[clientID];
+          if (state) {
+            // This is a bit of a hack: we use setLocalStateField on the temp instance
+            // because we're not actually setting *local* state, just populating it
+            // to generate an update message.
+            tempAwareness.setLocalStateField(clientID.toString(), state);
+          }
+        }
+        
+        const states = tempAwareness.getStates();
+        const updatedClients = Array.from(states.keys());
+        if (updatedClients.length > 0) {
+            const update = encodeAwarenessUpdate(tempAwareness, updatedClients);
+            applyAwarenessUpdate(this.awareness, update, 'firestore');
+        }
       }
     }
   }
