@@ -26,13 +26,12 @@ import type { Document as DocType } from '@/app/documents/actions';
 import { updateDocument } from '@/app/documents/actions';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, DocumentData } from "firebase/firestore";
+import { doc, onSnapshot, DocumentData, collection, doc as firestoreDoc } from "firebase/firestore";
 import { useAuth } from '@/hooks/use-auth';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
-import { WebrtcProvider } from 'y-webrtc';
-import { IndexeddbPersistence } from 'y-indexeddb'
+import { YFireProvider } from 'y-fire';
 import type { Awareness } from 'y-protocols/awareness';
 import { Loader2 } from 'lucide-react';
 
@@ -68,13 +67,12 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   
   const { ydoc, provider } = useMemo(() => {
     const doc = new Y.Doc();
-    const webrtcProvider = new WebrtcProvider(documentId, doc, {
-        signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
-    });
-    // Use IndexedDB for local persistence
-    new IndexeddbPersistence(documentId, doc);
+    const docRef = firestoreDoc(collection(db, 'documents_data'), documentId);
+    // Note: The `YFireProvider` uses a different path (`documents_data`) to store the raw Y.js data.
+    // This separates it from your main document metadata in the `documents` collection.
+    const fireProvider = new YFireProvider(docRef, doc);
 
-    return { ydoc: doc, provider: webrtcProvider };
+    return { ydoc: doc, provider: fireProvider };
   }, [documentId]);
   
   const [wordCount, setWordCount] = useState(0);
@@ -91,7 +89,10 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   
     setIsSaving(true);
       
-    updateDocument(documentId, { content: editor.getHTML() }, { uid: user.uid, displayName: user.displayName })
+    // With y-fire, saving content is more about metadata updates.
+    // The Y.js data is synced automatically by the provider.
+    // We only need to update our own metadata like lastModified.
+    updateDocument(documentId, { }, { uid: user.uid, displayName: user.displayName })
       .then((result) => {
         if (result) {
           setLastSaved(result.lastModified);
@@ -129,15 +130,17 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
 
 
   useEffect(() => {
-    if (editor || loading) return; // Only run once
+    if (loading) return; // Wait for user auth to be ready
     
     const collaborationUserName = user?.displayName || getAnonymousName();
     const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 
-    provider.awareness.setLocalStateField('user', {
-        name: collaborationUserName,
-        color: userColor,
-    });
+    if (provider && provider.awareness) {
+        provider.awareness.setLocalStateField('user', {
+            name: collaborationUserName,
+            color: userColor,
+        });
+    }
     
     const tiptapEditor = new Editor({
         extensions: [
@@ -164,7 +167,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
                 },
             }),
         ],
-        content: initialData.content || '',
+        // Content is now managed by Y.js through the provider
         editorProps: {
             attributes: { class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl p-12 focus:outline-none min-h-[calc(100vh-250px)]' },
         },
@@ -185,7 +188,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
           tiptapEditor.destroy();
         }
     };
-  }, [documentId, user, loading, ydoc, provider, editor, initialData.content]);
+  }, [documentId, user, loading, ydoc, provider]);
 
 
   const handleDocumentSnapshot = useCallback((doc: DocumentData) => {

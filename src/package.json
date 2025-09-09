@@ -76,7 +76,7 @@
     "remark-gfm": "^4.0.0",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
-    "y-firebase": "^9.0.3",
+    "y-fire": "0.3.1",
     "y-prosemirror": "^1.2.3",
     "yjs": "^13.6.18",
     "zod": "^3.24.2"

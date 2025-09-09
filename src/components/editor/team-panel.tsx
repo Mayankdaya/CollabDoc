@@ -97,7 +97,7 @@ export default function TeamPanel({ doc, awareness }: TeamPanelProps) {
   }, [owner, collaborators]);
 
   const isUserOnline = useCallback((user: UserProfile) => {
-    // y-firebase doesn't have a direct UID link in awareness, so we match by name.
+    // y-firebase awareness includes the user's display name
     return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
   }, [onlineUsers]);
 
@@ -154,4 +154,3 @@ export default function TeamPanel({ doc, awareness }: TeamPanelProps) {
     </div>
   );
 }
-    
