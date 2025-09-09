@@ -1,4 +1,5 @@
 
+
 import * as Y from 'yjs';
 import {
   collection,
@@ -21,6 +22,7 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
+import { RelativePosition } from 'y-prosemirror';
 
 
 export class YFireProvider {
@@ -74,12 +76,18 @@ export class YFireProvider {
             const data = snapshot.data();
             if (data) {
                 const clients = Object.keys(data).map(Number).filter(id => id !== this.doc.clientID);
-                const states = new Map(clients.map(clientID => [clientID, data[clientID]]));
+                const states = new Map(clients.map(clientID => {
+                    const state = data[clientID];
+                    if (state.cursor) {
+                        // Deserialize the cursor position
+                        state.cursor = RelativePosition.fromJSON(state.cursor);
+                    }
+                    return [clientID, state];
+                }));
                 
                 const tempAwareness = new Awareness(new Y.Doc());
                 // Manually set states on the temporary awareness instance
                 for (const [clientID, state] of states.entries()) {
-                    // We don't need to deserialize cursor, y-protocols handles it
                     tempAwareness.setLocalState(clientID, state);
                 }
 
@@ -138,8 +146,12 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        // We no longer need to serialize cursor, just pass the state
-        awarenessUpdate[String(clientID)] = state;
+        // Serialize cursor position if it exists
+        const serializableState = { ...state };
+        if (serializableState.cursor && serializableState.cursor.toJSON) {
+          serializableState.cursor = serializableState.cursor.toJSON();
+        }
+        awarenessUpdate[String(clientID)] = serializableState;
       }
     });
 
@@ -176,6 +188,10 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
+            if (state.cursor) {
+              // Deserialize the cursor position from JSON
+              state.cursor = RelativePosition.fromJSON(state.cursor);
+            }
             tempAwareness.setLocalState(clientID, state);
           }
         }
