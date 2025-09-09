@@ -21,15 +21,96 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
-import { RelativePosition } from 'y-prosemirror';
 
+/**
+ * A relative position is a position that is relative to a specific Yjs type.
+ *
+ * This is a copy of the RelativePosition class from y-prosemirror because it is not exported.
+ * This allows us to serialize and deserialize cursor positions to and from Firestore.
+ */
+class RelativePosition {
+    /**
+     * @param {Y.AbstractType<any>} type
+     * @param {Object<string, any> | null} TClock
+     */
+    constructor (type, TClock) {
+        this.type = type
+        this.TClock = TClock
+    }
 
-// DECODE a single awareness update and apply it to a Yjs awareness instance
-const applyAwarenessUpdateFromFirestore = (awareness: Awareness, update: Uint8Array, origin: any) => {
-    try {
-        applyAwarenessUpdate(awareness, update, origin);
-    } catch (e) {
-        console.error("Error applying awareness update:", e);
+    /**
+     * @param {Y.Doc} doc
+     * @param {Y.Item} item
+     */
+    static fromRelativePosition (doc, item) {
+        const type = item.parent
+        const TClock = Y.encodeStateAsUpdateV2(doc, new Map([[type, new Set([item])]]))
+        return new RelativePosition(type, TClock)
+    }
+
+    /**
+     * @param {Y.Doc} doc
+     * @return {Y.Item | null}
+     */
+    toYItem (doc) {
+        const { TClock, type } = this
+        // @ts-ignore
+        const store = doc.store
+        const TContent = Y.decodeUpdateV2(TClock)
+        const str = new Y.UpdateDecoderV2(TClock)
+        const head = Y.readUpdateHeadV2(str)
+        if (head.tc) {
+            Y.log(
+                'Unexpected transaction-client-id in TClock. This is a bug in y-prosemirror. Please report this issue.'
+            )
+        }
+        let item = null
+        /**
+         * @type {Map<string,any>|null}
+         */
+        let user = null
+        for (let i = 0; i < TContent.clients.length; i++) {
+            const client = TContent.clients[i]
+            const items = TContent.updates[i]
+            for (let i = 0; i < items.length; i++) {
+                const it = items[i]
+                if (it.parent === type) {
+                    item = it
+                } else {
+                    user = it
+                }
+            }
+        }
+        // @ts-ignore
+        return item
+    }
+
+    /**
+     * @param {Y.Doc} doc
+     * @return {number | null}
+     */
+    toAbsolutePosition (doc) {
+        const item = this.toYItem(doc)
+        // @ts-ignore
+        return item ? Y.getAbsPosition(item, doc.store) : null
+    }
+
+    /**
+     * @return {Object<string, any>}
+     */
+    toJSON () {
+        return {
+            type: Y.logType(this.type),
+            TClock: this.TClock ? Array.from(this.TClock) : null
+        }
+    }
+
+    /**
+     * @param {Object<string, any>} json
+     * @return {RelativePosition}
+     */
+    static fromJSON (json) {
+        return new RelativePosition(Y.createTypeFromString(json.type), json.TClock ? new Uint8Array(json.TClock) : null)
     }
 }
 
@@ -102,8 +183,10 @@ export class YFireProvider {
 
                 const updatedClients = Array.from(tempAwareness.getStates().keys());
                 
-                const encodedUpdate = encodeAwarenessUpdate(tempAwareness, updatedClients);
-                applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
+                if (updatedClients.length > 0) {
+                    const encodedUpdate = encodeAwarenessUpdate(tempAwareness, updatedClients);
+                    applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
+                }
             }
         }
     });
