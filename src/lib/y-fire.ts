@@ -11,6 +11,8 @@ import {
   query,
   setDoc,
   writeBatch,
+  deleteField,
+  updateDoc
 } from 'firebase/firestore';
 import { Awareness } from 'y-protocols/awareness';
 
@@ -20,11 +22,13 @@ export class YFireProvider {
   private readonly collection: DocumentReference;
   private readonly prefix = 'yfire';
   private readonly unsubscribes: (() => void)[] = [];
+  private readonly awarenessDocRef: DocumentReference;
 
   constructor(docRef: DocumentReference, ydoc: Y.Doc) {
     this.doc = ydoc;
     this.collection = docRef;
     this.awareness = new Awareness(ydoc);
+    this.awarenessDocRef = doc(this.collection, this.prefix, 'awareness');
 
     this.setup();
   }
@@ -54,6 +58,18 @@ export class YFireProvider {
     });
     this.unsubscribes.push(unsubscribeUpdates);
     
+    // Subscribe to awareness changes
+    const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data) {
+          const states = new Map(Object.entries(data));
+          this.awareness.setStates(states, 'firestore');
+        }
+      }
+    });
+    this.unsubscribes.push(unsubscribeAwareness);
+    
     this.doc.on('update', this.onDocUpdate.bind(this));
     this.awareness.on('update', this.onAwarenessUpdate.bind(this));
     
@@ -65,15 +81,12 @@ export class YFireProvider {
   }
   
   private async onAwarenessUnload() {
-    const state = this.awareness.getLocalState();
-    if(state) {
-        const awarenessRef = doc(
-            this.collection,
-            this.prefix,
-            `awareness/${this.doc.clientID}`
-        );
-        await deleteDoc(awarenessRef);
-    }
+      const state = this.awareness.getLocalState();
+      if(state) {
+          await updateDoc(this.awarenessDocRef, {
+              [this.doc.clientID]: deleteField()
+          });
+      }
   }
 
   private onDocUpdate(update: Uint8Array, origin: any) {
@@ -83,23 +96,28 @@ export class YFireProvider {
     }
   }
   
-  private onAwarenessUpdate({ added, updated, removed }: { added: number[], updated: number[], removed: number[] }) {
-    const changedClients = added.concat(updated, removed);
-    const awarenessRef = doc(this.collection, this.prefix, 'awareness');
-
-    const states = this.awareness.getStates();
-    const changes = new Map<number, any>();
+  private onAwarenessUpdate({ added, updated, removed }: { added: number[], updated: number[], removed: number[] }, origin: any) {
+    if (origin === 'firestore') {
+      return;
+    }
+    
+    const changedClients = added.concat(updated);
+    const awarenessUpdate: { [key: string]: any } = {};
 
     changedClients.forEach(clientID => {
-      const state = states.get(clientID);
-      changes.set(clientID, state || null);
+      const state = this.awareness.getStates().get(clientID);
+      if(state) {
+        awarenessUpdate[clientID] = state;
+      }
+    });
+    
+    removed.forEach(clientID => {
+        awarenessUpdate[clientID] = deleteField();
     });
 
-    const awarenessUpdates = {
-      changes: Object.fromEntries(changes.entries())
-    };
-
-    setDoc(awarenessRef, awarenessUpdates, { merge: true });
+    if (Object.keys(awarenessUpdate).length > 0) {
+      updateDoc(this.awarenessDocRef, awarenessUpdate);
+    }
   }
 
   private async loadInitialData() {
@@ -109,13 +127,12 @@ export class YFireProvider {
       Y.applyUpdate(this.doc, dbDoc);
     }
     
-    const awarenessCollection = collection(this.collection, this.prefix, 'awareness');
-    const awarenessSnapshot = await getDocs(awarenessCollection);
-    const awarenessStates = new Map();
-    awarenessSnapshot.forEach((doc) => {
-        awarenessStates.set(parseInt(doc.id), doc.data());
-    });
-    this.awareness.setStates(awarenessStates, 'firestore');
+    const awarenessSnapshot = await getDoc(this.awarenessDocRef);
+    if (awarenessSnapshot.exists()) {
+        const data = awarenessSnapshot.data();
+        const states = new Map(Object.entries(data));
+        this.awareness.setStates(states, 'firestore');
+    }
 
     const docUpdates = doc(this.collection, this.prefix, 'updates');
     const updatesSnapshot = await getDoc(docUpdates);
