@@ -2,11 +2,11 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronLeft, History, Loader2, Save, Phone, Video } from 'lucide-react';
+import { ChevronLeft, History, Loader2, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Editor } from '@tiptap/react';
-import type { WebrtcProvider } from 'y-webrtc';
+import type { Awareness } from 'y-protocols/awareness';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,47 +24,44 @@ import { useAuth } from '@/hooks/use-auth';
 interface EditorHeaderProps {
   doc: Document;
   editor: Editor | null;
-  provider: WebrtcProvider | null;
+  awareness: Awareness | null;
   docName: string;
   setDocName: (name: string) => void;
   isSaving: boolean;
   lastSaved: string; // Now a string
   lastSavedBy: string;
-  onCallStart: (type: 'audio' | 'video') => void;
-  onCallEnd: () => void;
-  inCall: boolean;
 }
 
-export default function EditorHeader({ doc, editor, provider, docName, setDocName, isSaving, lastSaved, lastSavedBy, onCallStart, onCallEnd, inCall }: EditorHeaderProps) {
+export default function EditorHeader({ doc, editor, awareness, docName, setDocName, isSaving, lastSaved, lastSavedBy }: EditorHeaderProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
   useEffect(() => {
-    if (!provider) return;
+    if (!awareness) return;
 
     const awarenessChangeHandler = () => {
-        const states = Array.from(provider.awareness.getStates().values());
+        const states = Array.from(awareness.getStates().values());
         const users = states
-            .map(state => state.user ? { ...state.user, clientId: Array.from(provider.awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
+            .map(state => state.user ? { ...state.user, clientId: Array.from(awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
             .filter((user): user is { name: string; color: string; clientId: any } => user !== null && !!user.name && user.clientId);
         setOnlineUsers(users);
     };
     
-    provider.awareness.on('change', awarenessChangeHandler);
+    awareness.on('change', awarenessChangeHandler);
     awarenessChangeHandler(); // Initial call
 
     return () => {
-        provider.awareness.off('change', awarenessChangeHandler);
+        awareness.off('change', awarenessChangeHandler);
     }
-  }, [provider]);
+  }, [awareness]);
 
   const handleNameChange = async (e: React.FocusEvent<HTMLInputElement>) => {
     if (!user) return;
     const newName = e.target.value;
     setDocName(newName);
     try {
-        await updateDocument(doc.id, { name: newName }, user);
+        await updateDocument(doc.id, { name: newName }, { uid: user.uid, displayName: user.displayName });
          toast({
             title: "Name Updated",
             description: "Document name saved.",
@@ -141,38 +138,6 @@ export default function EditorHeader({ doc, editor, provider, docName, setDocNam
             ))}
           </div>
         </TooltipProvider>
-
-        {inCall ? (
-           <Button variant="destructive" size="icon" onClick={onCallEnd}>
-                <Phone className="h-5 w-5" />
-                <span className="sr-only">End Call</span>
-            </Button>
-        ) : (
-            <>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" onClick={() => onCallStart('audio')}>
-                                <Phone className="h-5 w-5" />
-                                <span className="sr-only">Start Voice Call</span>
-                            </Button>
-                        </TooltipTrigger>
-                         <TooltipContent><p>Start Voice Call</p></TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                             <Button variant="outline" size="icon" onClick={() => onCallStart('video')}>
-                                <Video className="h-5 w-5" />
-                                <span className="sr-only">Start Video Call</span>
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Start Video Call</p></TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            </>
-        )}
         
         <Separator orientation="vertical" className="h-8 mx-1 sm:mx-2" />
 

@@ -9,10 +9,11 @@ import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
 import { getAllUsers } from '@/app/users/actions';
 import { Separator } from '../ui/separator';
+import type { Awareness } from 'y-protocols/awareness';
 
 interface TeamPanelProps {
   doc: Document;
-  onlineUsers: any[];
+  awareness: Awareness | null;
 }
 
 type UserProfile = {
@@ -35,10 +36,23 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
     }
 };
 
-export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
+export default function TeamPanel({ doc, awareness }: TeamPanelProps) {
   const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
   const [owner, setOwner] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (awareness) {
+      const updateOnlineUsers = () => {
+        const states = Array.from(awareness.getStates().values());
+        setOnlineUsers(states.map(s => s.user).filter(Boolean));
+      };
+      awareness.on('change', updateOnlineUsers);
+      updateOnlineUsers(); // Initial call
+      return () => awareness.off('change', updateOnlineUsers);
+    }
+  }, [awareness]);
 
   useEffect(() => {
     if (!doc.id) return;
@@ -83,8 +97,7 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
   }, [owner, collaborators]);
 
   const isUserOnline = useCallback((user: UserProfile) => {
-    // This is an approximation as we don't have a direct mapping from awareness clientId to user uid
-    // It checks if any online user has the same display name.
+    // y-firebase doesn't have a direct UID link in awareness, so we match by name.
     return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
   }, [onlineUsers]);
 

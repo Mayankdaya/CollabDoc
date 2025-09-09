@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { Editor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -32,18 +32,13 @@ import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
 import { WebrtcProvider } from 'y-webrtc';
-import VideoCallPanel from './video-call-panel';
-import Peer from 'simple-peer';
+import { IndexeddbPersistence } from 'y-indexeddb'
+import type { Awareness } from 'y-protocols/awareness';
 import { Loader2 } from 'lucide-react';
 
 interface EditorLayoutProps {
   documentId: string;
   initialData: DocType;
-}
-
-interface PeerData {
-    peerID: string;
-    peer: Peer.Instance;
 }
 
 const ChatPanel = dynamic(() => import('./chat-panel'), { ssr: false, loading: () => <div className="p-4"><Loader2 className="animate-spin" /></div> });
@@ -73,7 +68,8 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider | null>(null);
-
+  const [persistence, setPersistence] = useState<IndexeddbPersistence | null>(null);
+  
   const [wordCount, setWordCount] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [docName, setDocName] = useState(initialData.name);
@@ -81,20 +77,14 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const [lastSaved, setLastSaved] = useState<string>(initialData.lastModified);
   const [lastSavedBy, setLastSavedBy] = useState<string>(initialData.lastModifiedBy);
   
-  const [inCall, setInCall] = useState(false);
-  const [localStream, setLocalStream] = useState<MediaStream>();
-  const [peerStreams, setPeerStreams] = useState<MediaStream[]>([]);
-  const peersRef = useRef<PeerData[]>([]);
   const { toast } = useToast();
   
   const saveDocument = useCallback(() => {
-    if (!user || !editor || editor.isDestroyed || !ydoc) return;
+    if (!user || !editor || editor.isDestroyed) return;
   
     setIsSaving(true);
-    // Encode the entire Y.Doc state as a single update
-    const contentString = JSON.stringify(Array.from(Y.encodeStateAsUpdate(ydoc)));
       
-    updateDocument(documentId, { content: contentString }, user)
+    updateDocument(documentId, { content: editor.getHTML() }, { uid: user.uid, displayName: user.displayName })
       .then((result) => {
         if (result) {
           setLastSaved(result.lastModified);
@@ -112,57 +102,46 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
       .finally(() => {
         setIsSaving(false);
       });
-  }, [user, editor, documentId, ydoc, toast]);
+  }, [user, editor, documentId, toast]);
 
   useEffect(() => {
     let saveTimeout: NodeJS.Timeout;
     
     const handleUpdate = () => {
         clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveDocument, 2000);
+        saveTimeout = setTimeout(saveDocument, 2000); // Save after 2s of inactivity
     };
 
-    ydoc.on('update', handleUpdate);
+    editor?.on('update', handleUpdate);
 
     return () => {
-        ydoc.off('update', handleUpdate);
+        editor?.off('update', handleUpdate);
         clearTimeout(saveTimeout);
     };
-  }, [ydoc, saveDocument]);
+  }, [editor, saveDocument]);
 
 
   useEffect(() => {
-    if (loading) return;
-
-    // Load initial content into Y.Doc
-    if (initialData.content && initialData.content.startsWith('[')) {
-        try {
-            // New format: content is a JSON string of a Uint8Array
-            const initialContentUpdate = new Uint8Array(JSON.parse(initialData.content));
-            Y.applyUpdate(ydoc, initialContentUpdate);
-        } catch (error) {
-            console.error("Failed to parse Y.js update:", error);
-            // Fallback for malformed data - start with empty
-        }
-    }
-
+    if (loading || editor) return;
+    
     const collaborationUserName = user?.displayName || getAnonymousName();
     const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 
-    const webrtcProvider = new WebrtcProvider(`collab-doc-room-${documentId}`, ydoc, {
-        signaling: [
-            'wss://y-webrtc-signaling-eu.herokuapp.com',
-            'wss://y-webrtc-signaling-us.herokuapp.com'
-        ]
-    });
+    // Use IndexedDB for local persistence
+    const localProvider = new IndexeddbPersistence(documentId, ydoc);
+    setPersistence(localProvider);
     
+    // Use WebRTC for peer-to-peer collaboration
+    const webrtcProvider = new WebrtcProvider(documentId, ydoc, {
+        signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+    });
+    setProvider(webrtcProvider);
+
     webrtcProvider.awareness.setLocalStateField('user', {
         name: collaborationUserName,
         color: userColor,
     });
     
-    setProvider(webrtcProvider);
-
     const tiptapEditor = new Editor({
         extensions: [
             StarterKit.configure({ heading: { levels: [1, 2, 3] }, history: false }),
@@ -188,6 +167,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
                 },
             }),
         ],
+        content: initialData.content || '',
         editorProps: {
             attributes: { class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-2xl p-12 focus:outline-none min-h-[calc(100vh-250px)]' },
         },
@@ -202,6 +182,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
 
     return () => {
         webrtcProvider?.destroy();
+        localProvider?.destroy();
         tiptapEditor?.destroy();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -230,94 +211,8 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const handleZoomIn = useCallback(() => setZoomLevel(prev => Math.min(prev + 0.1, 2)), []);
   const handleZoomOut = useCallback(() => setZoomLevel(prev => Math.max(prev - 0.1, 0.5)), []);
 
-  const createPeer = useCallback((peerID: number, callerID: number, stream: MediaStream): PeerData | undefined => {
-    if(!provider) return;
-    const peer = new Peer({ initiator: true, trickle: false, stream });
-    peer.on('signal', signal => {
-        provider?.send('message', { type: 'signal', from: callerID, to: peerID, signal });
-    });
-    peer.on('stream', (peerStream) => {
-        setPeerStreams(prevStreams => [...prevStreams, peerStream]);
-    });
-    return { peerID: peerID.toString(), peer };
-  }, [provider]);
 
-  const addPeer = useCallback((incomingSignal: Peer.SignalData, callerID: number, stream: MediaStream): PeerData | undefined => {
-    if (!provider) return;
-    const peer = new Peer({ initiator: false, trickle: false, stream });
-    peer.on('signal', signal => {
-         provider?.send('message', { type: 'signal', from: provider.awareness.clientID, to: callerID, signal });
-    });
-    peer.on('stream', (peerStream) => {
-        setPeerStreams(prevStreams => {
-            if (prevStreams.some(s => s.id === peerStream.id)) return prevStreams;
-            return [...prevStreams, peerStream]
-        });
-    });
-    peer.signal(incomingSignal);
-    return { peerID: callerID.toString(), peer };
-  }, [provider]);
-  
-  useEffect(() => {
-    if (!provider) return;
-
-    const messageHandler = (message: any) => {
-        if (message.type === 'signal' && localStream) {
-            const peerData = peersRef.current.find(p => p.peerID === message.from);
-            if (peerData) {
-                peerData.peer.signal(message.signal);
-            } else {
-                const newPeer = addPeer(message.signal, message.from, localStream);
-                if (newPeer) peersRef.current.push(newPeer);
-            }
-        }
-    };
-    provider.on('message', messageHandler);
-
-    return () => {
-        provider?.off('message', messageHandler);
-    }
-  }, [provider, localStream, addPeer]);
-
-  const handleCallStart = useCallback((type: 'audio' | 'video') => {
-    if (!provider) {
-        toast({ variant: 'destructive', title: 'Collaboration Error', description: 'Could not initialize call. Please refresh the page.' });
-        return;
-    }
-
-    navigator.mediaDevices.getUserMedia({ video: type === 'video', audio: true }).then(stream => {
-        setLocalStream(stream);
-        setInCall(true);
-        const allPeerIds = Array.from(provider.awareness.getStates().keys()).filter(id => id !== provider.awareness.clientID);
-        const newPeers = allPeerIds.map(peerID => createPeer(peerID, provider.awareness.clientID, stream)).filter(p => p !== undefined) as PeerData[];
-        peersRef.current = newPeers;
-    }).catch(err => {
-        console.error("Failed to get media", err);
-        toast({ variant: 'destructive', title: 'Media Access Denied', description: 'Could not access your camera or microphone.' });
-    });
-  }, [toast, provider, createPeer]);
-
-  const handleCallEnd = useCallback(() => {
-    setInCall(false);
-    localStream?.getTracks().forEach(track => track.stop());
-    setLocalStream(undefined);
-    peersRef.current.forEach(({ peer }) => peer.destroy());
-    peersRef.current = [];
-    setPeerStreams([]);
-  }, [localStream]);
-
-  const toggleMedia = useCallback((type: 'audio' | 'video') => {
-    if (localStream) {
-        const track = type === 'audio' 
-            ? localStream.getAudioTracks()[0] 
-            : localStream.getVideoTracks()[0];
-        if (track) {
-            track.enabled = !track.enabled;
-        }
-    }
-  }, [localStream]);
-
-  if (!editor || loading) {
+  if (!editor || loading || !provider) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background/50">
             <div className="flex flex-col items-center gap-4">
@@ -333,15 +228,12 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
       <EditorHeader 
         doc={initialData}
         editor={editor}
-        provider={provider}
-        isSaving={isSaving}
+        awareness={provider.awareness}
         docName={docName}
         setDocName={setDocName}
+        isSaving={isSaving}
         lastSaved={lastSaved}
         lastSavedBy={lastSavedBy}
-        onCallStart={handleCallStart}
-        onCallEnd={handleCallEnd}
-        inCall={inCall}
       />
       <div className="flex flex-1 overflow-hidden relative">
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
@@ -371,31 +263,16 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
                     <TabsTrigger value="team">Team</TabsTrigger>
                 </TabsList>
                 <TabsContent value="chat" className="flex-1 overflow-y-auto p-0 m-0">
-                    <Suspense fallback={<div className="p-4"><Loader2 className="animate-spin" /></div>}>
-                      <ChatPanel documentId={documentId} />
-                    </Suspense>
+                    <ChatPanel documentId={documentId} />
                 </TabsContent>
                 <TabsContent value="ai-chat" className="flex-1 overflow-y-auto m-0">
-                   <Suspense fallback={<div className="p-4"><Loader2 className="animate-spin" /></div>}>
-                     <AiChatPanel documentContent={editor?.getHTML() || ''} editor={editor} />
-                   </Suspense>
+                    <AiChatPanel documentContent={editor?.getHTML() || ''} editor={editor} />
                 </TabsContent>
                 <TabsContent value="team" className="flex-1 overflow-y-auto m-0">
-                   <Suspense fallback={<div className="p-4"><Loader2 className="animate-spin" /></div>}>
-                     <TeamPanel doc={initialData} onlineUsers={[]} />
-                   </Suspense>
+                    <TeamPanel doc={initialData} awareness={provider.awareness} />
                 </TabsContent>
             </Tabs>
         </aside>
-
-        {inCall && (
-            <VideoCallPanel
-                peerStreams={peerStreams}
-                localStream={localStream}
-                onCallEnd={handleCallEnd}
-                toggleMedia={toggleMedia}
-            />
-        )}
       </div>
     </div>
   );
