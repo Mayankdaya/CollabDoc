@@ -26,12 +26,12 @@ import type { Document as DocType } from '@/app/documents/actions';
 import { updateDocument } from '@/app/documents/actions';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, DocumentData, collection, doc as firestoreDoc } from "firebase/firestore";
+import { doc, onSnapshot, DocumentData, collection } from "firebase/firestore";
 import { useAuth } from '@/hooks/use-auth';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import * as Y from 'yjs';
-import { YFireProvider } from 'y-fire';
+import { YFireProvider } from '@/lib/y-fire';
 import type { Awareness } from 'y-protocols/awareness';
 import { Loader2 } from 'lucide-react';
 
@@ -66,13 +66,11 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const [editor, setEditor] = useState<Editor | null>(null);
   
   const { ydoc, provider } = useMemo(() => {
-    const doc = new Y.Doc();
-    const docRef = firestoreDoc(collection(db, 'documents_data'), documentId);
-    // Note: The `YFireProvider` uses a different path (`documents_data`) to store the raw Y.js data.
-    // This separates it from your main document metadata in the `documents` collection.
-    const fireProvider = new YFireProvider(docRef, doc);
+    const docY = new Y.Doc();
+    const docRef = doc(collection(db, 'documents_data'), documentId);
+    const fireProvider = new YFireProvider(docRef, docY);
 
-    return { ydoc: doc, provider: fireProvider };
+    return { ydoc: docY, provider: fireProvider };
   }, [documentId]);
   
   const [wordCount, setWordCount] = useState(0);
@@ -181,9 +179,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     setEditor(tiptapEditor);
 
     return () => {
-        if (provider) {
-          provider.destroy();
-        }
+        provider?.destroy();
         if (tiptapEditor && !tiptapEditor.isDestroyed) {
           tiptapEditor.destroy();
         }
@@ -191,9 +187,9 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   }, [documentId, user, loading, ydoc, provider]);
 
 
-  const handleDocumentSnapshot = useCallback((doc: DocumentData) => {
-    if (doc.exists()) {
-      const data = doc.data();
+  const handleDocumentSnapshot = useCallback((docSnapshot: DocumentData) => {
+    if (docSnapshot.exists()) {
+      const data = docSnapshot.data();
       setDocName(data.name || '');
       if (data.lastModified) {
         const lastModifiedDate = data.lastModified?.toDate ? data.lastModified.toDate() : new Date(data.lastModified);
