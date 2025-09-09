@@ -40,9 +40,11 @@ import { useSidebar } from "@/components/ui/sidebar";
 import { UserMenu } from "@/components/user-menu";
 import { NewDocumentDialog } from "@/components/dashboard/new-document-dialog";
 import { useAuth } from "@/hooks/use-auth";
-import { collection, query, where, onSnapshot, orderBy, limit, startAfter, getDocs, QueryDocumentSnapshot } from "firebase/firestore";
+import { collection, query, where, getDocs, QueryDocumentSnapshot, getDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
+import { getDocuments } from "@/app/documents/actions";
+
 
 const DeleteAction = memo(function DeleteAction({ id, userId, onDeleted }: { id: string; userId: string, onDeleted: (id: string) => void }) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -79,81 +81,34 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [documents, setDocuments] = useState<Document[]>([]);
   const { toggleSidebar, isMobile } = useSidebar();
-  const [lastVisible, setLastVisible] = useState<QueryDocumentSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
 
-  const fetchDocuments = useCallback(async (initial = false) => {
-    if (!user) return;
-    setLoading(true);
-    
-    // Removed orderBy from the query to prevent index error
-    const baseQuery = query(
-        collection(db, "documents"), 
-        where("userId", "==", user.uid)
-    );
-
-    // Pagination logic remains, but sorting will be done on the client
-    const q = initial 
-      ? query(baseQuery, limit(10))
-      : lastVisible
-      ? query(baseQuery, startAfter(lastVisible), limit(10))
-      : null;
-
-    if (!q) {
-      setHasMore(false);
-      setLoading(false);
-      return;
-    }
-    
-    try {
-      const documentSnapshots = await getDocs(q);
-      const newDocuments = documentSnapshots.docs.map(doc => {
-        const data = doc.data();
-        const lastModifiedDate = data.lastModified?.toDate() || new Date();
-        return {
-            id: doc.id,
-            name: data.name,
-            content: data.content,
-            lastModified: lastModifiedDate.toISOString(),
-            lastModifiedBy: data.lastModifiedBy || 'Unknown',
-            userId: data.userId,
-            collaborators: data.collaborators || [],
-        } as Document;
-      });
-
-      setLastVisible(documentSnapshots.docs[documentSnapshots.docs.length - 1]);
-      
-      // Sort documents on the client-side after fetching
-      const sortAndSetDocuments = (docs: Document[]) => {
-        const sorted = docs.sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
-        setDocuments(sorted);
-      };
-
-      if (initial) {
-          sortAndSetDocuments(newDocuments);
-      } else {
-          setDocuments(prev => {
-              const combined = [...prev, ...newDocuments];
-              return combined.sort((a, b) => new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime());
-          });
-      }
-
-      setHasMore(documentSnapshots.docs.length === 10);
-    } catch (error) {
-      console.error("Failed to fetch documents:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [user, lastVisible]);
-  
   useEffect(() => {
-    if(user) {
-        fetchDocuments(true);
-    }
-  // The fetchDocuments function is now stable and doesn't need to be in the dependency array
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (!user) return;
+    
+    setLoading(true);
+    getDocuments(user.uid)
+      .then(docs => {
+        setDocuments(docs);
+        setFilteredDocuments(docs);
+      })
+      .catch(error => {
+        console.error("Failed to fetch documents:", error);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, [user]);
+
+  useEffect(() => {
+    const results = documents.filter(doc =>
+        doc.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredDocuments(results);
+  }, [searchTerm, documents]);
+
 
   const handleDocumentDeleted = useCallback((deletedId: string) => {
       setDocuments(docs => docs.filter(doc => doc.id !== deletedId));
@@ -171,9 +126,11 @@ export default function Dashboard() {
            <div className="relative flex-1 md:grow-0">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                type="search"
-                placeholder="Search documents..."
-                className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                  type="search"
+                  placeholder="Search documents..."
+                  className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
             </div>
             <div className="ml-auto flex items-center gap-2 md:grow-0">
@@ -217,62 +174,63 @@ export default function Dashboard() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {documents.map((doc) => (
-                        <TableRow key={doc.id}>
-                        <TableCell className="font-medium">
-                            <Link href={`/documents/${doc.id}`} className="hover:underline">
-                            {doc.name}
-                            </Link>
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                            {formatDistanceToNow(new Date(doc.lastModified), { addSuffix: true })}
-                        </TableCell>
-                        <TableCell className="hidden lg:table-cell">
-                            {doc.lastModifiedBy}
-                        </TableCell>
-                        <TableCell>
-                            <div className="flex items-center justify-end">
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button
-                                    aria-haspopup="true"
-                                    size="icon"
-                                    variant="ghost"
-                                >
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem asChild><Link href={`/documents/${doc.id}`} className="w-full">Edit</Link></DropdownMenuItem>
-                                <DropdownMenuItem>Share</DropdownMenuItem>
-                                {user && <DeleteAction id={doc.id} userId={user.uid} onDeleted={handleDocumentDeleted} />}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            </div>
-                        </TableCell>
+                    {loading ? (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center">
+                                <div className="flex justify-center items-center p-4">
+                                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                                </div>
+                            </TableCell>
                         </TableRow>
-                    ))}
+                    ) : filteredDocuments.length > 0 ? (
+                        filteredDocuments.map((doc) => (
+                            <TableRow key={doc.id}>
+                            <TableCell className="font-medium">
+                                <Link href={`/documents/${doc.id}`} className="hover:underline">
+                                {doc.name}
+                                </Link>
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                                {formatDistanceToNow(new Date(doc.lastModified), { addSuffix: true })}
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                                {doc.lastModifiedBy}
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center justify-end">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button
+                                        aria-haspopup="true"
+                                        size="icon"
+                                        variant="ghost"
+                                    >
+                                        <MoreHorizontal className="h-4 w-4" />
+                                        <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem asChild><Link href={`/documents/${doc.id}`} className="w-full">Edit</Link></DropdownMenuItem>
+                                    <ShareDialog doc={doc}>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Share</DropdownMenuItem>
+                                    </ShareDialog>
+                                    {user && doc.userId === user.uid && <DeleteAction id={doc.id} userId={user.uid} onDeleted={handleDocumentDeleted} />}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                </div>
+                            </TableCell>
+                            </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center p-4 text-muted-foreground">
+                                {searchTerm ? 'No documents match your search.' : "You don't have any documents yet."}
+                            </TableCell>
+                        </TableRow>
+                    )}
                     </TableBody>
                 </Table>
-                {loading && documents.length === 0 && (
-                  <div className="flex justify-center items-center p-4">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                  </div>
-                )}
-                {hasMore && !loading && (
-                    <div className="flex justify-center mt-4">
-                        <Button onClick={() => fetchDocuments()} variant="outline">
-                            Load More
-                        </Button>
-                    </div>
-                )}
-                {!loading && documents.length === 0 && (
-                  <div className="text-center p-4 text-muted-foreground">
-                    You don't have any documents yet.
-                  </div>
-                )}
                 </CardContent>
             </Card>
         </main>

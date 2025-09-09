@@ -42,9 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        // We get the freshest user data on every auth state change.
-        // This is important because `updateProfile` doesn't immediately update the user object.
-        await createUserDocument(user);
         setUser(user);
       } else {
         setUser(null);
@@ -60,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
-      // onAuthStateChanged will handle setting user and creating the document
+      await createUserDocument(result.user);
       router.push('/dashboard');
     } catch (error) {
       console.error("Error signing in with Google: ", error);
@@ -76,13 +73,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // **THIS IS THE CRITICAL FIX**: Update the profile immediately after creation
       await updateProfile(userCredential.user, { displayName: name });
       
-      // Create the user document with the new display name
+      // Manually create the user document with the new display name
       const updatedUser = {
-        ...userCredential.user,
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
         displayName: name,
-      } as User
+        photoURL: userCredential.user.photoURL
+      };
 
-      await createUserDocument(updatedUser);
+      await createUserDocument(updatedUser as User);
 
       // We don't need to call setUser here as onAuthStateChanged will fire
       // and it will now have the correct displayName.
@@ -98,8 +97,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async ({ email, password }: SignInData) => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // onAuthStateChanged will handle setting the user
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      await createUserDocument(result.user);
       router.push('/dashboard');
     } catch (error) {
       console.error("Error signing in with email: ", error);
