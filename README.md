@@ -1,6 +1,6 @@
 # CollabDoc - Real-Time Collaborative Editor
 
-This is a real-time collaborative editor application built with Next.js, Firebase, and Genkit AI.
+CollabDoc is a modern, enterprise-grade collaborative document editor built with a powerful tech stack including Next.js, Firebase, and Google's Genkit AI. It enables teams to create, edit, and manage documents seamlessly with real-time synchronization, live cursors, and in-app communication. The platform is supercharged with AI capabilities, offering an intelligent assistant for content generation, document summarization, translation, and advanced writing assistance, making it a comprehensive solution for modern workflows.
 
 ## Features
 
