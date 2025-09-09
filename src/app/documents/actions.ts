@@ -61,9 +61,6 @@ export async function getDocuments(userId: string) {
 }
 
 export async function getDocument(id: string) {
-    const headersList = headers();
-    const user = auth.currentUser; // This might be null on server
-
     const docRef = doc(db, "documents", id);
     const docSnap = await getDoc(docRef);
 
@@ -82,6 +79,7 @@ export async function getDocument(id: string) {
             collaborators: data.collaborators || [],
         };
         
+        // This is safe to do because we are just fetching data.
         return JSON.parse(JSON.stringify(serializableData)) as Document;
 
     } else {

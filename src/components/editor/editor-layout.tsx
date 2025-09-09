@@ -135,24 +135,20 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   useEffect(() => {
     if (loading) return;
 
+    // Load initial content into Y.Doc
     if (initialData.content && initialData.content.startsWith('[')) {
         try {
-            // This is the correct format for Y.js updates
+            // New format: content is a JSON string of a Uint8Array
             const initialContentUpdate = new Uint8Array(JSON.parse(initialData.content));
             Y.applyUpdate(ydoc, initialContentUpdate);
         } catch (error) {
-            // This is a fallback for potentially old, plain HTML content
-             if (editor && !editor.isDestroyed) {
-                 editor.commands.setContent(initialData.content, false);
-             }
-        }
-    } else if (initialData.content) {
-        // Fallback for old plain HTML content if editor is not ready yet
-        const yText = ydoc.getText('content');
-        if (yText.length === 0) {
-            yText.insert(0, initialData.content);
+            console.error("Failed to parse Y.js update:", error);
+            // Fallback for malformed data - start with empty
         }
     }
+
+    const collaborationUserName = user?.displayName || getAnonymousName();
+    const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 
     const webrtcProvider = new WebrtcProvider(`collab-doc-room-${documentId}`, ydoc, {
         signaling: [
@@ -160,15 +156,13 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
             'wss://y-webrtc-signaling-us.herokuapp.com'
         ]
     });
-    setProvider(webrtcProvider);
     
-    const collaborationUserName = user?.displayName || getAnonymousName();
-    const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
     webrtcProvider.awareness.setLocalStateField('user', {
         name: collaborationUserName,
         color: userColor,
     });
-
+    
+    setProvider(webrtcProvider);
 
     const tiptapEditor = new Editor({
         extensions: [
@@ -208,7 +202,6 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     setEditor(tiptapEditor);
 
     const awarenessChangeHandler = () => {
-        if (!webrtcProvider) return;
         const states = Array.from(webrtcProvider.awareness.getStates().values());
         const users = states
             .map(state => state.user ? { ...state.user, clientId: Array.from(webrtcProvider.awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
@@ -224,7 +217,8 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
         webrtcProvider?.destroy();
         tiptapEditor?.destroy();
     };
-  }, [documentId, user, ydoc, loading, initialData.content]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId, user, ydoc, loading]);
 
 
   const handleDocumentSnapshot = useCallback((doc: DocumentData) => {
@@ -419,5 +413,3 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     </div>
   );
 }
-
-    

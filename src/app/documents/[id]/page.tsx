@@ -19,7 +19,7 @@ function EditorLoading() {
     );
 }
 
-// Dynamically import the EditorLayout as it is a client component
+// Dynamically import the EditorLayout as it is a client component.
 const EditorLayout = dynamic(() => import('@/components/editor/editor-layout'), {
   ssr: false,
   loading: () => <EditorLoading />,
