@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Editor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -66,8 +66,13 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const { user, loading } = useAuth();
   const [editor, setEditor] = useState<Editor | null>(null);
   
-  const [ydoc] = useState(() => new Y.Doc());
-  const [provider, setProvider] = useState<WebrtcProvider | null>(null);
+  const { ydoc, provider } = useMemo(() => {
+    const doc = new Y.Doc();
+    const provider = new WebrtcProvider(documentId, doc, {
+        signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+    });
+    return { ydoc: doc, provider };
+  }, [documentId]);
   
   const [wordCount, setWordCount] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -121,7 +126,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
 
 
   useEffect(() => {
-    if (loading || editor) return;
+    if (editor || loading) return; // Only run once
     
     const collaborationUserName = user?.displayName || getAnonymousName();
     const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
@@ -129,13 +134,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     // Use IndexedDB for local persistence
     const localProvider = new IndexeddbPersistence(documentId, ydoc);
     
-    // Use WebRTC for peer-to-peer collaboration
-    const webrtcProvider = new WebrtcProvider(documentId, ydoc, {
-        signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
-    });
-    setProvider(webrtcProvider);
-
-    webrtcProvider.awareness.setLocalStateField('user', {
+    provider.awareness.setLocalStateField('user', {
         name: collaborationUserName,
         color: userColor,
     });
@@ -158,7 +157,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
             TableCell,
             Collaboration.configure({ document: ydoc }),
             CollaborationCursor.configure({
-                provider: webrtcProvider,
+                provider: provider,
                 user: { 
                   name: collaborationUserName,
                   color: userColor,
@@ -179,12 +178,11 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     setEditor(tiptapEditor);
 
     return () => {
-        webrtcProvider?.destroy();
+        provider?.destroy();
         localProvider?.destroy();
         tiptapEditor?.destroy();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documentId, user, ydoc, loading]);
+  }, [documentId, user, ydoc, loading, provider, editor, initialData.content]);
 
 
   const handleDocumentSnapshot = useCallback((doc: DocumentData) => {
