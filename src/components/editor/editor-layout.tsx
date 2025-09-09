@@ -178,8 +178,12 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     setEditor(tiptapEditor);
 
     return () => {
-        provider?.destroy();
-        tiptapEditor?.destroy();
+        if (provider) {
+          provider.destroy();
+        }
+        if (tiptapEditor && !tiptapEditor.isDestroyed) {
+          tiptapEditor.destroy();
+        }
     };
   }, [documentId, user, loading, ydoc, provider, editor, initialData.content]);
 
