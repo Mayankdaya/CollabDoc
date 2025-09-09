@@ -14,7 +14,7 @@ import {
   deleteField,
   updateDoc
 } from 'firebase/firestore';
-import { Awareness } from 'y-protocols/awareness';
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
 
 export class YFireProvider {
   public awareness: Awareness;
@@ -63,8 +63,9 @@ export class YFireProvider {
       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data) {
-          const states = new Map(Object.entries(data));
-          this.awareness.setStates(states, 'firestore');
+          const clients = Object.keys(data).map(Number);
+          const update = encodeAwarenessUpdate(this.awareness, clients);
+          applyAwarenessUpdate(this.awareness, update, 'firestore');
         }
       }
     });
@@ -85,7 +86,6 @@ export class YFireProvider {
           const update = {
               [this.doc.clientID]: deleteField()
           };
-          // Use setDoc with merge to avoid error if doc doesn't exist
           await setDoc(this.awarenessDocRef, update, { merge: true });
       }
   }
@@ -117,7 +117,6 @@ export class YFireProvider {
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
-      // Use setDoc with merge to create or update the awareness doc
       setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
     }
   }
@@ -132,8 +131,11 @@ export class YFireProvider {
     const awarenessSnapshot = await getDoc(this.awarenessDocRef);
     if (awarenessSnapshot.exists()) {
         const data = awarenessSnapshot.data();
-        const states = new Map(Object.entries(data));
-        this.awareness.setStates(states, 'firestore');
+        if (data) {
+          const clients = Object.keys(data).map(Number);
+          const update = encodeAwarenessUpdate(this.awareness, clients);
+          applyAwarenessUpdate(this.awareness, update, 'firestore');
+        }
     }
 
     const docUpdates = doc(this.collection, this.prefix, 'updates');
