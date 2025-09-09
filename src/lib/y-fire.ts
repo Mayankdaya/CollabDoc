@@ -12,9 +12,14 @@ import {
   setDoc,
   writeBatch,
   deleteField,
-  updateDoc
+  updateDoc,
 } from 'firebase/firestore';
-import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
+import {
+  Awareness,
+  applyAwarenessUpdate,
+  encodeAwarenessUpdate,
+  removeAwarenessStates,
+} from 'y-protocols/awareness';
 import { db } from './firebase';
 
 export class YFireProvider {
@@ -30,9 +35,18 @@ export class YFireProvider {
     this.doc = ydoc;
     this.collection = docRef;
     this.awareness = new Awareness(ydoc);
-    this.awarenessDocRef = doc(db, this.collection.path, this.prefix, 'awareness');
-    this.updatesDocRef = doc(db, this.collection.path, this.prefix, 'updates');
-
+    this.awarenessDocRef = doc(
+      db,
+      this.collection.path,
+      this.prefix,
+      'awareness'
+    );
+    this.updatesDocRef = doc(
+      db,
+      this.collection.path,
+      this.prefix,
+      'updates'
+    );
 
     this.setup();
   }
@@ -41,73 +55,94 @@ export class YFireProvider {
     await this.loadInitialData();
 
     // Subscribe to document updates
-    const unsubscribeDoc = onSnapshot(
-      this.updatesDocRef,
+    const unsubscribeDoc = onSnapshot(this.updatesDocRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const remoteUpdate = snapshot.data()?.['data'];
+        if (remoteUpdate) {
+          Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
+        }
+      }
+    });
+    this.unsubscribes.push(unsubscribeDoc);
+
+    // Subscribe to awareness changes
+    const unsubscribeAwareness = onSnapshot(
+      this.awarenessDocRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          const remoteUpdate = snapshot.data()?.['data'];
-          if (remoteUpdate) {
-            Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
+          const data = snapshot.data();
+          if (data) {
+            const clients = Object.keys(data).map(Number);
+            const states = clients
+              .map((clientID) => {
+                const state = data[clientID];
+                if (state) {
+                  return [clientID, state] as const;
+                }
+                return null;
+              })
+              .filter((s): s is [number, any] => s !== null);
+
+            const newStates = new Map(states);
+            const localStates = this.awareness.getStates();
+
+            const statesToApply = new Map<number, any>();
+            const statesToRemove: number[] = [];
+
+            // Add or update states
+            newStates.forEach((state, clientID) => {
+              const localState = localStates.get(clientID);
+              if (
+                !localState ||
+                JSON.stringify(localState) !== JSON.stringify(state)
+              ) {
+                statesToApply.set(clientID, state);
+              }
+            });
+
+            // Remove states
+            localStates.forEach((_, clientID) => {
+              if (!newStates.has(clientID)) {
+                statesToRemove.push(clientID);
+              }
+            });
+            
+            // Manually build an update to apply
+            if(statesToApply.size > 0 || statesToRemove.length > 0) {
+              const fakeAwareness = new Awareness(new Y.Doc());
+              fakeAwareness.setStates(statesToApply, 'remote');
+              
+              const update = encodeAwarenessUpdate(fakeAwareness, Array.from(statesToApply.keys()));
+              applyAwarenessUpdate(this.awareness, update, 'firestore');
+            }
+
+
+            if (statesToRemove.length > 0) {
+              removeAwarenessStates(this.awareness, statesToRemove, 'firestore');
+            }
           }
         }
       }
     );
-    this.unsubscribes.push(unsubscribeDoc);
-    
-    // Subscribe to awareness changes
-    const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
-       if (snapshot.exists()) {
-        const data = snapshot.data();
-        if (data) {
-          const clients = Object.keys(data).map(Number);
-          const states = clients.map(clientID => [clientID, data[clientID]]).filter(([_, state]) => state !== null);
-          const newStates = new Map(states as [number, any][]);
-          
-          const localStates = this.awareness.getStates();
-          const statesToApply = new Map<number, any>();
-          const statesToRemove: number[] = [];
-
-          newStates.forEach((state, clientID) => {
-              const localState = localStates.get(clientID);
-              if (!localState || JSON.stringify(localState) !== JSON.stringify(state)) {
-                  statesToApply.set(clientID, state);
-              }
-          });
-          
-          localStates.forEach((_, clientID) => {
-            if (!newStates.has(clientID)) {
-              statesToRemove.push(clientID);
-            }
-          })
-
-          if (statesToApply.size > 0) {
-            this.awareness.setStates(statesToApply, 'firestore');
-          }
-          if (statesToRemove.length > 0) {
-            removeAwarenessStates(this.awareness, statesToRemove, 'firestore');
-          }
-        }
-      }
-    });
     this.unsubscribes.push(unsubscribeAwareness);
-    
+
     this.doc.on('update', this.onDocUpdate.bind(this));
     this.awareness.on('update', this.onAwarenessUpdate.bind(this));
-    
+
     this.setupAwarenessUnload();
   }
-  
+
   private setupAwarenessUnload() {
     window.addEventListener('beforeunload', this.onAwarenessUnload.bind(this));
   }
-  
+
   private async onAwarenessUnload() {
-      if(this.awareness.getLocalState() !== null) {
-          const update = {
-              [this.doc.clientID]: deleteField()
-          };
-          await setDoc(this.awarenessDocRef, update, { merge: true });
-      }
+    if (this.awareness.getLocalState() !== null) {
+      const update = {
+        [this.doc.clientID]: deleteField(),
+      };
+      await setDoc(this.awarenessDocRef, update, { merge: true });
+    }
   }
 
   private onDocUpdate(update: Uint8Array, origin: any) {
@@ -115,24 +150,31 @@ export class YFireProvider {
       setDoc(this.updatesDocRef, { data: update }, { merge: true });
     }
   }
-  
-  private onAwarenessUpdate({ added, updated, removed }: { added: number[], updated: number[], removed: number[] }, origin: any) {
+
+  private onAwarenessUpdate(
+    {
+      added,
+      updated,
+      removed,
+    }: { added: number[]; updated: number[]; removed: number[] },
+    origin: any
+  ) {
     if (origin === 'firestore') {
       return;
     }
-    
+
     const changedClients = added.concat(updated);
     const awarenessUpdate: { [key: string]: any } = {};
 
-    changedClients.forEach(clientID => {
+    changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
-      if(state) {
+      if (state) {
         awarenessUpdate[String(clientID)] = state;
       }
     });
-    
-    removed.forEach(clientID => {
-        awarenessUpdate[String(clientID)] = deleteField();
+
+    removed.forEach((clientID) => {
+      awarenessUpdate[String(clientID)] = deleteField();
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
@@ -141,26 +183,25 @@ export class YFireProvider {
   }
 
   private async loadInitialData() {
-    // Note: The main document content is stored on the document itself, not in a subcollection.
-    // This provider assumes the Yjs doc is stored in a field on the main docRef.
-    // The current implementation saves updates to a subcollection, which is fine, but initial load needs to be considered.
-    
+    // Load Yjs document data
     const updatesSnapshot = await getDoc(this.updatesDocRef);
     if (updatesSnapshot.exists()) {
-        const update = updatesSnapshot.data() as { data: Uint8Array };
-        Y.applyUpdate(this.doc, update.data);
+      const update = updatesSnapshot.data() as { data: Uint8Array };
+      Y.applyUpdate(this.doc, update.data);
     }
 
+    // Load and apply awareness states
     const awarenessSnapshot = await getDoc(this.awarenessDocRef);
     if (awarenessSnapshot.exists()) {
-        const data = awarenessSnapshot.data();
-        if (data) {
-          const states = new Map(Object.entries(data).map(([key, value]) => [Number(key), value]));
-          this.awareness.setStates(states, 'firestore');
-        }
+      const data = awarenessSnapshot.data();
+      if (data) {
+        const clients = Object.keys(data).map(Number);
+        const update = encodeAwarenessUpdate(this.awareness, clients);
+        applyAwarenessUpdate(this.awareness, update, 'firestore');
+      }
     }
   }
-  
+
   public destroy() {
     this.onAwarenessUnload();
     window.removeEventListener('beforeunload', this.onAwarenessUnload);
