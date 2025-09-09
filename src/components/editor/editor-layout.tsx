@@ -68,7 +68,6 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebrtcProvider | null>(null);
-  const [persistence, setPersistence] = useState<IndexeddbPersistence | null>(null);
   
   const [wordCount, setWordCount] = useState(0);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -129,7 +128,6 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
 
     // Use IndexedDB for local persistence
     const localProvider = new IndexeddbPersistence(documentId, ydoc);
-    setPersistence(localProvider);
     
     // Use WebRTC for peer-to-peer collaboration
     const webrtcProvider = new WebrtcProvider(documentId, ydoc, {
