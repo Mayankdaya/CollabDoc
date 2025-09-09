@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview A conversational AI chat flow.
@@ -96,7 +97,7 @@ const chatPrompt = ai.definePrompt({
   For all other general questions or simple requests where no document generation or editing is needed, provide a helpful response in the 'response' field and leave the other fields empty.
 
   Current Document Content:
-  {{escapedDocumentContent}}
+  {{{escapedDocumentContent}}}
 
   Conversation History:
   {{#each history}}
@@ -115,6 +116,7 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async input => {
+    // This is the simplest way to escape HTML to prevent prompt corruption
     const escapeHtml = (unsafe: string): string => {
         return unsafe
              .replace(/&/g, "&amp;")
