@@ -1,4 +1,6 @@
 
+'use server';
+
 import * as Y from 'yjs';
 import {
   collection,
@@ -21,6 +23,18 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
+import { RelativePosition } from 'y-prosemirror';
+
+
+// DECODE a single awareness update and apply it to a Yjs awareness instance
+const applyAwarenessUpdateFromFirestore = (awareness: Awareness, update: Uint8Array, origin: any) => {
+    try {
+        applyAwarenessUpdate(awareness, update, origin);
+    } catch (e) {
+        console.error("Error applying awareness update:", e);
+    }
+}
+
 
 export class YFireProvider {
   public awareness: Awareness;
@@ -72,22 +86,25 @@ export class YFireProvider {
         if (snapshot.exists()) {
             const data = snapshot.data();
             if (data) {
-                const clients = Object.keys(data).map(Number);
-                const states = new Map(clients.map(clientID => [clientID, data[clientID]]));
+                const clients = Object.keys(data).map(Number).filter(id => id !== this.doc.clientID);
+                const states = new Map(clients.map(clientID => {
+                    const state = data[clientID];
+                    if (state.cursor) {
+                        // Deserialize the cursor position
+                        state.cursor = RelativePosition.fromJSON(state.cursor);
+                    }
+                    return [clientID, state];
+                }));
                 
-                const awarenessUpdate = new Awareness(new Y.Doc());
+                const tempAwareness = new Awareness(new Y.Doc());
                 // Manually set states on the temporary awareness instance
                 for (const [clientID, state] of states.entries()) {
-                    awarenessUpdate.setLocalStateField(clientID.toString(), state);
+                    tempAwareness.setLocalState(clientID, state);
                 }
 
-                // This is a workaround since y-protocols doesn't have a direct setStates.
-                // We create a temporary awareness instance, set its states, and then encode an update from it.
-                // It is a bit hacky but it is how many providers do it.
-                const awarenessStates = awarenessUpdate.getStates();
-                const updatedClients = Array.from(awarenessStates.keys());
+                const updatedClients = Array.from(tempAwareness.getStates().keys());
                 
-                const encodedUpdate = encodeAwarenessUpdate(awarenessUpdate, updatedClients);
+                const encodedUpdate = encodeAwarenessUpdate(tempAwareness, updatedClients);
                 applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
             }
         }
@@ -138,7 +155,12 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        awarenessUpdate[String(clientID)] = state;
+        // Serialize cursor position if it exists
+        const serializableState = { ...state };
+        if (serializableState.cursor) {
+          serializableState.cursor = serializableState.cursor.toJSON();
+        }
+        awarenessUpdate[String(clientID)] = serializableState;
       }
     });
 
@@ -175,10 +197,11 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
-            // This is a bit of a hack: we use setLocalStateField on the temp instance
-            // because we're not actually setting *local* state, just populating it
-            // to generate an update message.
-            tempAwareness.setLocalStateField(clientID.toString(), state);
+            if (state.cursor) {
+              // Deserialize the cursor position from JSON
+              state.cursor = RelativePosition.fromJSON(state.cursor);
+            }
+            tempAwareness.setLocalState(clientID, state);
           }
         }
         
