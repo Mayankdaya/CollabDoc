@@ -44,6 +44,7 @@ import { collection, query, where, getDocs, QueryDocumentSnapshot, getDoc, doc }
 import { db } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { getDocuments } from "@/app/documents/actions";
+import { ShareDialog } from "@/components/editor/share-dialog";
 
 
 const DeleteAction = memo(function DeleteAction({ id, userId, onDeleted }: { id: string; userId: string, onDeleted: (id: string) => void }) {
