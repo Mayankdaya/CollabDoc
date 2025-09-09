@@ -14,7 +14,8 @@ import {
   deleteField,
   updateDoc
 } from 'firebase/firestore';
-import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate } from 'y-protocols/awareness';
+import { Awareness, applyAwarenessUpdate, encodeAwarenessUpdate, removeAwarenessStates } from 'y-protocols/awareness';
+import { db } from './firebase';
 
 export class YFireProvider {
   public awareness: Awareness;
@@ -23,12 +24,15 @@ export class YFireProvider {
   private readonly prefix = 'yfire';
   private readonly unsubscribes: (() => void)[] = [];
   private readonly awarenessDocRef: DocumentReference;
+  private readonly updatesDocRef: DocumentReference;
 
   constructor(docRef: DocumentReference, ydoc: Y.Doc) {
     this.doc = ydoc;
     this.collection = docRef;
     this.awareness = new Awareness(ydoc);
-    this.awarenessDocRef = doc(this.collection, this.prefix, 'awareness');
+    this.awarenessDocRef = doc(db, this.collection.path, this.prefix, 'awareness');
+    this.updatesDocRef = doc(db, this.collection.path, this.prefix, 'updates');
+
 
     this.setup();
   }
@@ -36,11 +40,12 @@ export class YFireProvider {
   private async setup() {
     await this.loadInitialData();
 
+    // Subscribe to document updates
     const unsubscribeDoc = onSnapshot(
-      this.collection,
-      async (snapshot) => {
-        if (snapshot.exists() && snapshot.data()?.['doc']) {
-          const remoteUpdate = snapshot.data()?.['doc'];
+      this.updatesDocRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const remoteUpdate = snapshot.data()?.['data'];
           if (remoteUpdate) {
             Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
           }
@@ -48,24 +53,39 @@ export class YFireProvider {
       }
     );
     this.unsubscribes.push(unsubscribeDoc);
-
-    const docUpdates = doc(this.collection, this.prefix, 'updates');
-    const unsubscribeUpdates = onSnapshot(docUpdates, async (snapshot) => {
-      if (snapshot.exists() && snapshot.data()) {
-        const update = snapshot.data() as { data: Uint8Array };
-        Y.applyUpdate(this.doc, update.data, 'firestore');
-      }
-    });
-    this.unsubscribes.push(unsubscribeUpdates);
     
     // Subscribe to awareness changes
     const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
-      if (snapshot.exists()) {
+       if (snapshot.exists()) {
         const data = snapshot.data();
         if (data) {
           const clients = Object.keys(data).map(Number);
-          const update = encodeAwarenessUpdate(this.awareness, clients);
-          applyAwarenessUpdate(this.awareness, update, 'firestore');
+          const states = clients.map(clientID => [clientID, data[clientID]]).filter(([_, state]) => state !== null);
+          const newStates = new Map(states as [number, any][]);
+          
+          const localStates = this.awareness.getStates();
+          const statesToApply = new Map<number, any>();
+          const statesToRemove: number[] = [];
+
+          newStates.forEach((state, clientID) => {
+              const localState = localStates.get(clientID);
+              if (!localState || JSON.stringify(localState) !== JSON.stringify(state)) {
+                  statesToApply.set(clientID, state);
+              }
+          });
+          
+          localStates.forEach((_, clientID) => {
+            if (!newStates.has(clientID)) {
+              statesToRemove.push(clientID);
+            }
+          })
+
+          if (statesToApply.size > 0) {
+            this.awareness.setStates(statesToApply, 'firestore');
+          }
+          if (statesToRemove.length > 0) {
+            removeAwarenessStates(this.awareness, statesToRemove, 'firestore');
+          }
         }
       }
     });
@@ -92,8 +112,7 @@ export class YFireProvider {
 
   private onDocUpdate(update: Uint8Array, origin: any) {
     if (origin !== 'firestore') {
-      const docUpdates = doc(this.collection, this.prefix, 'updates');
-      setDoc(docUpdates, { data: update }, { merge: true });
+      setDoc(this.updatesDocRef, { data: update }, { merge: true });
     }
   }
   
@@ -122,27 +141,23 @@ export class YFireProvider {
   }
 
   private async loadInitialData() {
-    const docSnapshot = await getDoc(this.collection);
-    if (docSnapshot.exists() && docSnapshot.data()?.['doc']) {
-      const dbDoc = docSnapshot.data()?.['doc'];
-      Y.applyUpdate(this.doc, dbDoc);
-    }
+    // Note: The main document content is stored on the document itself, not in a subcollection.
+    // This provider assumes the Yjs doc is stored in a field on the main docRef.
+    // The current implementation saves updates to a subcollection, which is fine, but initial load needs to be considered.
     
+    const updatesSnapshot = await getDoc(this.updatesDocRef);
+    if (updatesSnapshot.exists()) {
+        const update = updatesSnapshot.data() as { data: Uint8Array };
+        Y.applyUpdate(this.doc, update.data);
+    }
+
     const awarenessSnapshot = await getDoc(this.awarenessDocRef);
     if (awarenessSnapshot.exists()) {
         const data = awarenessSnapshot.data();
         if (data) {
-          const clients = Object.keys(data).map(Number);
-          const update = encodeAwarenessUpdate(this.awareness, clients);
-          applyAwarenessUpdate(this.awareness, update, 'firestore');
+          const states = new Map(Object.entries(data).map(([key, value]) => [Number(key), value]));
+          this.awareness.setStates(states, 'firestore');
         }
-    }
-
-    const docUpdates = doc(this.collection, this.prefix, 'updates');
-    const updatesSnapshot = await getDoc(docUpdates);
-    if (updatesSnapshot.exists()) {
-        const update = updatesSnapshot.data() as { data: Uint8Array };
-        Y.applyUpdate(this.doc, update.data);
     }
   }
   
