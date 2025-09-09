@@ -1,6 +1,3 @@
-
-'use server';
-
 import * as Y from 'yjs';
 import {
   collection,
