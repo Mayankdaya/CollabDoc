@@ -81,11 +81,12 @@ export class YFireProvider {
   }
   
   private async onAwarenessUnload() {
-      const state = this.awareness.getLocalState();
-      if(state) {
-          await updateDoc(this.awarenessDocRef, {
+      if(this.awareness.getLocalState() !== null) {
+          const update = {
               [this.doc.clientID]: deleteField()
-          });
+          };
+          // Use setDoc with merge to avoid error if doc doesn't exist
+          await setDoc(this.awarenessDocRef, update, { merge: true });
       }
   }
 
@@ -107,16 +108,17 @@ export class YFireProvider {
     changedClients.forEach(clientID => {
       const state = this.awareness.getStates().get(clientID);
       if(state) {
-        awarenessUpdate[clientID] = state;
+        awarenessUpdate[String(clientID)] = state;
       }
     });
     
     removed.forEach(clientID => {
-        awarenessUpdate[clientID] = deleteField();
+        awarenessUpdate[String(clientID)] = deleteField();
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
-      updateDoc(this.awarenessDocRef, awarenessUpdate);
+      // Use setDoc with merge to create or update the awareness doc
+      setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
     }
   }
 
