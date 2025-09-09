@@ -89,29 +89,30 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const { toast } = useToast();
   
   const saveDocument = useCallback(() => {
-      if (!user || !editor || editor.isDestroyed) return;
-
-      setIsSaving(true);
-      const contentString = JSON.stringify(Array.from(Y.encodeStateAsUpdate(ydoc)));
+    if (!user || !editor || editor.isDestroyed || !ydoc) return;
+  
+    setIsSaving(true);
+    // Encode the entire Y.Doc state as a single update
+    const contentString = JSON.stringify(Array.from(Y.encodeStateAsUpdate(ydoc)));
       
-      updateDocument(documentId, { content: contentString }, user)
-          .then((result) => {
-              if (result) {
-                  setLastSaved(result.lastModified);
-                  setLastSavedBy(result.lastModifiedBy);
-              }
-          })
-          .catch((error) => {
-              console.error("Error saving document:", error);
-              toast({
-                  variant: "destructive",
-                  title: "Error Saving Document",
-                  description: "Could not save the document.",
-              });
-          })
-          .finally(() => {
-              setIsSaving(false);
-          });
+    updateDocument(documentId, { content: contentString }, user)
+      .then((result) => {
+        if (result) {
+          setLastSaved(result.lastModified);
+          setLastSavedBy(result.lastModifiedBy);
+        }
+      })
+      .catch((error) => {
+        console.error("Error saving document:", error);
+        toast({
+          variant: "destructive",
+          title: "Error Saving Document",
+          description: "Could not save the document.",
+        });
+      })
+      .finally(() => {
+        setIsSaving(false);
+      });
   }, [user, editor, documentId, ydoc, toast]);
 
   useEffect(() => {
@@ -134,16 +135,22 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   useEffect(() => {
     if (loading) return;
 
-    if (initialData.content) {
+    if (initialData.content && initialData.content.startsWith('[')) {
         try {
+            // This is the correct format for Y.js updates
             const initialContentUpdate = new Uint8Array(JSON.parse(initialData.content));
             Y.applyUpdate(ydoc, initialContentUpdate);
         } catch (error) {
-            console.warn("Could not parse initial document content from Firestore. It might be plain HTML. Applying as plain text.", error);
-            const yText = ydoc.getText('content');
-            if (yText.length === 0) {
-                 yText.insert(0, initialData.content);
-            }
+            // This is a fallback for potentially old, plain HTML content
+             if (editor && !editor.isDestroyed) {
+                 editor.commands.setContent(initialData.content, false);
+             }
+        }
+    } else if (initialData.content) {
+        // Fallback for old plain HTML content if editor is not ready yet
+        const yText = ydoc.getText('content');
+        if (yText.length === 0) {
+            yText.insert(0, initialData.content);
         }
     }
 
@@ -412,3 +419,5 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     </div>
   );
 }
+
+    
