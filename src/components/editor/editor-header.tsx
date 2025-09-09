@@ -6,6 +6,7 @@ import { ChevronLeft, History, Loader2, Save, Phone, Video } from 'lucide-react'
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Editor } from '@tiptap/react';
+import type { WebrtcProvider } from 'y-webrtc';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -23,20 +24,40 @@ import { useAuth } from '@/hooks/use-auth';
 interface EditorHeaderProps {
   doc: Document;
   editor: Editor | null;
+  provider: WebrtcProvider | null;
   docName: string;
   setDocName: (name: string) => void;
   isSaving: boolean;
   lastSaved: string; // Now a string
   lastSavedBy: string;
-  onlineUsers: any[];
   onCallStart: (type: 'audio' | 'video') => void;
   onCallEnd: () => void;
   inCall: boolean;
 }
 
-export default function EditorHeader({ doc, editor, docName, setDocName, isSaving, lastSaved, lastSavedBy, onlineUsers, onCallStart, onCallEnd, inCall }: EditorHeaderProps) {
+export default function EditorHeader({ doc, editor, provider, docName, setDocName, isSaving, lastSaved, lastSavedBy, onCallStart, onCallEnd, inCall }: EditorHeaderProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!provider) return;
+
+    const awarenessChangeHandler = () => {
+        const states = Array.from(provider.awareness.getStates().values());
+        const users = states
+            .map(state => state.user ? { ...state.user, clientId: Array.from(provider.awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
+            .filter((user): user is { name: string; color: string; clientId: any } => user !== null && !!user.name && user.clientId);
+        setOnlineUsers(users);
+    };
+    
+    provider.awareness.on('change', awarenessChangeHandler);
+    awarenessChangeHandler(); // Initial call
+
+    return () => {
+        provider.awareness.off('change', awarenessChangeHandler);
+    }
+  }, [provider]);
 
   const handleNameChange = async (e: React.FocusEvent<HTMLInputElement>) => {
     if (!user) return;

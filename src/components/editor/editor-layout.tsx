@@ -80,8 +80,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<string>(initialData.lastModified);
   const [lastSavedBy, setLastSavedBy] = useState<string>(initialData.lastModifiedBy);
-  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-
+  
   const [inCall, setInCall] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream>();
   const [peerStreams, setPeerStreams] = useState<MediaStream[]>([]);
@@ -200,18 +199,6 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     });
 
     setEditor(tiptapEditor);
-
-    const awarenessChangeHandler = () => {
-        const states = Array.from(webrtcProvider.awareness.getStates().values());
-        const users = states
-            .map(state => state.user ? { ...state.user, clientId: Array.from(webrtcProvider.awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
-            .filter((user): user is { name: string; color: string; clientId: any } => user !== null && !!user.name && user.clientId);
-        setOnlineUsers(users);
-    };
-    
-    webrtcProvider.awareness.on('change', awarenessChangeHandler);
-    awarenessChangeHandler();
-
 
     return () => {
         webrtcProvider?.destroy();
@@ -346,12 +333,12 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
       <EditorHeader 
         doc={initialData}
         editor={editor}
+        provider={provider}
         isSaving={isSaving}
         docName={docName}
         setDocName={setDocName}
         lastSaved={lastSaved}
         lastSavedBy={lastSavedBy}
-        onlineUsers={onlineUsers}
         onCallStart={handleCallStart}
         onCallEnd={handleCallEnd}
         inCall={inCall}
@@ -395,7 +382,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
                 </TabsContent>
                 <TabsContent value="team" className="flex-1 overflow-y-auto m-0">
                    <Suspense fallback={<div className="p-4"><Loader2 className="animate-spin" /></div>}>
-                     <TeamPanel doc={initialData} onlineUsers={onlineUsers} />
+                     <TeamPanel doc={initialData} onlineUsers={[]} />
                    </Suspense>
                 </TabsContent>
             </Tabs>

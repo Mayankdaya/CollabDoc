@@ -38,7 +38,6 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
 export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
   const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
   const [owner, setOwner] = useState<UserProfile | null>(null);
-  const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -64,14 +63,6 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
         setOwner(ownerId ? profileMap.get(ownerId) || null : null);
         setCollaborators(collaboratorIds.map((id: string) => profileMap.get(id)).filter(Boolean));
         
-        try {
-            const allUsersData = await getAllUsers();
-            setAllUsers(allUsersData);
-        } catch(e) {
-            console.error("Error fetching all users", e);
-            setAllUsers([]);
-        }
-
         setIsLoading(false);
     });
 
@@ -91,17 +82,12 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
     return Array.from(allPeople.values());
   }, [owner, collaborators]);
 
-  const onlineUserIds = useMemo(() => new Set(onlineUsers.map(u => u.clientId)), [onlineUsers]);
-
   const isUserOnline = useCallback((user: UserProfile) => {
     // This is an approximation as we don't have a direct mapping from awareness clientId to user uid
     // It checks if any online user has the same display name.
     return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
   }, [onlineUsers]);
 
-
-  const peopleWithAccessIds = new Set(peopleWithAccess.map(p => p.uid));
-  const otherUsers = allUsers.filter(u => !peopleWithAccessIds.has(u.uid));
 
   return (
     <div className="flex h-full flex-col">
@@ -148,7 +134,7 @@ export default function TeamPanel({ doc, onlineUsers }: TeamPanelProps) {
                 ))}
             </>
         )}
-        {!isLoading && peopleWithAccess.length === 0 && otherUsers.length === 0 && (
+        {!isLoading && peopleWithAccess.length === 0 && (
             <p className="text-center text-muted-foreground">No users have access to this document.</p>
         )}
       </div>
