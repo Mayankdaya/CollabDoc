@@ -68,10 +68,13 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
   
   const { ydoc, provider } = useMemo(() => {
     const doc = new Y.Doc();
-    const provider = new WebrtcProvider(documentId, doc, {
+    const webrtcProvider = new WebrtcProvider(documentId, doc, {
         signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
     });
-    return { ydoc: doc, provider };
+    // Use IndexedDB for local persistence
+    new IndexeddbPersistence(documentId, doc);
+
+    return { ydoc: doc, provider: webrtcProvider };
   }, [documentId]);
   
   const [wordCount, setWordCount] = useState(0);
@@ -131,9 +134,6 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     const collaborationUserName = user?.displayName || getAnonymousName();
     const userColor = `#${Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')}`;
 
-    // Use IndexedDB for local persistence
-    const localProvider = new IndexeddbPersistence(documentId, ydoc);
-    
     provider.awareness.setLocalStateField('user', {
         name: collaborationUserName,
         color: userColor,
@@ -179,10 +179,9 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
 
     return () => {
         provider?.destroy();
-        localProvider?.destroy();
         tiptapEditor?.destroy();
     };
-  }, [documentId, user, ydoc, loading, provider, editor, initialData.content]);
+  }, [documentId, user, loading, ydoc, provider, editor, initialData.content]);
 
 
   const handleDocumentSnapshot = useCallback((doc: DocumentData) => {
