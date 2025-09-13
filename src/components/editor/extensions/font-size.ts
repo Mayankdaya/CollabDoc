@@ -9,24 +9,10 @@ type FontSizeOptions = {
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    fontSize: {
-      /**
-       * Set the font size
-       */
-      setFontSize: (size: string) => ReturnType,
-      /**
-       * Unset the font size
-       */
-      unsetFontSize: () => ReturnType,
-      /**
-       * Increment font size
-       */
-      incrementFontSize: (limit?: number) => ReturnType,
-      /**
-       * Decrement font size
-       */
-      decrementFontSize: (limit?: number) => ReturnType,
-    }
+    setFontSize: (size: string) => ReturnType,
+    unsetFontSize: () => ReturnType,
+    incrementFontSize: (limit?: number) => ReturnType,
+    decrementFontSize: (limit?: number) => ReturnType,
   }
 }
 
