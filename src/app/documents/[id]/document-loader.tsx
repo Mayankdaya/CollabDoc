@@ -7,16 +7,17 @@ import type { Document } from '@/app/documents/actions';
 
 function EditorLoading() {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background/50">
+        <div className="flex h-screen w-full items-center justify-center bg-gray-200">
             <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Loading document...</p>
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <p className="text-gray-500">Loading Microsoft Word Editor...</p>
             </div>
         </div>
     );
 }
 
-const EditorLayout = dynamic(() => import('@/components/editor/editor-layout'), {
+// Directly import the actual editor component that needs client-side rendering
+const MicrosoftWordEditor = dynamic(() => import('@/components/editor/microsoft-word-editor').then(mod => mod.MicrosoftWordEditor), {
   ssr: false,
   loading: () => <EditorLoading />,
 });
@@ -27,5 +28,7 @@ interface DocumentLoaderProps {
 }
 
 export default function DocumentLoader({ documentId, initialData }: DocumentLoaderProps) {
-    return <EditorLayout documentId={documentId} initialData={initialData} />;
+    // Here you would also pass any necessary props to MicrosoftWordEditor
+    // For now, we'll pass the initial content.
+    return <MicrosoftWordEditor content={initialData.content} />;
 }
