@@ -78,7 +78,7 @@ import { Toggle } from '../ui/toggle';
 import type { Editor } from '@tiptap/react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Button } from '../ui/button';
-import { useCallback, useState, useTransition } from 'react';
+import { useCallback, useState, useTransition, memo } from 'react';
 import { ShareDialog } from './share-dialog';
 import { translateDocument, summarizeDocument, generateTableOfContents, insertCitation, generateBibliography } from '@/app/documents/[id]/actions';
 import { saveDocumentAs, Document } from '@/app/documents/actions';
@@ -102,7 +102,7 @@ interface EditorToolbarProps {
 }
 
 
-export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName, doc }: EditorToolbarProps) {
+export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName, doc }: EditorToolbarProps) {
     const { toast } = useToast();
     const { user } = useAuth();
     const [isSaveAsPending, startSaveAsTransition] = useTransition();
@@ -744,4 +744,4 @@ export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName,
       </Tabs>
     </div>
   );
-}
+});

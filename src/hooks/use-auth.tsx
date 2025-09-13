@@ -34,6 +34,19 @@ const createUserDocument = async (user: User) => {
     await setDoc(userRef, userData, { merge: true });
 };
 
+async function createSession(idToken: string) {
+    await fetch("/api/auth", {
+        method: "POST",
+        body: idToken,
+    });
+}
+
+async function clearSession() {
+    await fetch("/api/auth", {
+        method: "DELETE",
+    });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,8 +56,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
+        const idToken = await user.getIdToken();
+        await createSession(idToken);
       } else {
         setUser(null);
+        await clearSession();
       }
       setLoading(false);
     });
