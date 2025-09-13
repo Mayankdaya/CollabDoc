@@ -19,10 +19,11 @@ import Placeholder from '@tiptap/extension-placeholder';
 import History from '@tiptap/extension-history';
 import Gapcursor from '@tiptap/extension-gapcursor';
 import Dropcursor from '@tiptap/extension-dropcursor';
-import Blockquote from '@tiptap/extension-blockquote';
-import CodeBlock from '@tiptap/extension-code-block';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+import Blockquote from '@tiptap/extension-blockquote';
+import CodeBlock from '@tiptap/extension-code-block';
+import CharacterCount from '@tiptap/extension-character-count';
 
 import { FontSize } from './extensions/font-size';
 import { LineHeight } from './extensions/line-height';
@@ -145,6 +146,7 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       Dropcursor,
       Blockquote,
       CodeBlock,
+      CharacterCount,
       Collaboration.configure({
         document: ydoc,
       }),
