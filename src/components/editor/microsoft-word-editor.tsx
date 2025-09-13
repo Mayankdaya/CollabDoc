@@ -88,7 +88,6 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronRight,
-  File as FileIcon,
   FolderOpen,
   Share,
   Copy,
