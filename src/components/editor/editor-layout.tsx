@@ -9,7 +9,7 @@ import { YFireProvider } from '@/lib/y-fire';
 import { Loader2 } from 'lucide-react';
 import { MicrosoftWordEditor } from './microsoft-word-editor';
 import { db } from '@/lib/firebase';
-import { doc } from 'firebase/firestore';
+import { doc, collection } from 'firebase/firestore';
 import * as Y from 'yjs';
 
 
