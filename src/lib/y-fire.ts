@@ -140,7 +140,8 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        // Don't persist cursor data to Firestore
+        // CRITICAL FIX: Do not persist cursor data to Firestore.
+        // It's ephemeral and contains complex objects that Firestore can't handle.
         const { cursor, ...restState } = state;
         awarenessUpdate[String(clientID)] = restState;
       }
