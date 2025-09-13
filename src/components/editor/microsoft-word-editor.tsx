@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Slider } from '@/components/ui/slider';
 import { 
   Bold, 
   Italic, 
@@ -90,7 +91,6 @@ import {
   RotateCw,
   Maximize2,
   Minimize2,
-  Square as SquareIcon,
   Circle,
   Triangle,
   Star,
@@ -104,7 +104,6 @@ import {
   Bookmark,
   Tag,
   Calendar,
-  Clock as ClockIcon,
   MapPin,
   Phone,
   Mail,
@@ -126,13 +125,14 @@ import {
   SkipForward,
   Repeat,
   Shuffle,
-  Home as HomeIcon,
   CaseSensitive as InsertIcon,
   BookMarked as References,
   Send as Mailings,
   BookCheck as Review,
   Monitor as View,
-  LayoutPanelLeft as PageLayoutIcon
+  LayoutPanelLeft as PageLayoutIcon,
+  Home as HomeIcon,
+  File as FileIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
@@ -285,11 +285,11 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
   };
 
   // Save function
-  const handleSave = () => {
+  const handleSave = useCallback(() => {
     if (onSave && editor) {
       onSave(editor.getHTML());
     }
-  };
+  }, [onSave, editor]);
 
   // Search and replace
   const handleSearch = () => {
@@ -349,7 +349,7 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [editor, content, handleSave]);
+  }, [editor, handleSave]);
 
   if (!isClient) {
     return (
@@ -380,9 +380,9 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       </div>
 
       {/* Microsoft Word Menu Bar */}
-      <div className="bg-card border-b h-8 flex items-center px-4 text-sm">
+      <div className="bg-card border-b h-10 flex items-center px-4 text-sm">
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">File</Button>
+          <Button variant="primary" size="sm" className="h-7 px-3 text-xs bg-primary/10 text-primary-foreground hover:bg-primary/20">File</Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">Home</Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">Insert</Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">Page Layout</Button>
@@ -400,26 +400,26 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       {/* Microsoft Word Ribbon */}
       <div className="bg-card border-b">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start h-10 bg-muted/30 rounded-none border-b px-2">
-            <TabsTrigger value="home">Home</TabsTrigger>
-            <TabsTrigger value="insert">Insert</TabsTrigger>
-            <TabsTrigger value="layout">Layout</TabsTrigger>
-            <TabsTrigger value="references">References</TabsTrigger>
-            <TabsTrigger value="review">Review</TabsTrigger>
-            <TabsTrigger value="view">View</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="home" className="p-2 space-x-4 flex items-start">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-1">
-                <Button variant="ghost" size="sm" className="h-12 w-12 flex-col">
-                  <Clipboard className="h-5 w-5"/>
-                  <span className="text-xs">Paste</span>
-                </Button>
-              </div>
+          <TabsList className="w-full justify-start h-auto p-1 bg-muted/30 rounded-none border-b px-2 flex-wrap">
+             <div className="flex items-center space-x-1 border-r pr-2 mr-2">
+                <Button variant="ghost" size="icon" className="h-7 w-7"><Save className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editor?.commands.undo()}><Undo className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editor?.commands.redo()}><Redo className="h-4 w-4" /></Button>
+             </div>
+             
+             <div className="flex items-start space-x-1 border-r pr-2 mr-2">
+                <div className='flex flex-col items-center'>
+                    <div className='flex'>
+                       <Button variant="ghost" size="icon" className="h-7 w-7"><Clipboard className="h-4 w-4" /></Button>
+                       <Button variant="ghost" size="icon" className="h-7 w-7"><Scissors className="h-4 w-4" /></Button>
+                       <Button variant="ghost" size="icon" className="h-7 w-7"><Copy className="h-4 w-4" /></Button>
+                    </div>
+                     <Label className="text-xs text-muted-foreground pt-1">Clipboard</Label>
+                </div>
             </div>
-             <Separator orientation='vertical' className="h-20" />
-            <div className="space-y-1">
+
+            <div className="flex items-start space-x-1 border-r pr-2 mr-2">
+              <div className='flex flex-col items-center'>
                 <div className="flex items-center">
                     <Select value={fontFamily} onValueChange={handleFontFamilyChange}>
                       <SelectTrigger className="w-32 h-7 text-xs">
@@ -495,59 +495,62 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                     </Button>
                  </div>
                  <Label className="text-xs text-center block text-muted-foreground pt-1">Font</Label>
+              </div>
             </div>
-             <Separator orientation='vertical' className="h-20" />
-             <div className="space-y-1">
-                <div className="flex items-center space-x-1">
-                    <Button
-                      variant={editor?.isActive('bulletList') ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => editor?.commands.toggleBulletList()}
-                      className="h-7 w-7 p-0"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={editor?.isActive('orderedList') ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => editor?.commands.toggleOrderedList()}
-                      className="h-7 w-7 p-0"
-                    >
-                      <ListOrdered className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={editor?.isActive({ textAlign: 'left' }) ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => editor?.chain().focus().setTextAlign('left').run()}
-                      className="h-7 w-7 p-0"
-                    >
-                      <AlignLeft className="h-4 w-4" />
-                    </Button>
-                     <Button
-                      variant={editor?.isActive({ textAlign: 'center' }) ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => editor?.chain().focus().setTextAlign('center').run()}
-                      className="h-7 w-7 p-0"
-                    >
-                      <AlignCenter className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant={editor?.isActive({ textAlign: 'right' }) ? 'secondary' : 'ghost'}
-                      size="sm"
-                      onClick={() => editor?.chain().focus().setTextAlign('right').run()}
-                      className="h-7 w-7 p-0"
-                    >
-                      <AlignRight className="h-4 w-4" />
-                    </Button>
+            
+             <div className="flex items-start space-x-1 border-r pr-2 mr-2">
+                <div className='flex flex-col items-center'>
+                    <div className="flex items-center space-x-1">
+                        <Button
+                          variant={editor?.isActive('bulletList') ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.commands.toggleBulletList()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={editor?.isActive('orderedList') ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.commands.toggleOrderedList()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <ListOrdered className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={editor?.isActive({ textAlign: 'left' }) ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.chain().focus().setTextAlign('left').run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <AlignLeft className="h-4 w-4" />
+                        </Button>
+                         <Button
+                          variant={editor?.isActive({ textAlign: 'center' }) ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.chain().focus().setTextAlign('center').run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <AlignCenter className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={editor?.isActive({ textAlign: 'right' }) ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.chain().focus().setTextAlign('right').run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <AlignRight className="h-4 w-4" />
+                        </Button>
+                    </div>
+                     <Label className="text-xs text-center block text-muted-foreground pt-1">Paragraph</Label>
                 </div>
-                 <Label className="text-xs text-center block text-muted-foreground pt-1">Paragraph</Label>
             </div>
-          </TabsContent>
+          </TabsList>
           </Tabs>
       </div>
 
       {/* Document Area */}
-      <div className="flex-1 overflow-auto bg-background p-4 sm:p-8">
+      <div className="flex-1 overflow-auto bg-muted/40 p-4 sm:p-8">
         <div 
           className="w-full h-full"
           style={{ 
