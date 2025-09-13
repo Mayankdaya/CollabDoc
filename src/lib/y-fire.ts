@@ -21,7 +21,7 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
-import { RelativePosition } from 'y-prosemirror';
+import { RelativePosition } from 'y-prosemirror/dist/y-prosemirror.cjs';
 
 
 export class YFireProvider {
