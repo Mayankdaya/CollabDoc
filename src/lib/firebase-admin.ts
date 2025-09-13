@@ -11,12 +11,14 @@ if (!admin.apps.length) {
             credential: admin.credential.cert(serviceAccount),
         });
     } else {
-        // Initialize without credentials in environments where the key isn't available
-        // This might be the case in client-side rendering or certain test environments
-        admin.initializeApp();
+        // In a server environment, we must have credentials to initialize the Admin SDK.
+        // If they are not available, we should not proceed.
+        if (process.env.NODE_ENV !== 'development') {
+          console.error('Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
+        }
     }
 }
 
 
-export const auth = admin.auth();
-export const db = admin.firestore();
+export const auth = admin.apps.length ? admin.auth() : {} as admin.auth.Auth;
+export const db = admin.apps.length ? admin.firestore() : {} as admin.firestore.Firestore;
