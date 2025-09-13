@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -88,10 +87,10 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronRight,
+  File as FileIcon,
   FolderOpen,
   Share,
   Copy,
-  Cut,
   Paste,
   Scissors,
   Clipboard,
@@ -177,11 +176,9 @@ import {
   Clipboard as ClipboardIcon,
   Scissors as ScissorsIcon,
   Paste as PasteIcon,
-  Cut as CutIcon,
   Copy as CopyIcon,
   Share as ShareIcon,
   FolderOpen as FolderOpenIcon,
-  File as FileIcon,
   ChevronRight as ChevronRightIcon,
   ChevronDown as ChevronDownIcon,
   MoreVertical as MoreVerticalIcon,
@@ -594,7 +591,7 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                   Paste
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 px-3">
-                  <CutIcon className="h-4 w-4 mr-1" />
+                  <ScissorsIcon className="h-4 w-4 mr-1" />
                   Cut
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 px-3">
