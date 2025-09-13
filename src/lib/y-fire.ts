@@ -21,6 +21,7 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
+import { RelativePosition } from 'y-prosemirror';
 
 
 export class YFireProvider {
@@ -76,6 +77,10 @@ export class YFireProvider {
                 const clients = Object.keys(data).map(Number).filter(id => id !== this.doc.clientID);
                 const states = new Map(clients.map(clientID => {
                     const state = data[clientID];
+                     if (state.cursor) {
+                        // Deserialize the cursor position
+                        state.cursor = RelativePosition.fromJSON(state.cursor);
+                    }
                     return [clientID, state];
                 }));
                 
@@ -87,7 +92,7 @@ export class YFireProvider {
 
                 const updatedClients = Array.from(tempAwareness.getStates().keys());
                 
-                if (updatedClients.length > 0) {
+                if(updatedClients.length > 0) {
                     const encodedUpdate = encodeAwarenessUpdate(tempAwareness, updatedClients);
                     applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
                 }
@@ -140,7 +145,12 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        awarenessUpdate[String(clientID)] = state;
+        // Serialize cursor position if it exists
+        const serializableState = { ...state };
+        if (serializableState.cursor) {
+          serializableState.cursor = serializableState.cursor.toJSON();
+        }
+        awarenessUpdate[String(clientID)] = serializableState;
       }
     });
 
@@ -149,7 +159,6 @@ export class YFireProvider {
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
-      // Use setDoc with merge to avoid race conditions
       setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
     }
   }
@@ -178,6 +187,10 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
+            if (state.cursor) {
+              // Deserialize the cursor position from JSON
+              state.cursor = RelativePosition.fromJSON(state.cursor);
+            }
             tempAwareness.setLocalState(clientID, state);
           }
         }
