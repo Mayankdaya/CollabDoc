@@ -34,6 +34,11 @@ import * as Y from 'yjs';
 import { YFireProvider } from '@/lib/y-fire';
 import type { Awareness } from 'y-protocols/awareness';
 import { Loader2 } from 'lucide-react';
+import Link from '@tiptap/extension-link';
+import Blockquote from '@tiptap/extension-blockquote';
+import CodeBlock from '@tiptap/extension-code-block';
+import HorizontalRule from '@tiptap/extension-horizontal-rule';
+
 
 interface EditorLayoutProps {
   documentId: string;
@@ -142,7 +147,7 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
     
     const tiptapEditor = new Editor({
         extensions: [
-            StarterKit.configure({ heading: { levels: [1, 2, 3] }, history: false }),
+            StarterKit.configure({ heading: { levels: [1, 2, 3] }, codeBlock: false, horizontalRule: false, blockquote: false }),
             Placeholder.configure({ placeholder: 'Start writing your document...' }),
             Underline,
             TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -156,6 +161,10 @@ export default function EditorLayout({ documentId, initialData }: EditorLayoutPr
             TableRow,
             TableHeader,
             TableCell,
+            Link.configure({ openOnClick: false }),
+            Blockquote,
+            CodeBlock,
+            HorizontalRule,
             Collaboration.configure({ document: ydoc }),
             CollaborationCursor.configure({
                 provider: provider,

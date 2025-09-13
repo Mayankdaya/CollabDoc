@@ -60,6 +60,9 @@ import {
   Loader2,
   ScanText,
   Languages,
+  Code,
+  Quote,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 import {
@@ -128,6 +131,26 @@ export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName,
         if (url) {
             editor.chain().focus().setImage({ src: url }).run();
         }
+    }, [editor]);
+
+    const setLink = useCallback(() => {
+      if (!editor) return;
+      const previousUrl = editor.getAttributes('link').href;
+      const url = window.prompt('URL', previousUrl);
+
+      // cancelled
+      if (url === null) {
+        return;
+      }
+
+      // empty
+      if (url === '') {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run();
+        return;
+      }
+
+      // update link
+      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
     }, [editor]);
 
     const handleInsertTable = () => {
@@ -478,6 +501,23 @@ export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName,
                 >
                     <ListOrdered className="h-4 w-4" />
                 </Toggle>
+                <Separator orientation="vertical" className="h-8" />
+                <Toggle 
+                    aria-label="Toggle blockquote" 
+                    pressed={editor.isActive('blockquote')}
+                    onPressedChange={() => editor.chain().focus().toggleBlockquote().run()}
+                    className="h-9 w-9"
+                >
+                    <Quote className="h-4 w-4" />
+                </Toggle>
+                <Toggle 
+                    aria-label="Toggle code block" 
+                    pressed={editor.isActive('codeBlock')}
+                    onPressedChange={() => editor.chain().focus().toggleCodeBlock().run()}
+                    className="h-9 w-9"
+                >
+                    <Code className="h-4 w-4" />
+                </Toggle>
             </div>
         </TabsContent>
         <TabsContent value="insert" className='p-2 m-0 bg-muted/40'>
@@ -485,6 +525,10 @@ export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName,
                 <Button variant="ghost" size="sm" onClick={addImage}>
                     <ImageIcon className="h-4 w-4 mr-2" />
                     Picture
+                </Button>
+                <Button variant="ghost" size="sm" onClick={setLink} disabled={!editor.isEditable}>
+                    <LinkIcon className="h-4 w-4 mr-2" />
+                    Link
                 </Button>
                  <Popover open={isTablePopoverOpen} onOpenChange={setTablePopoverOpen}>
                     <PopoverTrigger asChild>
@@ -679,8 +723,7 @@ export function EditorToolbar({ editor, wordCount, onZoomIn, onZoomOut, docName,
             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
                 <Button variant="ghost" size="sm" disabled><BookOpen className="mr-2 h-4 w-4" /> Read Mode</Button>
                 <Button variant="ghost" size="sm" disabled><Printer className="mr-2 h-4 w-4" /> Print Layout</Button>
-                <Button variant="ghost" size="sm" disabled><Newspaper className="mr-2 h-4 w-4" /> Web Layout</Button>
-                <Separator orientation="vertical" className="h-8" />
+                <Button variant="ghost" size="sm" disabled><Newspaper className="mr-2 h-4 w-4" /> Web Layout</Button>                <Separator orientation="vertical" className="h-8" />
                 <Button variant="ghost" size="sm" disabled><Ruler className="mr-2 h-4 w-4" /> Ruler</Button>
                 <Button variant="ghost" size="sm" disabled><Grid className="mr-2 h-4 w-4" /> Gridlines</Button>
                 <Button variant="ghost" size="sm" disabled><Navigation className="mr-2 h-4 w-4" /> Navigation Pane</Button>
