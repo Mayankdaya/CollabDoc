@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
@@ -125,13 +124,13 @@ import {
   SkipForward,
   Repeat,
   Shuffle,
+  Home as HomeIcon,
   CaseSensitive as InsertIcon,
   BookMarked as References,
   Send as Mailings,
   BookCheck as Review,
   Monitor as View,
   LayoutPanelLeft as PageLayoutIcon,
-  Home as HomeIcon,
   File as FileIcon
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -596,7 +595,6 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       <div className="bg-card border-t h-6 flex items-center justify-between px-4 text-xs text-muted-foreground">
         <div className="flex items-center space-x-4">
           <span>Page 1 of 1</span>
-          <Separator orientation="vertical" className="h-4" />
           <span>Words: {editor?.getCharacterCount() || 0}</span>
         </div>
         <div className="flex items-center space-x-2">
