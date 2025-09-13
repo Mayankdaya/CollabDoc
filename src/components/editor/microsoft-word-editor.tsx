@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { EditorContent, useEditor, BubbleMenu, FloatingMenu } from '@tiptap/react';
+import React, { useState, useEffect } from 'react';
+import { EditorContent, useEditor, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
@@ -19,15 +19,16 @@ import Placeholder from '@tiptap/extension-placeholder';
 import History from '@tiptap/extension-history';
 import Gapcursor from '@tiptap/extension-gapcursor';
 import Dropcursor from '@tiptap/extension-dropcursor';
+import Blockquote from '@tiptap/extension-blockquote';
+import CodeBlock from '@tiptap/extension-code-block';
+import Collaboration from '@tiptap/extension-collaboration';
+import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
+
 import { FontSize } from './extensions/font-size';
 import { LineHeight } from './extensions/line-height';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Slider } from '@/components/ui/slider';
 import { 
   Bold, 
   Italic, 
@@ -40,139 +41,68 @@ import {
   ListOrdered,
   Quote,
   Code,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Table as TableIcon,
   Undo,
   Redo,
   Save,
-  Download,
   Printer,
   ZoomIn,
   ZoomOut,
-  Settings,
-  Type,
-  Palette,
-  AlignHorizontalJustifyCenter,
   Strikethrough,
-  Superscript,
-  Subscript,
-  Minus,
-  Hash,
-  CheckSquare,
-  Square,
-  MoreHorizontal,
-  FileText,
-  BarChart3,
-  Users,
-  Clock,
-  Eye,
-  EyeOff,
-  Search,
-  Replace,
-  BookOpen,
-  Layers,
-  Zap,
-  Target,
-  Sparkles,
+  Palette,
   X,
-  HelpCircle,
-  Menu,
-  MoreVertical,
-  ChevronDown,
-  ChevronRight,
-  FolderOpen,
-  Share,
-  Copy,
-  Scissors,
-  Clipboard,
-  RotateCcw,
-  RotateCw,
-  Maximize2,
-  Minimize2,
-  Circle,
-  Triangle,
-  Star,
-  Heart,
-  Smile,
-  Frown,
-  Meh,
-  ThumbsUp,
-  ThumbsDown,
-  Flag,
-  Bookmark,
-  Tag,
-  Calendar,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  Wifi,
-  WifiOff,
-  Battery,
-  BatteryLow,
-  Signal,
-  SignalHigh,
-  SignalLow,
-  SignalZero,
-  Volume2,
-  VolumeX,
-  Play,
-  Pause,
-  Stop,
-  SkipBack,
-  SkipForward,
-  Repeat,
-  Shuffle,
-  Home as HomeIcon,
-  CaseSensitive as InsertIcon,
+  Home,
   BookMarked as References,
   Send as Mailings,
   BookCheck as Review,
   Monitor as View,
   LayoutPanelLeft as PageLayoutIcon,
-  File as FileIcon
+  CaseSensitive as InsertIcon,
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/hooks/use-auth';
+import { Slider } from '@/components/ui/slider';
+import * as Y from 'yjs';
+import { YFireProvider } from '@/lib/y-fire';
+import { collection, doc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Document as Doc } from '@/app/documents/actions';
+
 
 interface MicrosoftWordEditorProps {
-  content?: string;
-  onContentChange?: (content: string) => void;
-  onSave?: (content: string) => void;
+  documentId: string;
+  initialData: Doc;
 }
 
 export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
-  content: initialContent = '',
-  onContentChange,
-  onSave,
+  documentId,
+  initialData
 }) => {
   const { user } = useAuth();
-  const [content, setContent] = useState(initialContent);
   const [zoomLevel, setZoomLevel] = useState(100);
   const [fontFamily, setFontFamily] = useState('Calibri');
   const [fontSize, setFontSize] = useState('11');
-  const [textColor, setTextColor] = useState('#000000');
-  const [highlightColor, setHighlightColor] = useState('#ffff00');
+  
   const [isClient, setIsClient] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
-  const [showStats, setShowStats] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [replaceQuery, setReplaceQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
-  const [showRulers, setShowRulers] = useState(true);
-  const [showGridlines, setShowGridlines] = useState(false);
-  const [viewMode, setViewMode] = useState<'print' | 'web' | 'read'>('print');
-
-  const editorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
+  const { ydoc, provider } = React.useMemo(() => {
+    const docY = new Y.Doc();
+    const docRef = doc(collection(db, 'documents_data'), documentId);
+    const fireProvider = new YFireProvider(docRef, docY);
+
+    return { ydoc: docY, provider: fireProvider };
+  }, [documentId]);
+
+
   const editor = useEditor({
-    extensions: isClient ? [
+    extensions: [
       StarterKit.configure({
+        history: false, // Use collaboration history
         heading: {
           levels: [1, 2, 3, 4, 5, 6],
         },
@@ -209,33 +139,38 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       }),
       Placeholder.configure({
         placeholder: 'Start typing your document here...',
-        showOnlyWhenEditable: true,
-        showOnlyCurrent: false,
       }),
       History,
       Gapcursor,
       Dropcursor,
-    ] : [StarterKit],
-    content: content || '<p>Start typing your document here...</p>',
-    onUpdate: ({ editor }) => {
-      const newContent = editor.getHTML();
-      setContent(newContent);
-      onContentChange?.(newContent);
-    },
+      Blockquote,
+      CodeBlock,
+      Collaboration.configure({
+        document: ydoc,
+      }),
+      CollaborationCursor.configure({
+        provider: provider,
+        user: {
+          name: user?.displayName || 'Anonymous',
+          color: '#' + Math.floor(Math.random()*16777215).toString(16),
+        },
+      }),
+    ],
+    content: initialData.content,
     editorProps: {
       attributes: {
         class: 'prose dark:prose-invert prose-sm sm:prose-base lg:prose-lg xl:prose-2xl m-5 focus:outline-none',
       },
     },
-    immediatelyRender: false,
   });
 
-  // Update editor content when content prop changes
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content, false);
-    }
-  }, [content, editor]);
+    return () => {
+      provider?.destroy();
+      ydoc?.destroy();
+    };
+  }, [provider, ydoc]);
+
 
   // Font family change
   const handleFontFamilyChange = (font: string) => {
@@ -253,21 +188,6 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
     }
   };
 
-  // Text color change
-  const handleTextColorChange = (color: string) => {
-    setTextColor(color);
-    if (editor) {
-      editor.chain().focus().setColor(color).run();
-    }
-  };
-
-  // Highlight color change
-  const handleHighlightColorChange = (color: string) => {
-    setHighlightColor(color);
-    if (editor) {
-      editor.chain().focus().toggleHighlight({ color }).run();
-    }
-  };
 
   // Zoom controls
   const handleZoomIn = () => {
@@ -278,102 +198,24 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
     setZoomLevel(prev => Math.max(prev - 25, 50));
   };
 
-  const handleZoomReset = () => {
-    setZoomLevel(100);
-  };
 
-  // Save function
-  const handleSave = useCallback(() => {
-    if (onSave && editor) {
-      onSave(editor.getHTML());
-    }
-  }, [onSave, editor]);
-
-  // Search and replace
-  const handleSearch = () => {
-    if (editor && searchQuery) {
-      const text = editor.getText();
-      const regex = new RegExp(searchQuery, 'gi');
-      const matches = text.match(regex);
-      if (matches) {
-        alert(`Found ${matches.length} matches for "${searchQuery}"`);
-      } else {
-        alert(`No matches found for "${searchQuery}"`);
-      }
-    }
-  };
-
-  const handleReplace = () => {
-    if (editor && searchQuery && replaceQuery) {
-      const text = editor.getText();
-      const newText = text.replace(new RegExp(searchQuery, 'gi'), replaceQuery);
-      editor.commands.setContent(newText);
-      alert(`Replaced all instances of "${searchQuery}" with "${replaceQuery}"`);
-    }
-  };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key) {
-          case 's':
-            e.preventDefault();
-            handleSave();
-            break;
-          case 'z':
-            e.preventDefault();
-            if (editor) {
-              editor.commands.undo();
-            }
-            break;
-          case 'y':
-            e.preventDefault();
-            if (editor) {
-              editor.commands.redo();
-            }
-            break;
-          case 'f':
-            e.preventDefault();
-            setShowSearch(true);
-            break;
-          case 'h':
-            e.preventDefault();
-            setShowSearch(true);
-            break;
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [editor, handleSave]);
-
-  if (!isClient) {
+  if (!isClient || !editor) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-gray-200">
-        <div className="text-gray-500">Loading Editor...</div>
+        <div className="text-gray-500">Loading Microsoft Word Editor...</div>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full flex flex-col bg-background text-foreground">
+    <div className="w-full h-full flex flex-col bg-background text-foreground theme-word">
       {/* Microsoft Word Title Bar */}
       <div className="bg-primary text-primary-foreground h-8 flex items-center justify-between px-2 text-sm">
         <div className="flex items-center space-x-4">
-          <span className="font-semibold">Document1 - Word</span>
+          <span className="font-semibold">{initialData.name} - Word</span>
         </div>
         <div className="flex items-center space-x-1">
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-primary-foreground hover:bg-primary/80">
-            <Minimize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-primary-foreground hover:bg-primary/80">
-            <Maximize2 className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-primary-foreground hover:bg-destructive/80">
-            <X className="h-4 w-4" />
-          </Button>
+           {/* These are just for show */}
         </div>
       </div>
 
@@ -404,18 +246,6 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editor?.commands.undo()}><Undo className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => editor?.commands.redo()}><Redo className="h-4 w-4" /></Button>
              </div>
-             
-             <div className="flex items-start space-x-1 border-r pr-2 mr-2">
-                <div className='flex flex-col items-center'>
-                    <div className='flex'>
-                       <Button variant="ghost" size="icon" className="h-7 w-7"><Clipboard className="h-4 w-4" /></Button>
-                       <Button variant="ghost" size="icon" className="h-7 w-7"><Scissors className="h-4 w-4" /></Button>
-                       <Button variant="ghost" size="icon" className="h-7 w-7"><Copy className="h-4 w-4" /></Button>
-                    </div>
-                     <Label className="text-xs text-muted-foreground pt-1">Clipboard</Label>
-                </div>
-            </div>
-
             <div className="flex items-start space-x-1 border-r pr-2 mr-2">
               <div className='flex flex-col items-center'>
                 <div className="flex items-center">
@@ -475,24 +305,15 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                     >
                       <Strikethrough className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => editor?.commands.setColor(textColor)}
-                      className="h-7 w-7 p-0"
-                    >
-                      <Type className="h-4 w-4" />
-                    </Button>
                      <Button
                       variant={editor?.isActive('highlight') ? 'secondary' : 'ghost'}
                       size="sm"
-                      onClick={() => editor?.commands.toggleHighlight({ color: highlightColor })}
+                      onClick={() => editor?.commands.toggleHighlight({ color: '#ffff00' })}
                       className="h-7 w-7 p-0"
                     >
                       <Palette className="h-4 w-4" />
                     </Button>
                  </div>
-                 <Label className="text-xs text-center block text-muted-foreground pt-1">Font</Label>
               </div>
             </div>
             
@@ -515,6 +336,24 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                         >
                           <ListOrdered className="h-4 w-4" />
                         </Button>
+                         <Button
+                          variant={editor.isActive('blockquote') ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <Quote className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant={editor.isActive('codeBlock') ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <Code className="h-4 w-4" />
+                        </Button>
+                    </div>
+                     <div className="flex items-center space-x-1">
                         <Button
                           variant={editor?.isActive({ textAlign: 'left' }) ? 'secondary' : 'ghost'}
                           size="sm"
@@ -539,16 +378,23 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
                         >
                           <AlignRight className="h-4 w-4" />
                         </Button>
+                         <Button
+                          variant={editor?.isActive({ textAlign: 'justify' }) ? 'secondary' : 'ghost'}
+                          size="sm"
+                          onClick={() => editor?.chain().focus().setTextAlign('justify').run()}
+                          className="h-7 w-7 p-0"
+                        >
+                          <AlignJustify className="h-4 w-4" />
+                        </Button>
                     </div>
-                     <Label className="text-xs text-center block text-muted-foreground pt-1">Paragraph</Label>
                 </div>
             </div>
           </TabsList>
-          </Tabs>
+        </Tabs>
       </div>
 
       {/* Document Area */}
-      <div className="flex-1 overflow-auto bg-muted/40 p-4 sm:p-8">
+      <div className="flex-1 overflow-auto bg-muted/40 p-4 sm:p-8 editor-page-background">
         <div 
           className="w-full h-full"
           style={{ 
@@ -556,36 +402,26 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
             transformOrigin: 'top center',
           }}
         >
-          <div className={cn("mx-auto bg-card shadow-lg", 
-            viewMode === 'print' ? "w-[8.5in] h-[11in] p-[1in]" : "w-full"
-          )}>
-              {editor ? (
-                <>
-                  <BubbleMenu
-                    editor={editor}
-                    tippyOptions={{ duration: 100 }}
-                    className="bg-card border rounded-lg shadow-lg p-1 flex items-center space-x-1"
-                  >
-                    <Button variant={editor.isActive('bold') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleBold().run()}>
-                      <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button variant={editor.isActive('italic') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleItalic().run()}>
-                      <Italic className="h-4 w-4" />
-                    </Button>
-                    <Button variant={editor.isActive('underline') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleUnderline().run()}>
-                      <UnderlineIcon className="h-4 w-4" />
-                    </Button>
-                  </BubbleMenu>
+          <div className={cn("mx-auto bg-card shadow-lg w-[8.5in] h-[11in] p-[1in]")}>
+            
+              <BubbleMenu
+                editor={editor}
+                tippyOptions={{ duration: 100 }}
+                className="bg-card border rounded-lg shadow-lg p-1 flex items-center space-x-1"
+              >
+                <Button variant={editor.isActive('bold') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleBold().run()}>
+                  <Bold className="h-4 w-4" />
+                </Button>
+                <Button variant={editor.isActive('italic') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleItalic().run()}>
+                  <Italic className="h-4 w-4" />
+                </Button>
+                <Button variant={editor.isActive('underline') ? 'secondary' : 'ghost'} size="sm" onClick={() => editor.chain().focus().toggleUnderline().run()}>
+                  <UnderlineIcon className="h-4 w-4" />
+                </Button>
+              </BubbleMenu>
 
-                  <EditorContent
-                    editor={editor}
-                  />
-                </>
-              ) : (
-                <div className="p-4 text-muted-foreground">
-                  Loading Editor...
-                </div>
-              )}
+              <EditorContent editor={editor} />
+            
           </div>
         </div>
       </div>
@@ -594,18 +430,20 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
       <div className="bg-card border-t h-6 flex items-center justify-between px-4 text-xs text-muted-foreground">
         <div className="flex items-center space-x-4">
           <span>Page 1 of 1</span>
-          <span>Words: {editor?.getCharacterCount() || 0}</span>
+          <span>Words: {editor?.storage.characterCount.words() || 0}</span>
         </div>
         <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleZoomOut}><ZoomOut className="h-4 w-4"/></Button>
             <span>{zoomLevel}%</span>
             <Slider
-                defaultValue={[100]}
+                value={[zoomLevel]}
                 max={200}
                 min={50}
                 step={10}
                 className="w-24"
                 onValueChange={(value) => setZoomLevel(value[0])}
             />
+            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={handleZoomIn}><ZoomIn className="h-4 w-4"/></Button>
         </div>
       </div>
     </div>

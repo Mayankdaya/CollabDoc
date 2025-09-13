@@ -28,7 +28,5 @@ interface DocumentLoaderProps {
 }
 
 export default function DocumentLoader({ documentId, initialData }: DocumentLoaderProps) {
-    // Here you would also pass any necessary props to MicrosoftWordEditor
-    // For now, we'll pass the initial content.
-    return <MicrosoftWordEditor content={initialData.content} />;
+    return <MicrosoftWordEditor documentId={documentId} initialData={initialData} />;
 }
