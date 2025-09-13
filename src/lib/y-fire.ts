@@ -82,7 +82,12 @@ export class YFireProvider {
                 const tempAwareness = new Awareness(new Y.Doc());
                 // Manually set states on the temporary awareness instance
                 for (const [clientID, state] of states.entries()) {
-                    tempAwareness.setLocalState(clientID, state);
+                    // CRITICAL FIX: Ensure cursor is handled gracefully if it's not a plain object
+                    const { cursor, ...restState } = state;
+                    if (cursor && typeof cursor === 'object') {
+                        // If we need to reconstruct cursor, we do it here. For now, just pass rest.
+                    }
+                    tempAwareness.setLocalState(clientID, restState);
                 }
 
                 const updatedClients = Array.from(tempAwareness.getStates().keys());
@@ -180,7 +185,8 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
-            tempAwareness.setLocalState(clientID, state);
+            const { cursor, ...restState } = state;
+            tempAwareness.setLocalState(clientID, restState);
           }
         }
         

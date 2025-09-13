@@ -36,16 +36,30 @@ function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isProtected = pathname.startsWith('/dashboard');
+  const isAuthRoute = pathname === '/login';
+  const isProtectedRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/documents');
 
   useEffect(() => {
-    if (isProtected && !loading && !user) {
-      router.push('/login');
+    if (!loading) {
+      if (user && isAuthRoute) {
+        router.push('/dashboard');
+      } else if (!user && isProtectedRoute) {
+        router.push('/login');
+      }
     }
-  }, [user, loading, router, isProtected, pathname]);
+  }, [user, loading, router, isProtectedRoute, isAuthRoute, pathname]);
   
-  if (isProtected && (loading || !user)) {
+  if (loading && isProtectedRoute) {
     return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+  
+  // To prevent flash of login page for authenticated users
+  if (loading && isAuthRoute) {
+     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>

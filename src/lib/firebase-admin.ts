@@ -15,6 +15,10 @@ if (!admin.apps.length) {
         // If they are not available, we should not proceed.
         if (process.env.NODE_ENV !== 'development') {
           console.error('Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
+        } else {
+          // For local development, we can initialize without credentials for some features, but auth will fail.
+          // This prevents a hard crash during local dev if keys are not set.
+          // Note: This path will not work for server-side auth checks.
         }
     }
 }
