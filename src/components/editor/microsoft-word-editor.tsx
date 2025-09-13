@@ -80,11 +80,9 @@ import {
   MoreVertical,
   ChevronDown,
   ChevronRight,
-  File as FileIcon,
   FolderOpen,
   Share,
   Copy,
-  Paste,
   Scissors,
   Clipboard,
   RotateCcw,
@@ -168,10 +166,10 @@ import {
   RotateCcw as RotateCcwIcon,
   Clipboard as ClipboardIcon,
   Scissors as ScissorsIcon,
-  Paste as PasteIcon,
   Copy as CopyIcon,
   Share as ShareIcon,
   FolderOpen as FolderOpenIcon,
+  File as FileIcon,
   ChevronRight as ChevronRightIcon,
   ChevronDown as ChevronDownIcon,
   MoreVertical as MoreVerticalIcon,
@@ -581,7 +579,7 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
               <h4 className="text-xs font-semibold text-gray-600 uppercase">Clipboard</h4>
               <div className="flex items-center space-x-1">
                 <Button variant="outline" size="sm" className="h-8 px-3">
-                  <PasteIcon className="h-4 w-4 mr-1" />
+                  <ClipboardIcon className="h-4 w-4 mr-1" />
                   Paste
                 </Button>
                 <Button variant="outline" size="sm" className="h-8 px-3">
