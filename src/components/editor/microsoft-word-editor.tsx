@@ -75,13 +75,6 @@ import {
   Target,
   Sparkles,
   X,
-  Home,
-  Insert,
-  PageLayout,
-  References,
-  Mailings,
-  Review,
-  View,
   HelpCircle,
   Menu,
   MoreVertical,
@@ -184,12 +177,13 @@ import {
   MoreVertical as MoreVerticalIcon,
   Menu as MenuIcon,
   HelpCircle as HelpCircleIcon,
-  View as ViewIcon,
-  Review as ReviewIcon,
-  Mailings as MailingsIcon,
-  PageLayout as PageLayoutIcon,
-  Insert as InsertIcon,
-  Home as HomeIcon
+  Home as HomeIcon,
+  CaseSensitive as InsertIcon,
+  BookMarked as References,
+  Send as Mailings,
+  BookCheck as Review,
+  Monitor as View,
+  LayoutPanelLeft as PageLayoutIcon
 } from 'lucide-react';
 
 interface MicrosoftWordEditorProps {
@@ -524,15 +518,15 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
             References
           </Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-            <MailingsIcon className="h-3 w-3 mr-1" />
+            <Mailings className="h-3 w-3 mr-1" />
             Mailings
           </Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-            <ReviewIcon className="h-3 w-3 mr-1" />
+            <Review className="h-3 w-3 mr-1" />
             Review
           </Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-            <ViewIcon className="h-3 w-3 mr-1" />
+            <View className="h-3 w-3 mr-1" />
             View
           </Button>
           <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
@@ -571,11 +565,11 @@ export const MicrosoftWordEditor: React.FC<MicrosoftWordEditorProps> = ({
               <span>Mailings</span>
             </TabsTrigger>
             <TabsTrigger value="review" className="flex items-center space-x-1 px-4">
-              <ReviewIcon className="h-4 w-4" />
+              <Review className="h-4 w-4" />
               <span>Review</span>
             </TabsTrigger>
             <TabsTrigger value="view" className="flex items-center space-x-1 px-4">
-              <ViewIcon className="h-4 w-4" />
+              <View className="h-4 w-4" />
               <span>View</span>
             </TabsTrigger>
           </TabsList>
