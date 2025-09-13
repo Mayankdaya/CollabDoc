@@ -59,8 +59,8 @@ export class YFireProvider {
     const unsubscribeDoc = onSnapshot(this.updatesDocRef, (snapshot) => {
       if (snapshot.exists()) {
         const remoteUpdate = snapshot.data()?.['data'];
-        if (remoteUpdate && remoteUpdate.toUint8Array) {
-            Y.applyUpdate(this.doc, remoteUpdate.toUint8Array(), 'firestore');
+        if (remoteUpdate && Array.isArray(remoteUpdate)) {
+            Y.applyUpdate(this.doc, new Uint8Array(remoteUpdate), 'firestore');
         } else if (remoteUpdate instanceof Uint8Array) {
             Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
         }
@@ -123,7 +123,7 @@ export class YFireProvider {
 
   private onDocUpdate(update: Uint8Array, origin: any) {
     if (origin !== 'firestore') {
-      setDoc(this.updatesDocRef, { data: update }, { merge: true });
+      setDoc(this.updatesDocRef, { data: Array.from(update) }, { merge: true });
     }
   }
 
@@ -166,8 +166,8 @@ export class YFireProvider {
     const updatesSnapshot = await getDoc(this.updatesDocRef);
     if (updatesSnapshot.exists()) {
       const remoteUpdate = updatesSnapshot.data()?.['data'];
-       if (remoteUpdate && remoteUpdate.toUint8Array) {
-            Y.applyUpdate(this.doc, remoteUpdate.toUint8Array(), 'firestore');
+       if (remoteUpdate && Array.isArray(remoteUpdate)) {
+            Y.applyUpdate(this.doc, new Uint8Array(remoteUpdate), 'firestore');
         } else if (remoteUpdate instanceof Uint8Array) {
             Y.applyUpdate(this.doc, remoteUpdate, 'firestore');
         }
