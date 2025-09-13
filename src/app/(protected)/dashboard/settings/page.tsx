@@ -25,6 +25,7 @@ type ProfileData = z.infer<typeof profileSchema>;
 
 const themes = [
   { name: 'Default Dark', className: 'theme-default-dark' },
+  { name: 'Word Blue', className: 'theme-word' },
   { name: 'CollabDoc', className: 'theme-collab-doc' },
   { name: 'Light', className: 'theme-light' },
   { name: 'Forest', className: 'theme-forest' },
