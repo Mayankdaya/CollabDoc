@@ -21,7 +21,6 @@ import {
   removeAwarenessStates,
 } from 'y-protocols/awareness';
 import { db } from './firebase';
-import { RelativePosition } from 'y-prosemirror/dist/y-prosemirror.cjs';
 
 
 export class YFireProvider {
@@ -77,10 +76,6 @@ export class YFireProvider {
                 const clients = Object.keys(data).map(Number).filter(id => id !== this.doc.clientID);
                 const states = new Map(clients.map(clientID => {
                     const state = data[clientID];
-                     if (state.cursor) {
-                        // Deserialize the cursor position
-                        state.cursor = RelativePosition.fromJSON(state.cursor);
-                    }
                     return [clientID, state];
                 }));
                 
@@ -145,12 +140,9 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        // Serialize cursor position if it exists
-        const serializableState = { ...state };
-        if (serializableState.cursor) {
-          serializableState.cursor = serializableState.cursor.toJSON();
-        }
-        awarenessUpdate[String(clientID)] = serializableState;
+        // Don't persist cursor data to Firestore
+        const { cursor, ...restState } = state;
+        awarenessUpdate[String(clientID)] = restState;
       }
     });
 
@@ -187,10 +179,6 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
-            if (state.cursor) {
-              // Deserialize the cursor position from JSON
-              state.cursor = RelativePosition.fromJSON(state.cursor);
-            }
             tempAwareness.setLocalState(clientID, state);
           }
         }
