@@ -29,7 +29,6 @@ import * as Y from 'yjs';
 import type { Document as Doc } from '@/app/documents/actions';
 import { updateDocument } from '@/app/documents/actions';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
 import { EditorToolbar } from './editor-toolbar';
 import EditorHeader from './editor-header';
 import AiChatPanel from './ai-chat-panel';
@@ -288,7 +287,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
                 <ResizablePanel defaultSize={75} id="editor-panel" className="flex flex-col overflow-hidden">
-                     <div className="flex-1 overflow-auto p-4 sm:p-8 bg-muted">
+                     <div className="flex-1 overflow-auto p-4 sm:p-8 editor-page-background">
                         <div className="mx-auto bg-card shadow-lg p-[1in]" style={{width: '8.5in', minHeight: '11in'}}>
                             <EditorContent editor={editor} />
                         </div>
@@ -334,3 +333,5 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
+
+    

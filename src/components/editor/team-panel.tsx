@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import type { Document } from '@/app/documents/actions';
-import { Avatar, AvatarFallback } from '../ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -101,18 +101,16 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
                 </div>
             </div>
             <div className='flex items-center gap-1'>
-                <div className="flex items-center">
-                    {isOnline && !isCurrentUser && (
-                        <>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
-                                <Phone className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
-                                <Video className="h-4 w-4" />
-                            </Button>
-                        </>
-                    )}
-                </div>
+                 {isOnline && !isCurrentUser && (
+                    <div className="flex items-center">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
+                            <Phone className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
+                            <Video className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
                 <span className="text-sm text-muted-foreground ml-2">
                     {role}
                 </span>
@@ -120,3 +118,5 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
         </div>
     )
 }
+
+    
