@@ -112,7 +112,7 @@ export class YFireProvider {
   private async onAwarenessUnload() {
       const awarenessUpdate: { [key: string]: any } = {};
       awarenessUpdate[String(this.doc.clientID)] = deleteField();
-      await updateDoc(this.awarenessDocRef, awarenessUpdate);
+      await setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
   }
 
   private onDocUpdate(update: Uint8Array, origin: any) {
@@ -148,7 +148,7 @@ export class YFireProvider {
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
-      updateDoc(this.awarenessDocRef, awarenessUpdate);
+      setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
     }
   }
 
