@@ -156,7 +156,9 @@ const generateDocumentFromTopicPrompt = ai.definePrompt({
   - Use bulleted lists (<ul><li>) for unordered information and ordered lists (<ol><li>) for sequential steps or rankings.
   - Use formatting to create visual interest. For example:
     - Use <u> for underlining important terms.
-    - Use <span style="color: #somecolor;"> to add color to headings or key phrases. Use professional and accessible colors like blues, greens, or purples.
+    - Use <span style="color: #4A90E2;"> to add a professional blue to headings or key phrases.
+    - Use <span style="color: #50E3C2;"> for an accent color.
+    - Use <span style="color: #B8E986;"> for another accent color.
     - Use <mark> to highlight text.
   - Ensure the entire output is valid HTML that can be rendered directly in a document editor.
   - Do not include <html> or <body> tags.`,
@@ -173,3 +175,4 @@ const generateDocumentFromTopicFlow = ai.defineFlow(
     return output!;
   }
 );
+
