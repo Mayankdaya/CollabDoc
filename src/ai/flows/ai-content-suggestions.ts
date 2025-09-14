@@ -154,6 +154,10 @@ const generateDocumentFromTopicPrompt = ai.definePrompt({
   - Write detailed paragraphs (<p>).
   - Incorporate at least one <blockquote> to highlight a key quote or important point.
   - Use bulleted lists (<ul><li>) for unordered information and ordered lists (<ol><li>) for sequential steps or rankings.
+  - Use formatting to create visual interest. For example:
+    - Use <u> for underlining important terms.
+    - Use <span style="color: #somecolor;"> to add color to headings or key phrases. Use professional and accessible colors like blues, greens, or purples.
+    - Use <mark> to highlight text.
   - Ensure the entire output is valid HTML that can be rendered directly in a document editor.
   - Do not include <html> or <body> tags.`,
 });
@@ -169,5 +173,3 @@ const generateDocumentFromTopicFlow = ai.defineFlow(
     return output!;
   }
 );
-
-    
