@@ -18,7 +18,7 @@ const simpleApiTestFlow = ai.defineFlow(
             prompt: 'Hello! Tell me a fun fact about space in one sentence.',
         });
 
-        const responseText = llmResponse.text();
+        const responseText = llmResponse.text;
         console.log('✅ Success! API Response:');
         console.log(responseText);
         return {
