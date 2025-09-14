@@ -276,7 +276,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={25} maxSize={40} minSize={20} className="flex flex-col">
-                    <Tabs defaultValue="chat" className="flex flex-col flex-1 min-h-0">
+                    <Tabs defaultValue="team" className="flex flex-col flex-1 min-h-0">
                         <TabsList className="grid w-full grid-cols-3 shrink-0 rounded-none bg-background/30">
                             <TabsTrigger value="chat"><MessageSquare className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Chat</span></TabsTrigger>
                             <TabsTrigger value="ai-chat"><Bot className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>AI</span></TabsTrigger>
@@ -314,5 +314,3 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
-
-    

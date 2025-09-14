@@ -19,8 +19,8 @@ interface TeamPanelProps {
 export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
   
-  const isUserOnline = useCallback((person: FoundUser) => {
-    return onlineUsers.some(onlineUser => onlineUser.uid === person.uid);
+  const isUserOnline = useCallback((personUid: string) => {
+    return onlineUsers.some(onlineUser => onlineUser.uid === personUid);
   }, [onlineUsers]);
 
   const owner = peopleWithAccess.find(p => p.uid === doc.userId);
@@ -40,7 +40,7 @@ export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartC
                         <p className="text-xs font-semibold text-muted-foreground uppercase">Owner</p>
                         <UserRow
                             person={owner}
-                            isOnline={isUserOnline(owner)}
+                            isOnline={isUserOnline(owner.uid)}
                             isCurrentUser={owner.uid === currentUser?.uid}
                             role="Owner"
                             onStartCall={onStartCall}
@@ -54,7 +54,7 @@ export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartC
                             <UserRow
                                 key={person.uid}
                                 person={person}
-                                isOnline={isUserOnline(person)}
+                                isOnline={isUserOnline(person.uid)}
                                 isCurrentUser={person.uid === currentUser?.uid}
                                 role="Editor"
                                 onStartCall={onStartCall}
@@ -118,5 +118,3 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
         </div>
     )
 }
-
-    
