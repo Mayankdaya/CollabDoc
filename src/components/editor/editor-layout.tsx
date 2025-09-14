@@ -213,9 +213,9 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 doc={initialData}
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel className="flex flex-col editor-page-background overflow-auto">
-                     <div className="flex-1 mx-auto my-8" style={{ width: '8.5in' }}>
-                        <div className={cn("bg-card shadow-lg p-[1in] h-full")}>
+                <ResizablePanel className="editor-page-background overflow-auto">
+                     <div className="mx-auto my-8" style={{ width: '8.5in' }}>
+                        <div className={cn("bg-card shadow-lg p-[1in]")} style={{minHeight: '11in'}}>
                             <EditorContent editor={editor} />
                         </div>
                     </div>
@@ -259,7 +259,5 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
-
-    
 
     
