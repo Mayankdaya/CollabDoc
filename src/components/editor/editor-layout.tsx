@@ -100,6 +100,7 @@ const EditorCore = ({
   const { toast } = useToast();
   const [editor, setEditor] = useState<EditorClass | null>(null);
   const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
+  const [isSynced, setIsSynced] = useState(false);
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -141,78 +142,69 @@ const EditorCore = ({
   ], []);
 
   useEffect(() => {
-    if (!room || !user) return;
+    if (!room || !user || editor) return;
 
     const newYDoc = new Y.Doc();
     const newProvider = new LiveblocksYjsProvider(room, newYDoc);
     setProvider(newProvider);
-    
-    newProvider.on('synced', (isSynced: boolean) => {
-      if(isSynced) {
-        const yDocHasContent = newYDoc.getXmlFragment('prosemirror').length > 0;
 
-        if (!yDocHasContent && initialData.content) {
-            // Convert the initial HTML content to Prosemirror JSON
-            const prosemirrorJson = generateJSON(initialData.content, extensions);
-            
-            // Apply this JSON to the Y.Doc. This requires a bit of a workaround.
-            const tempDoc = Y.encodeStateAsUpdate(new Y.Doc());
-            const prosemirrorYDoc = Y.mergeUpdates([tempDoc]);
-            const yXmlFragment = new Y.XmlFragment();
-            yXmlFragment.insert(0, [new Y.XmlText(JSON.stringify(prosemirrorJson))]);
-            
-            // This is a simplified way to get content into the doc.
-            // A more robust solution might involve a custom function to convert Prosemirror JSON to Y.XmlFragment
-            const yDocFragment = newYDoc.getXmlFragment('prosemirror');
-            if (yDocFragment.length === 0) {
-                 const newEditor = new EditorClass({ extensions, content: initialData.content });
-                 const prosemirrorJson = newEditor.getJSON();
-                 const yDocFragment = yDocToProsemirrorJSON(newYDoc, 'prosemirror');
-                 if(Object.keys(yDocFragment).length === 0){
-                    const update = Y.encodeStateAsUpdate(Y.Doc.fromJSON(prosemirrorJson));
-                    Y.applyUpdate(newYDoc, update);
-                 }
-                 newEditor.destroy();
-            }
-        }
-
-        const collaborationExtensions = [
-          Collaboration.configure({
-            document: newYDoc,
-          }),
-          CollaborationCursor.configure({
-            provider: newProvider,
-            user: {
-              name: user?.displayName || 'Anonymous',
-              color: '#' + Math.floor(Math.random()*16777215).toString(16),
-            },
-          }),
-        ]
-
-        const allExtensions = [...extensions, ...collaborationExtensions];
-        
-        const newEditor = new EditorClass({
-          extensions: allExtensions,
-          editorProps: {
-            attributes: {
-              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-            },
-          },
-          onUpdate: ({ editor: updatedEditor }) => {
-            handleAutoSave(updatedEditor.getHTML());
-          },
-        });
-
-        setEditor(newEditor);
-      }
-    });
+    newProvider.on('synced', () => setIsSynced(true));
 
     return () => {
       editor?.destroy();
       newProvider.destroy();
       newYDoc.destroy();
     };
-  }, [room, user, extensions, initialData.content, handleAutoSave]);
+  }, [room, user, editor]);
+
+  useEffect(() => {
+    if (!isSynced || !provider || editor) return;
+
+    const newYDoc = provider.document;
+    const yDocFragment = newYDoc.getXmlFragment('prosemirror');
+
+    if (yDocFragment.length === 0 && initialData.content) {
+      try {
+        const prosemirrorJson = generateJSON(initialData.content, extensions);
+        const yjsDoc = Y.encodeStateAsUpdate(
+          Y.Doc.fromJSON(prosemirrorJson) as any
+        );
+        Y.applyUpdate(newYDoc, yjsDoc);
+      } catch (error) {
+        console.error("Error applying initial content to Y.Doc:", error);
+      }
+    }
+
+    const collaborationExtensions = [
+      Collaboration.configure({
+        document: newYDoc,
+      }),
+      CollaborationCursor.configure({
+        provider: provider,
+        user: {
+          name: user?.displayName || 'Anonymous',
+          color: '#' + Math.floor(Math.random()*16777215).toString(16),
+        },
+      }),
+    ];
+
+    const allExtensions = [...extensions, ...collaborationExtensions];
+
+    const newEditor = new EditorClass({
+      extensions: allExtensions,
+      editorProps: {
+        attributes: {
+          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+        },
+      },
+      onUpdate: ({ editor: updatedEditor }) => {
+        handleAutoSave(updatedEditor.getHTML());
+      },
+    });
+
+    setEditor(newEditor);
+
+  }, [isSynced, provider, editor, extensions, initialData.content, handleAutoSave, user]);
 
 
   if (!editor || !provider) {
