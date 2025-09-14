@@ -99,6 +99,7 @@ const EditorCore = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [editor, setEditor] = useState<EditorClass | null>(null);
+  const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -145,70 +146,61 @@ const EditorCore = ({
     }
 
     const ydoc = new Y.Doc();
-    const provider = new LiveblocksYjsProvider(room, ydoc);
+    const newProvider = new LiveblocksYjsProvider(room, ydoc);
+    setProvider(newProvider);
 
-    provider.on('synced', (isSynced: boolean) => {
-      if (isSynced) {
-        const yDocFragment = ydoc.getXmlFragment('prosemirror');
-        const yDocHasContent = yDocFragment.length > 0;
-        
-        if (!yDocHasContent && initialData.content) {
-          try {
-            const prosemirrorJson = generateJSON(initialData.content, extensions);
-            const yjsDoc = Y.encodeStateAsUpdate(
-              Y.Doc.fromJSON(prosemirrorJson) as any
-            );
-            Y.applyUpdate(ydoc, yjsDoc);
-          } catch (error) {
-            console.error("Error applying initial content to Y.Doc:", error);
-          }
-        }
+    newProvider.on('synced', (isSynced: boolean) => {
+      if (!isSynced) return;
 
-        const collaborationExtensions = [
-          Collaboration.configure({
-            document: ydoc,
-          }),
-          CollaborationCursor.configure({
-            provider: provider,
-            user: {
-              name: user?.displayName || 'Anonymous',
-              color: '#' + Math.floor(Math.random()*16777215).toString(16),
-            },
-          }),
-        ];
-    
-        const allExtensions = [...extensions, ...collaborationExtensions];
-    
-        const newEditor = new EditorClass({
-          extensions: allExtensions,
-          editorProps: {
-            attributes: {
-              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-            },
+      const yDocFragment = ydoc.getXmlFragment('prosemirror');
+      const collaborationExtensions = [
+        Collaboration.configure({
+          document: ydoc,
+        }),
+        CollaborationCursor.configure({
+          provider: newProvider,
+          user: {
+            name: user?.displayName || 'Anonymous',
+            color: '#' + Math.floor(Math.random()*16777215).toString(16),
           },
-          onUpdate: ({ editor: updatedEditor }) => {
-            handleAutoSave(updatedEditor.getHTML());
+        }),
+      ];
+  
+      const allExtensions = [...extensions, ...collaborationExtensions];
+      
+      const content = yDocFragment.length > 0 ? undefined : initialData.content;
+  
+      const newEditor = new EditorClass({
+        extensions: allExtensions,
+        editorProps: {
+          attributes: {
+            class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
           },
-        });
-    
-        setEditor(newEditor);
-      }
+        },
+        content: content,
+        onUpdate: ({ editor: updatedEditor }) => {
+          handleAutoSave(updatedEditor.getHTML());
+        },
+      });
+  
+      setEditor(newEditor);
     });
 
+
     return () => {
-      provider.destroy();
+      newProvider.destroy();
       ydoc.destroy();
       editor?.destroy();
     };
   }, [room, user, extensions, handleAutoSave, initialData.content]);
 
 
-  if (!editor) {
+  if (!editor || !provider) {
     return <EditorLoading />;
   }
 
   const wordCount = editor?.storage.characterCount.words() || 0;
-  const awareness = (editor.extensionManager.extensions.find(e => e.name === 'collaborationCursor') as any)?.options.provider.awareness;
+  const awareness = provider.awareness;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
