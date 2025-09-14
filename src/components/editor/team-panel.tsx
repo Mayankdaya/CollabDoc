@@ -48,9 +48,12 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   useEffect(() => {
     if (awareness) {
         const updateOnlineUsers = () => {
-            const states = Array.from(awareness.getStates().values());
-            const users = states.map(s => s.user).filter(Boolean);
-            const uniqueUsers = Array.from(new Map(users.map(u => [u.name, u])).values());
+            const states = Array.from(awareness.getStates().entries());
+            const users = states
+                .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
+                .filter((user): user is { name: string; color: string; clientId: number } => user !== null && !!user.name);
+            
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
             setOnlineUsers(uniqueUsers);
         };
         awareness.on('change', updateOnlineUsers);
