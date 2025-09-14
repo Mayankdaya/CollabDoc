@@ -11,7 +11,7 @@ import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 
 
 interface TeamPanelProps {
@@ -58,14 +58,14 @@ export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: T
 
         const ownerId = docData.userId;
         const collaboratorIds: string[] = docData.collaborators || [];
-        
         const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
 
         if (allUserIds.length > 0) {
             try {
-                const userPromises = allUserIds.map(uid => getDoc(doc(db, 'users', uid)));
-                const userDocs = await Promise.all(userPromises);
-                const fetchedUsers = userDocs
+                // Firestore 'in' query is limited to 30 items, which is fine for this use case.
+                const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
+                const userDocs = await getDocs(usersQuery);
+                const fetchedUsers = userDocs.docs
                     .filter(d => d.exists())
                     .map(d => d.data() as FoundUser);
                 
@@ -156,4 +156,3 @@ export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: T
     </div>
   );
 }
-
