@@ -247,7 +247,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                         <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                             <TeamPanel 
                                 doc={initialData}
-                                peopleWithAccess={peopleWithAccess}
                                 awareness={provider.awareness}
                                 onStartCall={(user, type) => setCallState({ active: true, user, type })}
                             />

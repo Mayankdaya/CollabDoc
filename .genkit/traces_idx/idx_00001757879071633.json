@@ -97,3 +97,6 @@
 {"id":"0ce4d8eb155e6aecdb40dd8592ff32b9","type":"UNKNOWN","start":1757880961760,"name":"RSC GET /documents/[id]","end":1757880963998.5215,"status":0}
 {"id":"77a17546adc0233cb2fc1ad1e86405ee","type":"UNKNOWN","start":1757880966520,"name":"POST /documents/[id]","end":1757880967542.685,"status":0}
 {"id":"c93dc265a67103c8193ac4ec3af7870b","type":"UNKNOWN","start":1757880967726,"name":"POST /documents/[id]","end":1757880968471.2783,"status":0}
+{"id":"280091124cf8dbd97c3d52318e5a177d","type":"UNKNOWN","start":1757881011631,"name":"GET /documents/[id]","end":1757881012645.2844,"status":0}
+{"id":"7d4e24d3f17b4b65dac19f174f3d52c9","type":"UNKNOWN","start":1757881014285,"name":"POST /_error","end":1757881014765.4104,"status":0}
+{"id":"a20026ee69c1dd63004ba1976bd3e804","type":"UNKNOWN","start":1757881018591,"name":"POST /documents/[id]","end":1757881019394.8276,"status":0}

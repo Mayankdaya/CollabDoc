@@ -10,17 +10,20 @@ import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+
 
 interface TeamPanelProps {
   doc: Document;
   awareness: Awareness | null;
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
-  peopleWithAccess: FoundUser[];
 }
 
-export default function TeamPanel({ doc, awareness, onStartCall, peopleWithAccess }: TeamPanelProps) {
+export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -41,10 +44,44 @@ export default function TeamPanel({ doc, awareness, onStartCall, peopleWithAcces
   }, [awareness]);
 
   useEffect(() => {
-    // We are loading as long as peopleWithAccess is empty,
-    // but only if there *should* be at least one person (the owner).
-    setIsLoading(peopleWithAccess.length === 0 && !!doc.userId);
-  }, [peopleWithAccess, doc.userId]);
+    if (!doc.id) return;
+    
+    const docRef = doc(db, 'documents', doc.id);
+    
+    const unsubscribe = onSnapshot(docRef, async (snap) => {
+        setIsLoading(true);
+        const docData = snap.data();
+        if (!docData) {
+            setIsLoading(false);
+            return;
+        }
+
+        const ownerId = docData.userId;
+        const collaboratorIds: string[] = docData.collaborators || [];
+        
+        const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
+
+        if (allUserIds.length > 0) {
+            try {
+                const userPromises = allUserIds.map(uid => getDoc(doc(db, 'users', uid)));
+                const userDocs = await Promise.all(userPromises);
+                const fetchedUsers = userDocs
+                    .filter(d => d.exists())
+                    .map(d => d.data() as FoundUser);
+                
+                setPeopleWithAccess(fetchedUsers);
+            } catch (e) {
+                console.error("Error fetching user profiles:", e);
+                setPeopleWithAccess([]);
+            }
+        } else {
+            setPeopleWithAccess([]);
+        }
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [doc.id]);
   
 
   const isUserOnline = useCallback((user: FoundUser) => {
