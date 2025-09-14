@@ -47,8 +47,6 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
-import { yDocToProsemirrorJSON } from 'y-prosemirror';
-
 
 function EditorLoading() {
   return (
@@ -122,7 +120,7 @@ const EditorCore = ({
   );
   
   const extensions = useMemo(() => [
-    StarterKit.configure({ history: false, heading: { levels: [1, 2, 3] } }),
+    StarterKit.configure({ history: false }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TextStyle, FontFamily, FontSize, LineHeight, Color,
     Highlight.configure({ multicolor: true }),
@@ -318,19 +316,6 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 };
-
-// Helper to convert Prosemirror JSON to a Y.Doc
-function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
-    const tempEditor = new EditorClass({
-      extensions: extensions,
-      content: json,
-    });
-    const yDoc = Y.encodeStateAsUpdate(tempEditor.state.doc.toJSON() as any);
-    tempEditor.destroy();
-    const doc = new Y.Doc();
-    Y.applyUpdate(doc, yDoc);
-    return doc;
-}
     
 
     
@@ -338,3 +323,4 @@ function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
 
 
     
+
