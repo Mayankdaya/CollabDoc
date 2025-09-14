@@ -74,24 +74,29 @@ export class YFireProvider {
         const newStates = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
 
         const localStates = this.awareness.getStates();
+        
         const removedClients = Array.from(localStates.keys()).filter(clientID => !newStates.has(clientID) && clientID !== this.doc.clientID);
-        const updatedClients = Array.from(newStates.keys()).filter(clientID => clientID !== this.doc.clientID);
+        
+        const updatedClients = Array.from(newStates.keys()).filter(clientID => {
+            return clientID !== this.doc.clientID;
+        });
 
         if (removedClients.length > 0) {
             removeAwarenessStates(this.awareness, removedClients, 'firestore');
         }
+
+        const newAwareness = new Awareness(this.doc);
+        newAwareness.setLocalState(this.doc.clientID, this.awareness.getLocalState()!);
         
-        if (updatedClients.length > 0) {
-            const tempAwareness = new Awareness(new Y.Doc());
-            updatedClients.forEach(clientID => {
-                const state = newStates.get(clientID);
-                if (state) {
-                    tempAwareness.setLocalState(clientID, state);
-                }
-            });
-            const update = encodeAwarenessUpdate(tempAwareness, updatedClients);
-            applyAwarenessUpdate(this.awareness, update, 'firestore');
-        }
+        updatedClients.forEach(clientID => {
+            const state = newStates.get(clientID);
+            if (state) {
+                newAwareness.setLocalState(clientID, state);
+            }
+        });
+        
+        const update = encodeAwarenessUpdate(newAwareness, updatedClients);
+        applyAwarenessUpdate(this.awareness, update, 'firestore');
     });
 
     this.unsubscribes.push(unsubscribeAwareness);
