@@ -37,12 +37,6 @@ const ChatOutputSchema = z.object({
     .describe(
       'If the user requests document creation or modification, this field will contain the updated content as an HTML string.'
     ),
-  requiresConfirmation: z
-    .boolean()
-    .optional()
-    .describe(
-      'If true, the UI should ask the user for confirmation before performing an action.'
-    ),
 });
 type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
@@ -94,27 +88,10 @@ const chatFlow = ai.defineFlow(
     });
 
     const firstToolOutput = toolResponses[0]?.output as any;
-    const firstToolName = result.toolRequests[0]?.name;
 
-    const documentContent = firstToolOutput?.updatedDocumentContent;
-    
-    let requiresConfirmation = false;
-    // Default response when a tool is used, but it's not content generation.
-    let aiResponse = "I've updated the document for you.";
-
-    if (firstToolName === 'generateNewContent' && documentContent) {
-      requiresConfirmation = true;
-      // ALWAYS overwrite any conversational response with the specific confirmation question.
-      aiResponse = "I have generated the content for you. Would you like to paste it into the editor?";
-    } else if (result.text) {
-      // If the model provided text AND used a tool (that wasn't new content), use that text.
-      aiResponse = result.text;
-    }
-    
     return {
-      response: aiResponse,
-      documentContent,
-      requiresConfirmation,
+      response: result.text || "I've updated the document for you.",
+      documentContent: firstToolOutput?.updatedDocumentContent,
     };
   }
 );
