@@ -122,20 +122,6 @@ const EditorCore = ({
     [documentId, user, toast, setIsSaving, setLastSaved, setLastSavedBy]
   );
   
-  const extensions = useMemo(() => [
-    StarterKit.configure({ history: false }),
-    TextAlign.configure({ types: ['heading', 'paragraph'] }),
-    TextStyle, FontFamily, FontSize, LineHeight, Color,
-    Highlight.configure({ multicolor: true }),
-    Underline,
-    Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-    Image,
-    Link.configure({ openOnClick: false }),
-    Placeholder.configure({ placeholder: 'Start typing...' }),
-    CharacterCount,
-    TaskList, TaskItem.configure({ nested: true }),
-  ], []);
-
   // Effect to create the Y.Doc and provider
   useEffect(() => {
     if (!room || !user || yDoc) return;
@@ -151,52 +137,61 @@ const EditorCore = ({
     }
   }, [room, user, yDoc]);
 
-  // Effect to handle editor creation and content syncing
   const editor = useEditor({
-    // Pass the extensions without collaboration first
-    extensions,
-    // The editor will be created with empty content initially
+    extensions: [
+        StarterKit.configure({ history: false }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        TextStyle, FontFamily, FontSize, LineHeight, Color,
+        Highlight.configure({ multicolor: true }),
+        Underline,
+        Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+        Image,
+        Link.configure({ openOnClick: false }),
+        Placeholder.configure({ placeholder: 'Start typing...' }),
+        CharacterCount,
+        TaskList, TaskItem.configure({ nested: true }),
+        ...(yDoc && provider && user ? [
+            Collaboration.configure({
+                document: yDoc,
+            }),
+            CollaborationCursor.configure({
+                provider: provider,
+                user: {
+                    name: user?.displayName || 'Anonymous',
+                    color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+                },
+            })
+        ] : []),
+    ],
     content: ``,
-    // Important: The editor is created but remains null until yDoc is ready
     editorProps: {
         attributes: {
             class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
         },
     },
-  }, [extensions]);
+  }, [yDoc, provider, user]);
+
 
   // Effect to manage collaboration and initial content once the editor is ready
   useEffect(() => {
     if (!editor || !yDoc || !provider || !user) {
       return;
     }
-
-    // Configure collaboration extensions
-    editor.registerPlugin(Collaboration.configure({
-        document: yDoc,
-    }).createPlugin());
-
-    editor.registerPlugin(CollaborationCursor.configure({
-        provider: provider,
-        user: {
-          name: user?.displayName || 'Anonymous',
-          color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-        },
-    }).createPlugin());
-
+    
     // Function to handle content sync
     const handleSync = () => {
-      const yDocFragment = yDoc.getXmlFragment('prosemirror');
+        const yDocFragment = yDoc.getXmlFragment('prosemirror');
 
-      if (yDocFragment.length === 0 && initialData.content) {
-        Y.applyUpdate(yDoc, Y.encodeStateAsUpdate(prosemirrorJSONToYDoc(extensions, initialData.content)));
-      }
+        if (yDocFragment.length === 0 && initialData.content) {
+             const doc = prosemirrorJSONToYDoc(editor.extensionManager.extensions, initialData.content);
+             const update = Y.encodeStateAsUpdate(doc);
+             Y.applyUpdate(yDoc, update);
+        }
 
-      const prosemirrorContent = yDocToProsemirrorJSON(yDoc.get('prosemirror', Y.XmlFragment));
-
-      if (editor && !editor.isDestroyed) {
+        if (editor && !editor.isDestroyed) {
+          const prosemirrorContent = yDocToProsemirrorJSON(yDoc.get('prosemirror', Y.XmlFragment));
           editor.commands.setContent(prosemirrorContent, false);
-      }
+        }
     };
     
     // Listen for the sync event
@@ -212,7 +207,7 @@ const EditorCore = ({
       provider.off('synced', handleSync);
     };
 
-  }, [editor, yDoc, provider, user, extensions, initialData.content, handleAutoSave]);
+  }, [editor, yDoc, provider, user, initialData.content, handleAutoSave]);
 
   if (!editor || !provider) {
     return <EditorLoading />;
@@ -346,3 +341,6 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     
 
 
+
+
+    
