@@ -73,21 +73,27 @@ export class YFireProvider {
         if (snapshot.exists()) {
             const data = snapshot.data();
             if (data) {
-                const clients = Object.keys(data).map(Number).filter(id => id !== this.doc.clientID);
-                const states = new Map(clients.map(clientID => {
-                    const state = data[clientID];
-                    return [clientID, state];
-                }));
+                const clients = Object.keys(data).map(Number);
+                const states = new Map(clients.map(clientID => [clientID, data[clientID]]));
                 
+                const remoteClientIDs = Array.from(states.keys());
+                const localClientIDs = Array.from(this.awareness.getStates().keys());
+                const removedClientIDs = localClientIDs.filter(id => !remoteClientIDs.includes(id));
+
+                if(removedClientIDs.length > 0) {
+                  removeAwarenessStates(this.awareness, removedClientIDs, 'firestore');
+                }
+
                 const tempAwareness = new Awareness(new Y.Doc());
                 // Manually set states on the temporary awareness instance
                 for (const [clientID, state] of states.entries()) {
-                    // CRITICAL FIX: Ensure cursor is handled gracefully if it's not a plain object
-                    const { cursor, ...restState } = state;
-                    if (cursor && typeof cursor === 'object') {
-                        // If we need to reconstruct cursor, we do it here. For now, just pass rest.
+                    if (clientID !== this.doc.clientID) {
+                        const { cursor, ...restState } = state;
+                        if (cursor && typeof cursor === 'object') {
+                            // If we need to reconstruct cursor, we do it here. For now, just pass rest.
+                        }
+                        tempAwareness.setLocalState(clientID, restState);
                     }
-                    tempAwareness.setLocalState(clientID, restState);
                 }
 
                 const updatedClients = Array.from(tempAwareness.getStates().keys());
