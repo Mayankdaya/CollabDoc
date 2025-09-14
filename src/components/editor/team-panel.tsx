@@ -47,16 +47,15 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
 
   useEffect(() => {
     if (awareness) {
-      const updateOnlineUsers = () => {
-        const states = Array.from(awareness.getStates().values());
-        const users = states.map(s => s.user).filter(Boolean);
-        // Deduplicate based on name, as one user might have multiple client IDs
-        const uniqueUsers = Array.from(new Map(users.map(u => [u.name, u])).values());
-        setOnlineUsers(uniqueUsers);
-      };
-      awareness.on('change', updateOnlineUsers);
-      updateOnlineUsers(); // Initial call
-      return () => awareness.off('change', updateOnlineUsers);
+        const updateOnlineUsers = () => {
+            const states = Array.from(awareness.getStates().values());
+            const users = states.map(s => s.user).filter(Boolean);
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.name, u])).values());
+            setOnlineUsers(uniqueUsers);
+        };
+        awareness.on('change', updateOnlineUsers);
+        updateOnlineUsers(); // Initial call
+        return () => awareness.off('change', updateOnlineUsers);
     }
   }, [awareness]);
 
@@ -103,7 +102,6 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   }, [owner, collaborators]);
 
   const isUserOnline = useCallback((user: UserProfile) => {
-    // y-firebase awareness includes the user's display name
     return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
   }, [onlineUsers]);
 

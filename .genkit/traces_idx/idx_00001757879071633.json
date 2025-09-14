@@ -60,3 +60,6 @@
 {"id":"0c26ef789cd0fa31f8e566d01e706ef4","type":"UNKNOWN","start":1757879772798,"name":"POST /documents/[id]","end":1757879773906.7083,"status":0}
 {"id":"7852ee8688380135194125d228a41973","type":"flow","start":1757879813132,"name":"chatFlow","end":1757879814171.4863,"status":2}
 {"id":"8dcf9b181f0a5fe96f011ffbbf36799e","type":"UNKNOWN","start":1757879813001,"name":"POST /documents/[id]","end":1757879815534.9553,"status":2}
+{"id":"97010343159795e0c84386957863dd4b","type":"UNKNOWN","start":1757879873367,"name":"GET /documents/[id]","end":1757879873804.6343,"status":0}
+{"id":"3af5b5e1d4c7004044794354897f6433","type":"UNKNOWN","start":1757879876679,"name":"POST /_error","end":1757879876842.939,"status":0}
+{"id":"8eca117f9489719cd7d1559bc50dbd0c","type":"UNKNOWN","start":1757879882708,"name":"POST /documents/[id]","end":1757879883717.0386,"status":0}

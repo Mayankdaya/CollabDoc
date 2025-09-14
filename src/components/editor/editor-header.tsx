@@ -41,13 +41,13 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
     if (!awareness) return;
 
     const awarenessChangeHandler = () => {
-        const states = Array.from(awareness.getStates().values());
+        const states = Array.from(awareness.getStates().entries());
         const users = states
-            .map(state => state && state.user ? { ...state.user, clientId: Array.from(awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
-            .filter((user): user is { name: string; color: string; clientId: any } => user !== null && !!user.name && user.clientId);
+            .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
+            .filter((user): user is { name: string; color: string; clientId: number } => user !== null && !!user.name);
         
-        // Deduplicate users based on name
-        const uniqueUsers = Array.from(new Map(users.map(u => [u.name, u])).values());
+        // Deduplicate users based on clientId
+        const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
         setOnlineUsers(uniqueUsers);
     };
     
@@ -126,7 +126,7 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
         <TooltipProvider>
           <div className="flex -space-x-2">
             {onlineUsers.map((c) => (
-              <Tooltip key={c.clientId || c.name}>
+              <Tooltip key={c.clientId}>
                   <TooltipTrigger asChild>
                       <Avatar className="h-8 w-8 border-2" style={{ borderColor: c.color }}>
                           <AvatarFallback style={{ backgroundColor: c.color, color: 'white' }}>
