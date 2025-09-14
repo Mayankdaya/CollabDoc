@@ -149,51 +149,45 @@ const EditorCore = ({
     const newProvider = new LiveblocksYjsProvider(room, ydoc);
     setProvider(newProvider);
 
+    const collaborationExtensions = [
+        Collaboration.configure({
+            document: ydoc,
+            field: 'prosemirror',
+        }),
+        CollaborationCursor.configure({
+            provider: newProvider,
+            user: {
+              name: user?.displayName || 'Anonymous',
+              color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+            },
+        }),
+    ];
+
+    const newEditor = new EditorClass({
+      extensions: [
+        ...extensions,
+        ...collaborationExtensions,
+      ],
+      editorProps: {
+        attributes: {
+          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+        },
+      },
+      onUpdate: ({ editor: updatedEditor }) => {
+        handleAutoSave(updatedEditor.getHTML());
+      },
+    });
+
+    setEditor(newEditor);
+
     newProvider.on('synced', (isSynced: boolean) => {
       if (isSynced) {
         const yDocFragment = ydoc.getXmlFragment('prosemirror');
         const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
 
-        if (yDocFragment.length === 0 && initialData.content) {
-            // Document is empty on the server, populate from initial data
-            const tempEditor = new EditorClass({
-                extensions,
-                content: initialData.content,
-            });
-            const prosemirrorJson = tempEditor.getJSON();
-            const yjsUpdate = Y.encodeStateAsUpdate(
-                prosemirrorJSONToYDoc(extensions, prosemirrorJson)
-            );
-            Y.applyUpdate(ydoc, yjsUpdate);
-            tempEditor.destroy();
+        if (!newEditor.isDestroyed && yDocFragment.length === 0) {
+            newEditor.commands.setContent(initialData.content || '', false);
         }
-
-        const newEditor = new EditorClass({
-          extensions: [
-            ...extensions,
-            Collaboration.configure({
-                document: ydoc,
-                field: 'prosemirror',
-            }),
-            CollaborationCursor.configure({
-                provider: newProvider,
-                user: {
-                  name: user?.displayName || 'Anonymous',
-                  color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-                },
-            }),
-          ],
-          editorProps: {
-            attributes: {
-              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-            },
-          },
-          onUpdate: ({ editor: updatedEditor }) => {
-            handleAutoSave(updatedEditor.getHTML());
-          },
-        });
-
-        setEditor(newEditor);
       }
     });
 
@@ -343,4 +337,6 @@ function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
     Y.applyUpdate(doc, yDoc);
     return doc;
 }
+    
+
     
