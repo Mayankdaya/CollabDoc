@@ -126,3 +126,6 @@
 {"id":"9fee82e0c6a518fbc058d732e2e5efc8","type":"UNKNOWN","start":1757881413444,"name":"GET /documents/[id]","end":1757881413851.6653,"status":0}
 {"id":"4c5e05eee43902096ca92b89e12956d3","type":"UNKNOWN","start":1757881415950,"name":"POST /_error","end":1757881416296.5325,"status":0}
 {"id":"6767451846c6e579090272f6c6bfdfe8","type":"UNKNOWN","start":1757881419834,"name":"POST /documents/[id]","end":1757881420662.032,"status":0}
+{"id":"80aa5a2873ecb017d5d8ea4d0c37bd54","type":"UNKNOWN","start":1757881463136,"name":"GET /documents/[id]","end":1757881463604.119,"status":0}
+{"id":"6d5d9d5222b4c24e6ac81a4af8cdcb61","type":"UNKNOWN","start":1757881465759,"name":"POST /_error","end":1757881466055.8662,"status":0}
+{"id":"5263c3e2d362a91963b5c1c534590109","type":"UNKNOWN","start":1757881469553,"name":"POST /documents/[id]","end":1757881470348.9934,"status":0}
