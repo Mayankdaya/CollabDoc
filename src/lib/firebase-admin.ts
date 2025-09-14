@@ -1,31 +1,20 @@
 
+'use server';
+
 import * as admin from 'firebase-admin';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY
-  ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)
-  : null;
-
+// Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
-    if (serviceAccount) {
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            projectId: 'latexresumeai',
-        });
-    } else {
-        // For local development and in environments where the service account key is not set,
-        // we can initialize without credentials for features that don't require admin privileges (like auth session cookies).
-        // However, this will not work for server-side database access via the admin SDK.
-        if (process.env.NODE_ENV === 'development' || !process.env.VERCEL) {
-             admin.initializeApp({
-                projectId: 'latexresumeai',
-            });
-        } else {
-            console.error('Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY is not set in a production environment.');
-        }
-    }
+  try {
+    // In a managed environment like Google App Engine or Cloud Functions (and App Hosting),
+    // the SDK can auto-discover credentials.
+    // For local development, you would set the GOOGLE_APPLICATION_CREDENTIALS env var.
+    admin.initializeApp();
+  } catch (e) {
+    console.error('Firebase Admin SDK initialization failed:', e);
+  }
 }
 
-
 export const auth = admin.apps.length ? admin.auth() : ({} as admin.auth.Auth);
-// The admin db is no longer used for document creation.
+// The admin db is not used. Client-side SDK with security rules is used for DB operations.
 // export const db = admin.apps.length ? admin.firestore() : {} as admin.firestore.Firestore;
