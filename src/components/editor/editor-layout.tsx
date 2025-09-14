@@ -99,8 +99,6 @@ const EditorCore = ({
   const { user } = useAuth();
   const { toast } = useToast();
   const [editor, setEditor] = useState<EditorClass | null>(null);
-  const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
-  const [isSynced, setIsSynced] = useState(false);
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -142,83 +140,82 @@ const EditorCore = ({
   ], []);
 
   useEffect(() => {
-    if (!room || !user || editor) return;
-
-    const newYDoc = new Y.Doc();
-    const newProvider = new LiveblocksYjsProvider(room, newYDoc);
-    setProvider(newProvider);
-
-    newProvider.on('synced', () => setIsSynced(true));
-
-    return () => {
-      editor?.destroy();
-      newProvider.destroy();
-      newYDoc.destroy();
-    };
-  }, [room, user, editor]);
-
-  useEffect(() => {
-    if (!isSynced || !provider || editor) return;
-
-    const newYDoc = provider.document;
-    const yDocFragment = newYDoc.getXmlFragment('prosemirror');
-
-    if (yDocFragment.length === 0 && initialData.content) {
-      try {
-        const prosemirrorJson = generateJSON(initialData.content, extensions);
-        const yjsDoc = Y.encodeStateAsUpdate(
-          Y.Doc.fromJSON(prosemirrorJson) as any
-        );
-        Y.applyUpdate(newYDoc, yjsDoc);
-      } catch (error) {
-        console.error("Error applying initial content to Y.Doc:", error);
-      }
+    if (!room || !user) {
+      return;
     }
 
-    const collaborationExtensions = [
-      Collaboration.configure({
-        document: newYDoc,
-      }),
-      CollaborationCursor.configure({
-        provider: provider,
-        user: {
-          name: user?.displayName || 'Anonymous',
-          color: '#' + Math.floor(Math.random()*16777215).toString(16),
-        },
-      }),
-    ];
+    const ydoc = new Y.Doc();
+    const provider = new LiveblocksYjsProvider(room, ydoc);
 
-    const allExtensions = [...extensions, ...collaborationExtensions];
+    provider.on('synced', (isSynced: boolean) => {
+      if (isSynced) {
+        const yDocFragment = ydoc.getXmlFragment('prosemirror');
+        const yDocHasContent = yDocFragment.length > 0;
+        
+        if (!yDocHasContent && initialData.content) {
+          try {
+            const prosemirrorJson = generateJSON(initialData.content, extensions);
+            const yjsDoc = Y.encodeStateAsUpdate(
+              Y.Doc.fromJSON(prosemirrorJson) as any
+            );
+            Y.applyUpdate(ydoc, yjsDoc);
+          } catch (error) {
+            console.error("Error applying initial content to Y.Doc:", error);
+          }
+        }
 
-    const newEditor = new EditorClass({
-      extensions: allExtensions,
-      editorProps: {
-        attributes: {
-          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-        },
-      },
-      onUpdate: ({ editor: updatedEditor }) => {
-        handleAutoSave(updatedEditor.getHTML());
-      },
+        const collaborationExtensions = [
+          Collaboration.configure({
+            document: ydoc,
+          }),
+          CollaborationCursor.configure({
+            provider: provider,
+            user: {
+              name: user?.displayName || 'Anonymous',
+              color: '#' + Math.floor(Math.random()*16777215).toString(16),
+            },
+          }),
+        ];
+    
+        const allExtensions = [...extensions, ...collaborationExtensions];
+    
+        const newEditor = new EditorClass({
+          extensions: allExtensions,
+          editorProps: {
+            attributes: {
+              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+            },
+          },
+          onUpdate: ({ editor: updatedEditor }) => {
+            handleAutoSave(updatedEditor.getHTML());
+          },
+        });
+    
+        setEditor(newEditor);
+      }
     });
 
-    setEditor(newEditor);
+    return () => {
+      provider.destroy();
+      ydoc.destroy();
+      editor?.destroy();
+    };
+  }, [room, user, extensions, handleAutoSave, initialData.content]);
 
-  }, [isSynced, provider, editor, extensions, initialData.content, handleAutoSave, user]);
 
-
-  if (!editor || !provider) {
+  if (!editor) {
     return <EditorLoading />;
   }
 
   const wordCount = editor?.storage.characterCount.words() || 0;
+  const awareness = (editor.extensionManager.extensions.find(e => e.name === 'collaborationCursor') as any)?.options.provider.awareness;
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
         <EditorHeader 
             doc={initialData} 
             editor={editor}
-            awareness={provider.awareness}
+            awareness={awareness}
             docName={docName}
             setDocName={setDocName}
             isSaving={isSaving}
@@ -268,7 +265,7 @@ const EditorCore = ({
                 <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                     <TeamPanel 
                         doc={initialData} 
-                        awareness={provider.awareness}
+                        awareness={awareness}
                         onStartCall={(user, type) => setCallState({ active: true, user, type })}
                     />
                 </TabsContent>
