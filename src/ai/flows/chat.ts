@@ -93,14 +93,14 @@ const chatFlow = ai.defineFlow(
     
     let documentContent: string | undefined = undefined;
     let requiresConfirmation: boolean | undefined = undefined;
+    let aiResponse = result.text(); // Capture the AI's text response first.
 
     if (result.toolRequests.length > 0) {
+      // If there's a tool request, we still want to preserve the text response.
       const toolResponse = await result.runTools({
         context: {documentContent: input.documentContent},
       });
       
-      // In this simple case, we just take the first tool's output.
-      // A more complex implementation might handle multiple tool calls.
       const firstToolOutput = toolResponse[0]?.tool?.output?.updatedDocumentContent;
       const firstToolName = toolResponse[0]?.tool?.name;
       
@@ -110,10 +110,14 @@ const chatFlow = ai.defineFlow(
             requiresConfirmation = true;
         }
       }
+      // If the AI didn't provide a text response along with the tool call, create a default one.
+      if (!aiResponse) {
+          aiResponse = "I've updated the document for you.";
+      }
     }
 
     return {
-      response: result.text(),
+      response: aiResponse,
       documentContent,
       requiresConfirmation,
     };
