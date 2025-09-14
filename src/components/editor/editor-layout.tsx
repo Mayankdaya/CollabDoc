@@ -157,19 +157,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
 
     useEffect(() => {
         if (!editor || !provider) return;
-    
-        const handleSync = () => {
-            if (provider.synced && editor && !editor.isDestroyed) {
-                const yDocFragment = provider.doc.get('prosemirror', Y.XmlFragment);
-                if (yDocFragment.length === 0 && initialData.content) {
-                    editor.commands.setContent(initialData.content, false);
-                }
-            }
-        };
-    
-        provider.on('synced', handleSync);
-        // Call it once in case the provider is already synced
-        handleSync();
 
         const updateHandler = ({ editor: updatedEditor }: { editor: EditorClass }) => {
             handleAutoSave(updatedEditor.getHTML());
@@ -179,9 +166,8 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
 
         return () => {
             editor.off('update', updateHandler);
-            provider.off('synced', handleSync);
         };
-    }, [editor, provider, initialData.content, handleAutoSave]);
+    }, [editor, provider, handleAutoSave]);
 
     if (!editor || !provider) {
         return <EditorLoading />;
