@@ -57,7 +57,7 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateContentSuggestionsInputSchema},
   output: {schema: GenerateContentSuggestionsOutputSchema},
   config: {
-    model: googleAI.model('gemini-1.5-flash'),
+    model: googleAI.model('gemini-2.5-flash'),
   },
   prompt: `You are an AI assistant designed to provide content suggestions for a collaborative document editor.
   Given the current document content, cursor position, and desired tone, generate an array of suggested phrases, sentences, or paragraphs to improve the writing.
@@ -103,7 +103,7 @@ const findSynonymsPrompt = ai.definePrompt({
     input: { schema: FindSynonymsInputSchema },
     output: { schema: FindSynonymsOutputSchema },
     config: {
-      model: googleAI.model('gemini-1.5-flash'),
+      model: googleAI.model('gemini-2.5-flash'),
     },
     prompt: 'Find synonyms for the word: {{word}}',
 });
@@ -140,7 +140,7 @@ const checkSpellingAndGrammarPrompt = ai.definePrompt({
   input: { schema: SpellingAndGrammarInputSchema },
   output: { schema: SpellingAndGrammarOutputSchema },
   config: {
-    model: googleAI.model('gemini-1.5-flash'),
+    model: googleAI.model('gemini-2.5-flash'),
   },
   prompt: 'Check the following document for spelling and grammar errors. Provide a list of suggestions for improvement. Document: {{documentContent}}',
 });
