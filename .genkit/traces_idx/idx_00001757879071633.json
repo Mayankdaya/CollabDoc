@@ -94,3 +94,6 @@
 {"id":"4922cdf8dac88b01a5cde06c4b0c2e68","type":"UNKNOWN","start":1757880720656,"name":"POST /documents/[id]","end":1757880722428.3755,"status":0}
 {"id":"bdc5f06e70c3b78746be51176a2c0eb8","type":"flow","start":1757880731746,"name":"chatFlow","end":1757880732785.8313,"status":2}
 {"id":"5491bc5596d723be8d1e009e80859936","type":"UNKNOWN","start":1757880731609,"name":"POST /documents/[id]","end":1757880733854.0486,"status":2}
+{"id":"0ce4d8eb155e6aecdb40dd8592ff32b9","type":"UNKNOWN","start":1757880961760,"name":"RSC GET /documents/[id]","end":1757880963998.5215,"status":0}
+{"id":"77a17546adc0233cb2fc1ad1e86405ee","type":"UNKNOWN","start":1757880966520,"name":"POST /documents/[id]","end":1757880967542.685,"status":0}
+{"id":"c93dc265a67103c8193ac4ec3af7870b","type":"UNKNOWN","start":1757880967726,"name":"POST /documents/[id]","end":1757880968471.2783,"status":0}
