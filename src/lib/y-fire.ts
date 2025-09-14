@@ -88,11 +88,7 @@ export class YFireProvider {
                 // Manually set states on the temporary awareness instance
                 for (const [clientID, state] of states.entries()) {
                     if (clientID !== this.doc.clientID) {
-                        const { cursor, ...restState } = state;
-                        if (cursor && typeof cursor === 'object') {
-                            // If we need to reconstruct cursor, we do it here. For now, just pass rest.
-                        }
-                        tempAwareness.setLocalState(clientID, restState);
+                       tempAwareness.setLocalState(clientID, state);
                     }
                 }
 
@@ -120,10 +116,9 @@ export class YFireProvider {
 
   private async onAwarenessUnload() {
     if (this.awareness.getLocalState() !== null) {
-      const update = {
+      await updateDoc(this.awarenessDocRef, {
         [this.doc.clientID]: deleteField(),
-      };
-      await setDoc(this.awarenessDocRef, update, { merge: true });
+      });
     }
   }
 
@@ -151,10 +146,7 @@ export class YFireProvider {
     changedClients.forEach((clientID) => {
       const state = this.awareness.getStates().get(clientID);
       if (state) {
-        // CRITICAL FIX: Do not persist cursor data to Firestore.
-        // It's ephemeral and contains complex objects that Firestore can't handle.
-        const { cursor, ...restState } = state;
-        awarenessUpdate[String(clientID)] = restState;
+        awarenessUpdate[String(clientID)] = state;
       }
     });
 
@@ -191,8 +183,7 @@ export class YFireProvider {
         for (const clientID of clients) {
           const state = data[clientID];
           if (state) {
-            const { cursor, ...restState } = state;
-            tempAwareness.setLocalState(clientID, restState);
+            tempAwareness.setLocalState(clientID, state);
           }
         }
         
