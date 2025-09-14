@@ -162,3 +162,6 @@
 {"id":"9dfaac0b665e29ffd8e95c46f0623e9d","type":"UNKNOWN","start":1757881983028,"name":"POST /documents/[id]","end":1757881983959.2126,"status":0}
 {"id":"8faf1b2ed9069c49ed23f977f204a98c","type":"UNKNOWN","start":1757881997616,"name":"POST /documents/[id]","end":1757881998525.727,"status":0}
 {"id":"4db01541c87b211dec6f48d3d4d1fde1","type":"UNKNOWN","start":1757881998980,"name":"POST /documents/[id]","end":1757881999842.5376,"status":0}
+{"id":"10a7c96ca1ad7b24d6cc4ecf3a9b6e9b","type":"UNKNOWN","start":1757882013371,"name":"GET /documents/[id]","end":1757882013814.077,"status":0}
+{"id":"bf8c707499c0071a10ea6c6d5809b9a2","type":"UNKNOWN","start":1757882016052,"name":"POST /_error","end":1757882016330.9214,"status":0}
+{"id":"a80bcd78782c55a9d02fb0000f1d714e","type":"UNKNOWN","start":1757882020301,"name":"POST /documents/[id]","end":1757882021078.145,"status":0}
