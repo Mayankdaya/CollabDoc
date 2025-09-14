@@ -50,6 +50,48 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FoundUser[]>([]);
 
+  useEffect(() => {
+    if (!doc.id) return;
+    const docRef = firestoreDoc(db, 'documents', doc.id);
+
+    const unsubscribe = onSnapshot(docRef, async (snap) => {
+        const docData = snap.data();
+        if (!docData) return;
+
+        const ownerId = docData.userId;
+        const collaboratorIds = docData.collaborators || [];
+        
+        const userIdsToFetch = [ownerId, ...collaboratorIds].filter(Boolean);
+        const uniqueUserIds = [...new Set(userIdsToFetch)];
+
+        if (uniqueUserIds.length > 0) {
+             try {
+                const usersRef = collection(db, 'users');
+                const usersQuery = query(usersRef, where('uid', 'in', uniqueUserIds));
+                const querySnapshot = await getDocs(usersQuery);
+                const fetchedUsers = querySnapshot.docs.map(d => d.data() as FoundUser);
+
+                const ownerProfile = fetchedUsers.find(u => u.uid === ownerId) || null;
+                const collaboratorProfiles = fetchedUsers.filter(u => collaboratorIds.includes(u.uid));
+
+                setOwner(ownerProfile);
+                setDbCollaborators(collaboratorProfiles);
+
+            } catch (e) {
+                console.error("Error fetching user profiles:", e);
+                setOwner(null);
+                setDbCollaborators([]);
+            }
+        } else {
+            setOwner(null);
+            setDbCollaborators([]);
+        }
+    });
+
+    return () => unsubscribe();
+  }, [doc.id]);
+
+
   const peopleWithAccess = useMemo(() => {
     const allPeople = new Map<string, FoundUser>();
     if (owner) {
@@ -58,43 +100,6 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
     dbCollaborators.forEach(c => allPeople.set(c.uid, c));
     return Array.from(allPeople.values());
   }, [owner, dbCollaborators]);
-
-   useEffect(() => {
-    if (!doc.id) return;
-    const docRef = firestoreDoc(db, 'documents', doc.id);
-
-    const unsubscribe = onSnapshot(docRef, async (snap) => {
-        const docData = snap.data();
-        if (!docData) return;
-
-        // Fetch owner info
-        if (docData.userId && (!owner || owner.uid !== docData.userId)) {
-            try {
-                const userRef = firestoreDoc(db, 'users', docData.userId);
-                const userSnap = await getDoc(userRef);
-                if(userSnap.exists()) {
-                    setOwner(userSnap.data() as FoundUser);
-                }
-            } catch(e) { console.error(e)}
-        }
-        
-        // Fetch collaborator info
-        if (docData.collaborators && docData.collaborators.length > 0) {
-            try {
-                const collaboratorQuery = query(collection(db, 'users'), where('uid', 'in', docData.collaborators));
-                const collaboratorSnapshots = await getDocs(collaboratorQuery);
-                const collaboratorData = collaboratorSnapshots.docs
-                    .map(doc => doc.data() as FoundUser)
-                    .filter(Boolean);
-                setDbCollaborators(collaboratorData);
-            } catch(e) {console.error(e)}
-        } else {
-            setDbCollaborators([]);
-        }
-    });
-
-    return () => unsubscribe();
-  }, [doc.id]);
 
   useEffect(() => {
     if(onPeopleListChange) {
@@ -135,7 +140,18 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
      if (!user) return;
      startAdding(async () => {
         try {
-            await updateDocument(doc.id, { collaborators: arrayUnion(collaboratorId) }, user);
+            const currentDoc = await getDoc(firestoreDoc(db, 'documents', doc.id));
+            const currentCollaborators = currentDoc.data()?.collaborators || [];
+            if (currentCollaborators.includes(collaboratorId)) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'User Already Added',
+                    description: 'This user already has access to the document.',
+                });
+                return;
+            }
+
+            await updateDocument(doc.id, { collaborators: arrayUnion(collaboratorId) }, { uid: user.uid, displayName: user.displayName });
             toast({
                 title: 'Collaborator Added',
                 description: 'The user now has access to the document.',
