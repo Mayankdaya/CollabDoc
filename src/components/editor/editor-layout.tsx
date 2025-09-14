@@ -213,9 +213,9 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 doc={initialData}
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
-                <ResizablePanel defaultSize={75} className="overflow-auto" id="editor-panel">
-                     <div className="mx-auto my-8" style={{ width: '8.5in' }}>
-                        <div className={cn("bg-card shadow-lg p-[1in]")} style={{minHeight: '11in'}}>
+                <ResizablePanel defaultSize={75} id="editor-panel" className="flex flex-col overflow-hidden">
+                     <div className="flex-1 overflow-auto p-4 sm:p-8">
+                        <div className="mx-auto bg-card shadow-lg p-[1in]" style={{width: '8.5in', minHeight: '11in'}}>
                             <EditorContent editor={editor} />
                         </div>
                     </div>
@@ -228,13 +228,13 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                             <TabsTrigger value="ai-chat"><Bot className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>AI</span></TabsTrigger>
                             <TabsTrigger value="team"><Users className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Team</span></TabsTrigger>
                         </TabsList>
-                        <TabsContent value="chat" className="overflow-auto mt-0">
+                        <TabsContent value="chat" className="flex-1 overflow-auto mt-0">
                             <ChatPanel documentId={documentId} />
                         </TabsContent>
-                        <TabsContent value="ai-chat" className="overflow-auto mt-0">
+                        <TabsContent value="ai-chat" className="flex-1 overflow-auto mt-0">
                             <AiChatPanel documentContent={editor.getHTML()} editor={editor} />
                         </TabsContent>
-                        <TabsContent value="team" className="overflow-auto mt-0">
+                        <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                             <TeamPanel 
                                 doc={initialData} 
                                 awareness={provider.awareness}
@@ -259,5 +259,3 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
-
-    
