@@ -82,11 +82,10 @@ const chatFlow = ai.defineFlow(
   },
   async input => {
     const result = await chatPrompt(input);
-    const resultText = result.text;
-
+    
     if (result.toolRequests.length === 0) {
       return {
-        response: resultText,
+        response: result.text,
       };
     }
 
@@ -100,12 +99,16 @@ const chatFlow = ai.defineFlow(
     const documentContent = firstToolOutput?.updatedDocumentContent;
     
     let requiresConfirmation = false;
-    let aiResponse = resultText || "I've updated the document for you.";
+    // Default response when a tool is used, but it's not content generation.
+    let aiResponse = "I've updated the document for you.";
 
     if (firstToolName === 'generateNewContent' && documentContent) {
       requiresConfirmation = true;
-      // ALWAYS overwrite the default response with a more specific one for confirmation.
+      // ALWAYS overwrite any conversational response with the specific confirmation question.
       aiResponse = "I have generated the content for you. Would you like to paste it into the editor?";
+    } else if (result.text) {
+      // If the model provided text AND used a tool (that wasn't new content), use that text.
+      aiResponse = result.text;
     }
     
     return {
