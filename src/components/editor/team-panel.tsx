@@ -12,16 +12,16 @@ import type { FoundUser } from './share-dialog';
 interface TeamPanelProps {
   doc: Document;
   peopleWithAccess: FoundUser[];
-  onlineUsers: any[];
+  onlineUserUIDs: string[];
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc, peopleWithAccess, onlineUserUIDs, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
   
   const isUserOnline = useCallback((personUid: string) => {
-    return onlineUsers.some(onlineUser => onlineUser.uid === personUid);
-  }, [onlineUsers]);
+    return onlineUserUIDs.includes(personUid);
+  }, [onlineUserUIDs]);
 
   const owner = peopleWithAccess.find(p => p.uid === doc.userId);
   const collaborators = peopleWithAccess.filter(p => p.uid !== doc.userId);
@@ -118,5 +118,3 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
         </div>
     )
 }
-
-    

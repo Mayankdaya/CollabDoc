@@ -84,6 +84,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     
     const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+    const [onlineUserUIDs, setOnlineUserUIDs] = useState<string[]>([]);
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -110,6 +111,11 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
         [documentId, user, toast]
     );
 
+    const handlePeopleListChange = useCallback((people: FoundUser[]) => {
+      setPeopleWithAccess(people);
+    }, []);
+
+
     useEffect(() => {
         const fetchUsers = async () => {
             const docRef = doc(db, 'documents', documentId);
@@ -122,10 +128,14 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
 
                 if (allUserIds.length > 0) {
-                    const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
-                    const userDocs = await getDocs(usersQuery);
-                    const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
-                    setPeopleWithAccess(fetchedUsers);
+                    try {
+                        const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
+                        const userDocs = await getDocs(usersQuery);
+                        const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
+                        setPeopleWithAccess(fetchedUsers);
+                    } catch (error) {
+                        console.error("Error fetching user profiles:", error);
+                    }
                 }
             }
         };
@@ -152,6 +162,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 
                 const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
                 setOnlineUsers(uniqueUsers);
+                setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
             };
             awareness.on('change', updateOnlineUsers);
             updateOnlineUsers();
@@ -173,6 +184,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 
                 const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
                 setOnlineUsers(uniqueUsers);
+                setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
             };
             awareness.on('change', updateOnlineUsers);
             updateOnlineUsers();
@@ -275,7 +287,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
-                onPeopleListChange={setPeopleWithAccess}
+                onPeopleListChange={handlePeopleListChange}
             />
             <EditorToolbar 
                 editor={editor} 
@@ -311,7 +323,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                             <TeamPanel 
                                 doc={initialData}
                                 peopleWithAccess={peopleWithAccess}
-                                onlineUsers={onlineUsers}
+                                onlineUserUIDs={onlineUserUIDs}
                                 onStartCall={(user, type) => setCallState({ active: true, user, type })}
                             />
                         </TabsContent>
@@ -333,5 +345,3 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
-
-    
