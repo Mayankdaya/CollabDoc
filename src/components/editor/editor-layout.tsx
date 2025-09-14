@@ -158,16 +158,10 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     useEffect(() => {
         if (!editor || !provider) return;
 
-        const handleSync = () => {
-            if (!editor.isDestroyed) {
-                const yDocFragment = provider.doc.get('prosemirror', Y.XmlFragment);
-                if (yDocFragment.length === 0 && initialData.content) {
-                    editor.commands.setContent(initialData.content, false);
-                }
-            }
-        };
-
-        provider.on('synced', handleSync);
+        const yDocFragment = provider.doc.get('prosemirror', Y.XmlFragment);
+        if (yDocFragment.length === 0 && initialData.content) {
+            editor.commands.setContent(initialData.content, false);
+        }
 
         const updateHandler = ({ editor: updatedEditor }: { editor: EditorClass }) => {
             handleAutoSave(updatedEditor.getHTML());
@@ -176,7 +170,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
         editor.on('update', updateHandler);
 
         return () => {
-            provider.off('synced', handleSync);
             editor.off('update', updateHandler);
         };
     }, [editor, provider, initialData.content, handleAutoSave]);
