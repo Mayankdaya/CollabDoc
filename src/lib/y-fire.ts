@@ -139,11 +139,9 @@ export class YFireProvider {
     const awarenessUpdate: { [key: string]: any } = {};
 
     changedClients.forEach((clientID) => {
-        if(clientID === this.doc.clientID) {
-            const state = this.awareness.getStates().get(clientID);
-            if (state) {
-                awarenessUpdate[String(clientID)] = state;
-            }
+        const state = this.awareness.getStates().get(clientID);
+        if (state) {
+            awarenessUpdate[String(clientID)] = state;
         }
     });
 
