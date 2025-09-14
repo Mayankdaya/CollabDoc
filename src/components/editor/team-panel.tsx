@@ -9,6 +9,8 @@ import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 
 interface TeamPanelProps {
   doc: Document;
@@ -17,14 +19,43 @@ interface TeamPanelProps {
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc: initialDoc, peopleWithAccess: initialPeople, onlineUsers, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
+  const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>(initialPeople);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // We determine loading status based on whether the peopleWithAccess prop has been populated
-    setIsLoading(peopleWithAccess.length === 0);
-  }, [peopleWithAccess]);
+   useEffect(() => {
+    setIsLoading(true);
+    if (!initialDoc.id) {
+        setIsLoading(false);
+        return;
+    };
+
+    const fetchUsers = async () => {
+        const docRef = doc(db, 'documents', initialDoc.id);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const docData = docSnap.data();
+            const ownerId = docData.userId;
+            const collaboratorIds = docData.collaborators || [];
+            const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
+
+            if (allUserIds.length > 0) {
+                const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
+                const userDocs = await getDocs(usersQuery);
+                const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
+                setPeopleWithAccess(fetchedUsers);
+            } else {
+                setPeopleWithAccess([]);
+            }
+        }
+        setIsLoading(false);
+    };
+
+    fetchUsers();
+  }, [initialDoc.id]);
+
 
   const isUserOnline = useCallback((person: FoundUser) => {
     return onlineUsers.some(onlineUser => onlineUser.uid === person.uid);
@@ -84,7 +115,7 @@ export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartC
                                 </>
                             )}
                             <span className="text-sm text-muted-foreground">
-                                {person.uid === doc.userId ? 'Owner' : 'Editor'}
+                                {person.uid === initialDoc.userId ? 'Owner' : 'Editor'}
                             </span>
                         </div>
                     </div>
