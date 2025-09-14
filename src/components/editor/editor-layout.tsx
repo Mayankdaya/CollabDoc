@@ -182,9 +182,7 @@ const EditorCore = ({
     newProvider.on('synced', (isSynced: boolean) => {
         if (isSynced) {
             const yDocFragment = ydoc.getXmlFragment('prosemirror');
-            const prosemirrorContent = yDocFragment.length > 0
-                ? yDocToProsemirrorJSON(yDocFragment)
-                : generateJSON(initialData.content, extensions);
+            const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
 
             if (!newEditor.isDestroyed && yDocFragment.length === 0) {
                  newEditor.commands.setContent(prosemirrorContent, false);
