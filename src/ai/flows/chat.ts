@@ -113,20 +113,23 @@ const chatFlow = ai.defineFlow(
     };
     
     const result = await chatPrompt(internalInput);
-    const toolRequest = result.toolRequest();
     
     let documentContent: string | undefined = undefined;
     let requiresConfirmation: boolean | undefined = undefined;
 
-    if (toolRequest) {
-      const toolResponse = await toolRequest.run();
-      const toolOutput = toolResponse.output();
-
-      if (toolOutput.name === 'generateNewContent') {
-        documentContent = toolOutput.result.updatedDocumentContent;
-        requiresConfirmation = true;
-      } else {
-        documentContent = toolOutput.result.updatedDocumentContent;
+    if (result.toolRequests.length > 0) {
+      const toolResponse = await result.runTools();
+      
+      // In this simple case, we just take the first tool's output.
+      // A more complex implementation might handle multiple tool calls.
+      const firstToolOutput = toolResponse[0]?.tool?.output?.updatedDocumentContent;
+      const firstToolName = toolResponse[0]?.tool?.name;
+      
+      if (firstToolOutput !== undefined) {
+        documentContent = firstToolOutput;
+        if (firstToolName === 'generateNewContent') {
+            requiresConfirmation = true;
+        }
       }
     }
 

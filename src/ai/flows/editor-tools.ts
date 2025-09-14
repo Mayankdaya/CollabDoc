@@ -20,7 +20,6 @@ export const replaceTextInDocument = ai.defineTool(
     description:
       'Replaces all occurrences of a specific text string in the document. This is useful for find-and-replace operations. The replacement is case-sensitive.',
     inputSchema: z.object({
-      documentContent: z.string().describe('The full HTML content of the document.'),
       textToFind: z.string().describe('The exact text to find in the document.'),
       textToReplaceWith: z
         .string()
@@ -32,7 +31,8 @@ export const replaceTextInDocument = ai.defineTool(
         .describe('The HTML content of the document after the replacement.'),
     }),
   },
-  async ({documentContent, textToFind, textToReplaceWith}) => {
+  async ({textToFind, textToReplaceWith}, context) => {
+    const documentContent = (context.flow?.input as any)?.documentContent || '';
     // Prevent infinite loops by checking for an empty search string.
     if (!textToFind) {
       return { updatedDocumentContent: documentContent };
@@ -50,7 +50,6 @@ export const deleteTextFromDocument = ai.defineTool(
     description:
       'Deletes all occurrences of a specific text string from the document. Useful for removing sentences or paragraphs. The match is case-sensitive.',
     inputSchema: z.object({
-      documentContent: z.string().describe('The full HTML content of the document.'),
       textToDelete: z
         .string()
         .describe('The exact text to delete from the document.'),
@@ -61,7 +60,8 @@ export const deleteTextFromDocument = ai.defineTool(
         .describe('The HTML content of the document after the deletion.'),
     }),
   },
-  async ({documentContent, textToDelete}) => {
+  async ({textToDelete}, context) => {
+    const documentContent = (context.flow?.input as any)?.documentContent || '';
      // Prevent infinite loops by checking for an empty search string.
      if (!textToDelete) {
       return { updatedDocumentContent: documentContent };
@@ -78,7 +78,6 @@ export const appendToDocument = ai.defineTool(
     name: 'appendToDocument',
     description: 'Adds the given HTML content to the very end of the document.',
     inputSchema: z.object({
-      documentContent: z.string().describe('The full HTML content of the document.'),
       htmlToAppend: z
         .string()
         .describe(
@@ -91,7 +90,8 @@ export const appendToDocument = ai.defineTool(
         .describe('The HTML content of the document after the append operation.'),
     }),
   },
-  async ({documentContent, htmlToAppend}) => {
+  async ({htmlToAppend}, context) => {
+    const documentContent = (context.flow?.input as any)?.documentContent || '';
     return {
       updatedDocumentContent: documentContent + htmlToAppend,
     };
