@@ -163,8 +163,8 @@ const EditorCore = ({
             
             // This is a simplified way to get content into the doc.
             // A more robust solution might involve a custom function to convert Prosemirror JSON to Y.XmlFragment
-            const yText = newYDoc.getText('prosemirror');
-            if (yText.length === 0) {
+            const yDocFragment = newYDoc.getXmlFragment('prosemirror');
+            if (yDocFragment.length === 0) {
                  const newEditor = new EditorClass({ extensions, content: initialData.content });
                  const prosemirrorJson = newEditor.getJSON();
                  const yDocFragment = yDocToProsemirrorJSON(newYDoc, 'prosemirror');
