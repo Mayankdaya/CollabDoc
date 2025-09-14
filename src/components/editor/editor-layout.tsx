@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -185,9 +184,8 @@ const EditorCore = ({
           const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
           if (yDocFragment.length === 0) {
               const prosemirrorJson = generateJSON(initialData.content, extensions);
-              const content = prosemirrorJson.content;
-              if (content && Array.isArray(content) && content.length > 0) {
-                  newEditor.commands.setContent(prosemirrorJson, false);
+              if (!newEditor.isDestroyed) {
+                newEditor.commands.setContent(prosemirrorJson, false);
               }
           }
         }
@@ -342,3 +340,6 @@ function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
 
     
 
+
+
+    
