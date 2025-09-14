@@ -70,34 +70,44 @@ export class YFireProvider {
 
     // Subscribe to awareness changes
     const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
-      const data = snapshot.data() || {};
-      const remoteStates = new Map<number, any>();
-      for (const key in data) {
-          remoteStates.set(parseInt(key, 10), data[key]);
-      }
-      
-      const localClientIDs = Array.from(this.awareness.getStates().keys());
-      const remoteClientIDs = Array.from(remoteStates.keys());
-
-      // Find clients that have disconnected
-      const removedClients = localClientIDs.filter(clientID => {
-          return !remoteClientIDs.includes(clientID) && clientID !== this.doc.clientID;
-      });
-
-      // Find clients that have updated states
-      const updatedClients = remoteClientIDs.filter(clientID => clientID !== this.doc.clientID);
-      
-      if (removedClients.length > 0) {
-          removeAwarenessStates(this.awareness, removedClients, 'firestore');
-      }
-
-      // Apply remote states directly
-      updatedClients.forEach(clientID => {
-        const state = remoteStates.get(clientID);
-        if (state) {
-            this.awareness.setLocalState(clientID, state);
+        const data = snapshot.data() || {};
+        const remoteStates = new Map<number, any>();
+        for (const key in data) {
+            remoteStates.set(parseInt(key, 10), data[key]);
         }
-      });
+        
+        const localClientIDs = Array.from(this.awareness.getStates().keys());
+        const remoteClientIDs = Array.from(remoteStates.keys());
+
+        const removedClients = localClientIDs.filter(clientID => !remoteClientIDs.includes(clientID) && clientID !== this.doc.clientID);
+        const updatedClients = remoteClientIDs.filter(clientID => clientID !== this.doc.clientID);
+
+        if (removedClients.length > 0) {
+            removeAwarenessStates(this.awareness, removedClients, 'firestore');
+        }
+
+        if (updatedClients.length > 0) {
+            const tempAwareness = new Awareness(new Y.Doc());
+            updatedClients.forEach(clientID => {
+                const state = remoteStates.get(clientID);
+                if (state) {
+                    tempAwareness.setLocalState(clientID, state);
+                }
+            });
+
+            if (tempAwareness.getStates().size > 0) {
+                // Filter out client IDs that don't have states in tempAwareness
+                const validClients = updatedClients.filter(clientId => 
+                    tempAwareness.getStates().has(clientId)
+                );
+                
+                // Only proceed if we have valid clients
+                if (validClients.length > 0) {
+                    const update = encodeAwarenessUpdate(tempAwareness, validClients);
+                    applyAwarenessUpdate(this.awareness, update, 'firestore');
+                }
+            }
+        }
     });
 
 
@@ -114,9 +124,9 @@ export class YFireProvider {
   }
 
   private async onAwarenessUnload() {
-      const awarenessUpdate: { [key: string]: any } = {};
-      awarenessUpdate[String(this.doc.clientID)] = deleteField();
-      await setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
+      await setDoc(this.awarenessDocRef, {
+          [String(this.doc.clientID)]: deleteField()
+      }, { merge: true });
   }
 
   private onDocUpdate(update: Uint8Array, origin: any) {
@@ -173,17 +183,13 @@ export class YFireProvider {
     if (awarenessSnapshot.exists()) {
       const data = awarenessSnapshot.data();
       if (data) {
-          const remoteStates = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
-          const newAwareness = new Awareness(new Y.Doc());
-          
-          remoteStates.forEach((state, clientID) => {
-              newAwareness.setLocalState(clientID, state as any);
-          });
-          
-          if (newAwareness.getStates().size > 0) {
-              const update = encodeAwarenessUpdate(newAwareness, Array.from(newAwareness.getStates().keys()));
-              applyAwarenessUpdate(this.awareness, update, 'firestore');
-          }
+        const clients = Object.keys(data).map(Number);
+        const awarenessUpdate = new Awareness(new Y.Doc());
+        clients.forEach(clientID => {
+          awarenessUpdate.setLocalState(clientID, data[clientID]);
+        });
+        const update = encodeAwarenessUpdate(awarenessUpdate, clients);
+        applyAwarenessUpdate(this.awareness, update, 'firestore');
       }
     }
   }
