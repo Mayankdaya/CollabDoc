@@ -85,7 +85,7 @@ const chatFlow = ai.defineFlow(
     
     let documentContent: string | undefined = undefined;
     let requiresConfirmation: boolean | undefined = undefined;
-    let aiResponse = result.text; // Capture the AI's text response first.
+    let aiResponse = result.text(); // Capture the AI's text response first.
 
     if (result.toolRequests.length > 0) {
       const toolResponse = await result.runTools({
