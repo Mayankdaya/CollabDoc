@@ -150,7 +150,7 @@ export class YFireProvider {
     });
 
     if (Object.keys(awarenessUpdate).length > 0) {
-      setDoc(this.awarenessDocRef, awarenessUpdate, { merge: true });
+      updateDoc(this.awarenessDocRef, awarenessUpdate);
     }
   }
 
