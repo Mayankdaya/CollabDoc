@@ -212,8 +212,8 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 docName={docName}
                 doc={initialData}
             />
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel className="editor-page-background overflow-auto">
+            <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
+                <ResizablePanel className="editor-page-background overflow-auto" id="editor-panel">
                      <div className="mx-auto my-8" style={{ width: '8.5in' }}>
                         <div className={cn("bg-card shadow-lg p-[1in]")} style={{minHeight: '11in'}}>
                             <EditorContent editor={editor} />
