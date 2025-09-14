@@ -119,7 +119,7 @@ const chatFlow = ai.defineFlow(
     // This is the simplest way to escape HTML to prevent prompt corruption
     const escapeHtml = (unsafe: string): string => {
         return unsafe
-             .replace(/&/g, "&amp;")
+             .replace(/&(?!(amp|lt|gt|quot|#039);)/g, "&amp;")
              .replace(/</g, "&lt;")
              .replace(/>/g, "&gt;")
              .replace(/"/g, "&quot;")
