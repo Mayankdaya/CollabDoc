@@ -109,9 +109,7 @@ export const clearDocument = ai.defineTool(
     name: 'clearDocument',
     description:
       'Deletes all content from the document, leaving it completely empty.',
-    inputSchema: z.object({
-      // This tool doesn't need documentContent, so it's omitted.
-    }), 
+    inputSchema: z.object({}), 
     outputSchema: z.object({
       updatedDocumentContent: z
         .string()
