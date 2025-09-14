@@ -39,3 +39,8 @@
 {"id":"d92d8bfc42f674dd1db0c90cc583e735","type":"UNKNOWN","start":1757879558215,"name":"GET /favicon--route-entry","end":1757879558468.9365,"status":0}
 {"id":"3b05e49cc5c26b2ce2b1903873bdf6a9","type":"flow","start":1757879582926,"name":"chatFlow","end":1757879583949.1748,"status":2}
 {"id":"3d4509b27d19d4574407f608e857eba2","type":"UNKNOWN","start":1757879582790,"name":"POST /documents/[id]","end":1757879584897.3599,"status":2}
+{"id":"95e4b59e27325b2aa68f74289e9ae83e","type":"UNKNOWN","start":1757879622745,"name":"GET /documents/[id]","end":1757879623253.12,"status":0}
+{"id":"d4f1f4a94d81acf7aa05106617cafde0","type":"UNKNOWN","start":1757879626278,"name":"POST /_error","end":1757879626452.6301,"status":0}
+{"id":"09ef7111d4ce99534052153a31527f4b","type":"UNKNOWN","start":1757879632019,"name":"POST /documents/[id]","end":1757879633061.692,"status":0}
+{"id":"bab6e8d65fb01bf9ac2c5292affd0ab8","type":"flow","start":1757879635508,"name":"chatFlow","end":1757879636556.0747,"status":2}
+{"id":"6c45360b5f42067c9210454221ed4bd9","type":"UNKNOWN","start":1757879635376,"name":"POST /documents/[id]","end":1757879637879.9446,"status":2}
