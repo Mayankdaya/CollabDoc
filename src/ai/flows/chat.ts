@@ -12,6 +12,7 @@ import {
   appendToDocument,
   clearDocument,
   deleteTextFromDocument,
+  generateNewContent,
   replaceTextInDocument,
 } from './editor-tools';
 
@@ -52,12 +53,12 @@ type ChatOutput = z.infer<typeof ChatOutputSchema>;
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: InternalChatInputSchema},
-  output: {schema: ChatOutputSchema},
   tools: [
     replaceTextInDocument,
     deleteTextFromDocument,
     appendToDocument,
     clearDocument,
+    generateNewContent,
   ],
   config: {
     safetySettings: [
@@ -68,33 +69,11 @@ const chatPrompt = ai.definePrompt({
     ],
   },
   prompt: `You are a sophisticated AI assistant integrated into a professional document editor.
-  Your goal is to help users by creating high-quality, well-structured, and visually stunning content, or by directly modifying the document on their command.
+  Your goal is to help users by answering their questions, generating content, or by directly modifying the document on their command.
 
-  You have two primary capabilities:
-
-  1.  **Document Generation:**
-      When a user asks you to create a document (e.g., "write an essay on the solar system"), you must adhere to the following premium formatting standards:
-      *   **Generate Content in HTML:** The document must be a single, well-structured HTML string.
-      *   **Professional Structure & Style:**
-          *   Start with a main title using an \`<h2 style="color: hsl(var(--primary));">\` tag.
-          *   Use \`<h3>\` tags for major sections and \`<h4>\` for sub-sections.
-          *   Write informative paragraphs using \`<p>\` tags.
-          *   Use \`<blockquote>\` to highlight important quotes or key takeaways.
-          *   Use \`<strong>\` for emphasis and \`<mark>\` to highlight keywords.
-          *   Use \`<table>\` for structured data.
-      *   **Set Output Fields:**
-          *   Populate the 'documentContent' field with the generated HTML.
-          *   Set 'requiresConfirmation' to true.
-          *   For the 'response' field, ask for user confirmation in a friendly tone. Example: "I've drafted a document about the solar system for you. Would you like me to paste it into the editor?".
-
-  2.  **Direct Document Editing:**
-      When a user asks you to modify the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the provided tools to perform the action.
-      *   Analyze the user's request and choose the appropriate tool (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.).
-      *   Call the tool with the correct parameters based on the current document content.
-      *   The tool will return the modified HTML. You MUST place this modified HTML into the 'documentContent' output field.
-      *   For the 'response' field, provide a confirmation message. Example: "I have removed that paragraph for you."
-
-  For all other general questions or simple requests where no document generation or editing is needed, provide a helpful response in the 'response' field and leave the other fields empty.
+  - If the user asks you to **create or generate** a new document (e.g., "write an essay on the solar system"), you MUST use the \`generateNewContent\` tool. The content you generate for the tool should be well-structured HTML using h2, h3, p, and other appropriate tags.
+  - If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.).
+  - For all other general questions, provide a helpful response without using any tools.
 
   Current Document Content:
   {{{escapedDocumentContent}}}
@@ -118,20 +97,42 @@ const chatFlow = ai.defineFlow(
   async input => {
     // This is the simplest way to escape HTML to prevent prompt corruption
     const escapeHtml = (unsafe: string): string => {
-        return unsafe
-             .replace(/&(?!(amp|lt|gt|quot|#039);)/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
-    }
+      return unsafe
+        .replace(/&(?!(amp|lt|gt|quot|#039);)/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
 
     const internalInput = {
       ...input,
       escapedDocumentContent: escapeHtml(input.documentContent),
     };
-    const {output} = await chatPrompt(internalInput);
-    return output!;
+    
+    const result = await chatPrompt(internalInput);
+    const toolRequest = result.toolRequest();
+    
+    let documentContent: string | undefined = undefined;
+    let requiresConfirmation: boolean | undefined = undefined;
+
+    if (toolRequest) {
+      const toolResponse = await toolRequest.run();
+      const toolOutput = toolResponse.output();
+
+      if (toolOutput.name === 'generateNewContent') {
+        documentContent = toolOutput.result.updatedDocumentContent;
+        requiresConfirmation = true;
+      } else {
+        documentContent = toolOutput.result.updatedDocumentContent;
+      }
+    }
+
+    return {
+      response: result.text(),
+      documentContent,
+      requiresConfirmation,
+    };
   }
 );
 

@@ -7,6 +7,7 @@
  * - deleteTextFromDocument - Deletes all occurrences of a specific text string.
  * - appendToDocument - Appends text to the end of the document.
  * - clearDocument - Clears the entire document content.
+ * - generateNewContent - Replaces the entire document with new, AI-generated HTML content.
  */
 
 import {ai} from '@/ai/genkit';
@@ -112,6 +113,24 @@ export const clearDocument = ai.defineTool(
   async () => {
     return {
       updatedDocumentContent: '',
+    };
+  }
+);
+
+export const generateNewContent = ai.defineTool(
+  {
+    name: 'generateNewContent',
+    description: 'Use this tool to generate completely new content for the document, such as writing an essay or a report. This will replace the entire existing document.',
+    inputSchema: z.object({
+        generatedHtmlContent: z.string().describe('The new, well-structured HTML content to populate the document with.'),
+    }),
+    outputSchema: z.object({
+      updatedDocumentContent: z.string().describe('The HTML content for the document.'),
+    }),
+  },
+  async ({ generatedHtmlContent }) => {
+    return {
+      updatedDocumentContent: generatedHtmlContent,
     };
   }
 );
