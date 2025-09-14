@@ -136,82 +136,104 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
 
 
     useEffect(() => {
-        if (!room || !user || provider) return;
+        if (!room || !user) return;
 
-        const ydoc = new Y.Doc();
-        const newProvider = new LiveblocksYjsProvider(room, ydoc);
+        let ydoc: Y.Doc;
+        let newProvider: LiveblocksYjsProvider;
+        let newEditor: EditorClass;
 
-        // Listen for awareness changes to update online users
-        const awareness = newProvider.awareness;
-        const updateOnlineUsers = () => {
-            const states = Array.from(awareness.getStates().values());
-            const users = states
-                .map((state) => state.user)
-                .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
-            
-            const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
-            setOnlineUsers(uniqueUsers);
-        };
-        awareness.on('change', updateOnlineUsers);
-        updateOnlineUsers(); // Initial call
-
-
-        const newEditor = new EditorClass({
-            extensions: [
-                StarterKit.configure({ 
-                    history: false,
-                }),
-                TextAlign.configure({ types: ['heading', 'paragraph'] }),
-                TextStyle, FontFamily, FontSize, LineHeight, Color,
-                Highlight.configure({ multicolor: true }),
-                Underline,
-                Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-                Image,
-                Link.configure({ openOnClick: false }),
-                Placeholder.configure({ placeholder: 'Start typing...' }),
-                CharacterCount,
-                TaskList, TaskItem.configure({ nested: true }),
-                Collaboration.configure({
-                    document: ydoc,
-                }),
-                CollaborationCursor.configure({
-                    provider: newProvider,
-                    user: {
-                        name: user?.displayName || 'Anonymous',
-                        color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-                        uid: user.uid,
-                    },
-                })
-            ],
-            editorProps: {
-                attributes: {
-                    class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-                },
-            },
-        });
-        
-        setEditor(newEditor);
-        setProvider(newProvider);
-        
-        const handleSync = () => {
-            if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
-                const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
-                if (yDocFragment.length === 0 && initialData.content) {
-                    newEditor.commands.setContent(initialData.content, false);
-                }
+        if (provider && editor) {
+             // Already initialized
+            const awareness = provider.awareness;
+             const updateOnlineUsers = () => {
+                const states = Array.from(awareness.getStates().values());
+                const users = states
+                    .map((state) => state.user)
+                    .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
+                
+                const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
+                setOnlineUsers(uniqueUsers);
+            };
+            awareness.on('change', updateOnlineUsers);
+            updateOnlineUsers();
+            return () => {
+                 awareness.off('change', updateOnlineUsers);
             }
-        };
 
-        newProvider.on('synced', handleSync);
-        handleSync(); // Also run on initial setup
+        } else {
+            ydoc = new Y.Doc();
+            newProvider = new LiveblocksYjsProvider(room, ydoc);
+            setProvider(newProvider);
+
+            const awareness = newProvider.awareness;
+            const updateOnlineUsers = () => {
+                const states = Array.from(awareness.getStates().values());
+                const users = states
+                    .map((state) => state.user)
+                    .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
+                
+                const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
+                setOnlineUsers(uniqueUsers);
+            };
+            awareness.on('change', updateOnlineUsers);
+            updateOnlineUsers();
 
 
-        return () => {
-            awareness.off('change', updateOnlineUsers);
-            newProvider.off('synced', handleSync);
-            ydoc.destroy();
-            newProvider.destroy();
-            newEditor.destroy();
+            newEditor = new EditorClass({
+                extensions: [
+                    StarterKit.configure({ 
+                        history: false,
+                    }),
+                    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+                    TextStyle, FontFamily, FontSize, LineHeight, Color,
+                    Highlight.configure({ multicolor: true }),
+                    Underline,
+                    Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+                    Image,
+                    Link.configure({ openOnClick: false }),
+                    Placeholder.configure({ placeholder: 'Start typing...' }),
+                    CharacterCount,
+                    TaskList, TaskItem.configure({ nested: true }),
+                    Collaboration.configure({
+                        document: ydoc,
+                    }),
+                    CollaborationCursor.configure({
+                        provider: newProvider,
+                        user: {
+                            name: user?.displayName || 'Anonymous',
+                            color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+                            uid: user.uid,
+                        },
+                    })
+                ],
+                editorProps: {
+                    attributes: {
+                        class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+                    },
+                },
+            });
+            
+            setEditor(newEditor);
+            
+            const handleSync = () => {
+                if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
+                    const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
+                    if (yDocFragment.length === 0 && initialData.content) {
+                        newEditor.commands.setContent(initialData.content, false);
+                    }
+                }
+            };
+
+            newProvider.on('synced', handleSync);
+            handleSync();
+
+            return () => {
+                awareness.off('change', updateOnlineUsers);
+                newProvider.off('synced', handleSync);
+                ydoc.destroy();
+                newProvider.destroy();
+                newEditor.destroy();
+            }
         }
     }, [room, user]);
 
