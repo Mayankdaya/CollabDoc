@@ -30,6 +30,7 @@ export async function generateContentSuggestions(
 ) {
   const parsed = GenerateContentSuggestionsInputSchema.safeParse(input);
   if (!parsed.success) {
+    console.error("Invalid input for content suggestions:", parsed.error.flatten());
     throw new Error("Invalid input for content suggestions.");
   }
   try {
@@ -75,6 +76,7 @@ const TranslateDocumentInputSchema = z.object({
 export async function translateDocument(input: z.infer<typeof TranslateDocumentInputSchema>) {
     const parsed = TranslateDocumentInputSchema.safeParse(input);
     if (!parsed.success) {
+        console.error("Invalid input for translation:", parsed.error.flatten());
         throw new Error("Invalid input for translation.");
     }
     try {
@@ -93,6 +95,7 @@ const SummarizeDocumentInputSchema = z.object({
 export async function summarizeDocument(input: z.infer<typeof SummarizeDocumentInputSchema>) {
     const parsed = SummarizeDocumentInputSchema.safeParse(input);
     if (!parsed.success) {
+        console.error("Invalid input for summary:", parsed.error.flatten());
         throw new Error("Invalid input for summary.");
     }
     try {
@@ -119,14 +122,14 @@ const ChatInputSchema = z.object({
 export async function chat(input: z.infer<typeof ChatInputSchema>) {
     const parsed = ChatInputSchema.safeParse(input);
     if (!parsed.success) {
-        console.error("Invalid chat input:", parsed.error);
+        console.error("Invalid chat input:", parsed.error.flatten());
         throw new Error("Invalid input for chat.");
     }
     try {
         const result = await chatFlow(parsed.data);
         return result;
     } catch (error) {
-        console.error("Error in chat flow:", error);
+        console.error("Error in chat flow. Full error object:", error);
         throw new Error("Failed to get chat response.");
     }
 }
@@ -138,7 +141,10 @@ const GenerateTableOfContentsInputSchema = z.object({
 
 export async function generateTableOfContents(input: z.infer<typeof GenerateTableOfContentsInputSchema>) {
   const parsed = GenerateTableOfContentsInputSchema.safeParse(input);
-  if (!parsed.success) throw new Error("Invalid input for TOC.");
+  if (!parsed.success) {
+    console.error("Invalid input for TOC:", parsed.error.flatten());
+    throw new Error("Invalid input for TOC.");
+  }
   try {
     return await generateTableOfContentsFlow(parsed.data);
   } catch (error) {
@@ -155,7 +161,10 @@ const InsertCitationInputSchema = z.object({
 
 export async function insertCitation(input: z.infer<typeof InsertCitationInputSchema>) {
   const parsed = InsertCitationInputSchema.safeParse(input);
-  if (!parsed.success) throw new Error("Invalid input for citation.");
+  if (!parsed.success) {
+    console.error("Invalid input for citation:", parsed.error.flatten());
+    throw new Error("Invalid input for citation.");
+  }
   try {
     return await insertCitationFlow(parsed.data);
   } catch (error) {
@@ -171,7 +180,10 @@ const GenerateBibliographyInputSchema = z.object({
 
 export async function generateBibliography(input: z.infer<typeof GenerateBibliographyInputSchema>) {
   const parsed = GenerateBibliographyInputSchema.safeParse(input);
-  if (!parsed.success) throw new Error("Invalid input for bibliography.");
+  if (!parsed.success) {
+    console.error("Invalid input for bibliography:", parsed.error.flatten());
+    throw new Error("Invalid input for bibliography.");
+  }
   try {
     return await generateBibliographyFlow(parsed.data);
   } catch (error) {
@@ -193,6 +205,7 @@ const SendMessageSchema = z.object({
 export async function sendMessage(input: z.infer<typeof SendMessageSchema>) {
     const parsed = SendMessageSchema.safeParse(input);
     if (!parsed.success) {
+        console.error("Invalid input for sending message:", parsed.error.flatten());
         throw new Error("Invalid input for sending message.");
     }
     const { documentId, message, user } = parsed.data;
