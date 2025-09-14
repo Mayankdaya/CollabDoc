@@ -1,7 +1,7 @@
 
 "use server";
 
-import { generateContentSuggestions as genAIFlow, findSynonyms as findSynonymsFlow, checkSpellingAndGrammar as checkSpellingAndGrammarFlow } from "@/ai/flows/ai-content-suggestions";
+import { generateContentSuggestions as genAIFlow, findSynonyms as findSynonymsFlow, checkSpellingAndGrammar as checkSpellingAndGrammarFlow, generateDocumentFromTopic as generateDocumentFromTopicFlow } from "@/ai/flows/ai-content-suggestions";
 import { translateDocument as translateDocumentFlow, summarizeDocument as summarizeDocumentFlow, generateTableOfContents as generateTableOfContentsFlow, insertCitation as insertCitationFlow, generateBibliography as generateBibliographyFlow } from "@/ai/flows/document-actions";
 import { chat as chatFlow } from "@/ai/flows/chat";
 import { z } from "zod";
@@ -135,6 +135,24 @@ export async function chat(input: z.infer<typeof ChatInputSchema>) {
     }
 }
 
+const GenerateDocumentFromTopicInputSchema = z.object({
+    topic: z.string(),
+});
+
+export async function generateDocumentFromTopic(input: z.infer<typeof GenerateDocumentFromTopicInputSchema>) {
+    const parsed = GenerateDocumentFromTopicInputSchema.safeParse(input);
+    if (!parsed.success) {
+        console.error("Invalid input for topic generation:", parsed.error.flatten());
+        throw new Error("Invalid input for topic generation.");
+    }
+    try {
+        return await generateDocumentFromTopicFlow(parsed.data);
+    } catch (error) {
+        console.error("Error generating document from topic:", error);
+        throw new Error("Failed to generate document from topic.");
+    }
+}
+
 
 const GenerateTableOfContentsInputSchema = z.object({
   documentContent: z.string(),
@@ -230,3 +248,5 @@ export async function sendMessage(input: z.infer<typeof SendMessageSchema>) {
         throw new Error("Failed to send message.");
     }
 }
+
+    

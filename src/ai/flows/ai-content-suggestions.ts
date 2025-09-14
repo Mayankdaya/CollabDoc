@@ -2,73 +2,45 @@
 'use server';
 
 /**
- * @fileOverview Provides AI-powered content suggestions for improving writing within the collaborative document editor.
+ * @fileOverview Provides AI-powered content suggestions and direct content generation.
  *
- * - generateContentSuggestions - A function that generates content suggestions.
- * - GenerateContentSuggestionsInput - The input type for the generateContentSuggestions function.
- * - GenerateContentSuggestionsOutput - The return type for the generateContentSuggestions function.
- * - findSynonyms - A function that finds synonyms for a given word.
- * - checkSpellingAndGrammar - A function that checks the document for spelling and grammar errors.
+ * - generateContentSuggestions - Generates writing improvement suggestions.
+ * - findSynonyms - Finds synonyms for a word.
+ * - checkSpellingAndGrammar - Checks for spelling and grammar errors.
+ * - generateDocumentFromTopic - Generates a full HTML document from a topic.
  */
 
 import {ai} from '@/ai/genkit';
 import { googleAI } from '@genkit-ai/googleai';
 import {z} from 'genkit';
 
+// Section 1: Content Improvement Suggestions
+
 const GenerateContentSuggestionsInputSchema = z.object({
-  documentContent: z
-    .string()
-    .describe('The current content of the document being edited.'),
-  cursorPosition: z
-    .number()
-    .describe(
-      'The current cursor position within the document content, used to provide context-aware suggestions.'
-    ),
-  tone: z
-    .string()
-    .optional()
-    .describe(
-      'The desired tone of the content, e.g., professional, casual, academic.'
-    ),
+  documentContent: z.string().describe('The current content of the document.'),
+  cursorPosition: z.number().describe('The cursor position for context.'),
+  tone: z.string().optional().describe('Desired tone for the suggestions.'),
 });
-export type GenerateContentSuggestionsInput = z.infer<
-  typeof GenerateContentSuggestionsInputSchema
->;
+export type GenerateContentSuggestionsInput = z.infer<typeof GenerateContentSuggestionsInputSchema>;
 
 const GenerateContentSuggestionsOutputSchema = z.object({
-  suggestions: z
-    .array(z.string())
-    .describe(
-      'An array of suggested phrases, sentences, or paragraphs to improve the document content.'
-    ),
+  suggestions: z.array(z.string()).describe('Array of content suggestions.'),
 });
-export type GenerateContentSuggestionsOutput = z.infer<
-  typeof GenerateContentSuggestionsOutputSchema
->;
+export type GenerateContentSuggestionsOutput = z.infer<typeof GenerateContentSuggestionsOutputSchema>;
 
-export async function generateContentSuggestions(
-  input: GenerateContentSuggestionsInput
-): Promise<GenerateContentSuggestionsOutput> {
+export async function generateContentSuggestions(input: GenerateContentSuggestionsInput): Promise<GenerateContentSuggestionsOutput> {
   return generateContentSuggestionsFlow(input);
 }
 
-const prompt = ai.definePrompt({
+const generateContentSuggestionsPrompt = ai.definePrompt({
   name: 'generateContentSuggestionsPrompt',
   input: {schema: GenerateContentSuggestionsInputSchema},
   output: {schema: GenerateContentSuggestionsOutputSchema},
   model: googleAI.model('gemini-1.5-flash-latest'),
-  prompt: `You are an AI assistant designed to provide content suggestions for a collaborative document editor.
-  Given the current document content, cursor position, and desired tone, generate an array of suggested phrases, sentences, or paragraphs to improve the writing.
-
-  Current Document Content:
-  {{documentContent}}
-
-  Cursor Position: {{cursorPosition}}
-
-  Desired Tone: {{tone}}
-
-  Suggestions:
-  `,
+  prompt: `Generate content improvement suggestions based on the document content, cursor position, and desired tone.
+  Document: {{documentContent}}
+  Cursor at: {{cursorPosition}}
+  Tone: {{tone}}`,
 });
 
 const generateContentSuggestionsFlow = ai.defineFlow(
@@ -78,18 +50,19 @@ const generateContentSuggestionsFlow = ai.defineFlow(
     outputSchema: GenerateContentSuggestionsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await generateContentSuggestionsPrompt(input);
     return output!;
   }
 );
 
+// Section 2: Writing Assistance Tools
 
 const FindSynonymsInputSchema = z.object({
   word: z.string().describe('The word to find synonyms for.'),
 });
 
 const FindSynonymsOutputSchema = z.object({
-    synonyms: z.array(z.string()).describe('An array of synonyms for the given word.'),
+    synonyms: z.array(z.string()).describe('Array of synonyms.'),
 });
 
 export async function findSynonyms(word: string): Promise<z.infer<typeof FindSynonymsOutputSchema>> {
@@ -116,18 +89,15 @@ const findSynonymsFlow = ai.defineFlow(
     }
 );
 
-
 const SpellingAndGrammarInputSchema = z.object({
-  documentContent: z.string().describe('The content of the document to check.'),
+  documentContent: z.string().describe('The document content to check.'),
 });
 
 const SpellingAndGrammarOutputSchema = z.object({
-  suggestions: z.array(z.string()).describe('An array of spelling and grammar suggestions.'),
+  suggestions: z.array(z.string()).describe('Array of spelling/grammar suggestions.'),
 });
 
-export async function checkSpellingAndGrammar(
-  documentContent: string
-): Promise<z.infer<typeof SpellingAndGrammarOutputSchema>> {
+export async function checkSpellingAndGrammar(documentContent: string): Promise<z.infer<typeof SpellingAndGrammarOutputSchema>> {
   return checkSpellingAndGrammarFlow({ documentContent });
 }
 
@@ -136,7 +106,7 @@ const checkSpellingAndGrammarPrompt = ai.definePrompt({
   input: { schema: SpellingAndGrammarInputSchema },
   output: { schema: SpellingAndGrammarOutputSchema },
   model: googleAI.model('gemini-1.5-flash-latest'),
-  prompt: 'Check the following document for spelling and grammar errors. Provide a list of suggestions for improvement. Document: {{documentContent}}',
+  prompt: 'Check for spelling and grammar errors and provide suggestions. Document: {{documentContent}}',
 });
 
 const checkSpellingAndGrammarFlow = ai.defineFlow(
@@ -150,3 +120,44 @@ const checkSpellingAndGrammarFlow = ai.defineFlow(
         return output!;
     }
 );
+
+// Section 3: Direct Document Generation
+
+const GenerateDocumentFromTopicInputSchema = z.object({
+  topic: z.string().describe('The topic for the new document.'),
+});
+export type GenerateDocumentFromTopicInput = z.infer<typeof GenerateDocumentFromTopicInputSchema>;
+
+const GenerateDocumentFromTopicOutputSchema = z.object({
+  documentContent: z.string().describe('The generated HTML content for the document.'),
+});
+export type GenerateDocumentFromTopicOutput = z.infer<typeof GenerateDocumentFromTopicOutputSchema>;
+
+
+export async function generateDocumentFromTopic(input: GenerateDocumentFromTopicInput): Promise<GenerateDocumentFromTopicOutput> {
+  return generateDocumentFromTopicFlow(input);
+}
+
+const generateDocumentFromTopicPrompt = ai.definePrompt({
+  name: 'generateDocumentFromTopicPrompt',
+  input: {schema: GenerateDocumentFromTopicInputSchema},
+  output: {schema: GenerateDocumentFromTopicOutputSchema},
+  model: googleAI.model('gemini-1.5-flash-latest'),
+  prompt: `You are an AI assistant that generates well-structured HTML documents.
+  Based on the topic "{{topic}}", create a comprehensive document.
+  The output MUST be valid HTML content, including headings, paragraphs, and lists where appropriate.`,
+});
+
+const generateDocumentFromTopicFlow = ai.defineFlow(
+  {
+    name: 'generateDocumentFromTopicFlow',
+    inputSchema: GenerateDocumentFromTopicInputSchema,
+    outputSchema: GenerateDocumentFromTopicOutputSchema,
+  },
+  async input => {
+    const {output} = await generateDocumentFromTopicPrompt(input);
+    return output!;
+  }
+);
+
+    

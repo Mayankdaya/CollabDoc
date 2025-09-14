@@ -2,11 +2,11 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from 'react';
-import { Loader2, SendHorizonal, Sparkles, Mic } from 'lucide-react';
+import { Loader2, SendHorizonal, Sparkles, Mic, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { chat } from '@/app/documents/[id]/actions';
+import { chat, generateDocumentFromTopic } from '@/app/documents/[id]/actions';
 import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
@@ -51,11 +51,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         // Check for browser support
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
-            toast({
-                variant: 'destructive',
-                title: "Speech Recognition Not Supported",
-                description: "Your browser does not support voice commands.",
-            });
+            console.warn("Speech recognition not supported by this browser.");
             return;
         }
 
@@ -65,16 +61,12 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         recognition.lang = 'en-US';
 
         recognition.onresult = (event) => {
-            let interimTranscript = '';
             let finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     finalTranscript += event.results[i][0].transcript;
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
                 }
             }
-            // Use the final transcript to update the input
             if (finalTranscript) {
                 setInput(prevInput => prevInput + finalTranscript);
             }
@@ -121,17 +113,17 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
 
         const newMessages: Message[] = [...messages, { role: 'user', content: input }];
         setMessages(newMessages);
+        const currentInput = input;
         setInput('');
 
         startTransition(async () => {
             try {
                 const result = await chat({
                     history: newMessages.slice(0, -1),
-                    message: input,
+                    message: currentInput,
                     documentContent,
                 });
                 
-                // If the AI modified the document, update the editor
                 if (result.documentContent !== undefined && result.documentContent !== documentContent) {
                     handleEditorUpdate(result.documentContent);
                 }
@@ -140,13 +132,46 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                     role: 'model', 
                     content: result.response,
                     documentContent: result.documentContent,
-                    requiresConfirmation: result.requiresConfirmation,
                 }]);
 
             } catch (error) {
                 toast({
                     variant: 'destructive',
                     title: 'Error getting response',
+                    description: error instanceof Error ? error.message : 'An unknown error occurred.',
+                });
+                setMessages(prev => prev.slice(0, -1));
+            }
+        });
+    };
+
+    const handleGenerateContent = () => {
+        if (!input.trim() || !editor) return;
+
+        const topic = input;
+        setInput('');
+        
+        // Add a user message to show what was requested
+        setMessages(prev => [...prev, { role: 'user', content: `Generate a document about: ${topic}` }]);
+
+        startTransition(async () => {
+             try {
+                const result = await generateDocumentFromTopic({ topic });
+
+                if (result && result.documentContent) {
+                    handleEditorUpdate(result.documentContent);
+                    setMessages(prev => [...prev, { role: 'model', content: "I've updated the document for you." }]);
+                    toast({
+                        title: 'Content Generated',
+                        description: 'The document has been updated with the new content.',
+                    });
+                } else {
+                    setMessages(prev => [...prev, { role: 'model', content: "I couldn't generate content for that topic." }]);
+                }
+            } catch (error) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Error generating content',
                     description: error instanceof Error ? error.message : 'An unknown error occurred.',
                 });
                 setMessages(prev => prev.slice(0, -1)); // remove user message on error
@@ -161,24 +186,12 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         }
     }
 
-    const handlePasteContent = (content?: string) => {
-        if (editor && content) {
-            editor.chain().focus().insertContent(content).run();
-            // Optionally, clear the confirmation message
-            setMessages(prev => prev.map(m => ({ ...m, requiresConfirmation: false })));
-        }
-    }
-
-    const handleCancelPaste = () => {
-        setMessages(prev => prev.map(m => ({ ...m, requiresConfirmation: false })));
-    }
-
 
     return (
         <div className="flex h-full flex-col">
             <div className='p-4 border-b border-white/30'>
                  <h2 className="font-headline text-lg font-semibold">AI Assistant</h2>
-                 <p className="text-sm text-muted-foreground">Ask questions, give voice commands, or tell me to edit the document.</p>
+                 <p className="text-sm text-muted-foreground">Ask questions, give commands, or use the checkmark to generate a document from a topic.</p>
             </div>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="space-y-4 p-4">
@@ -200,12 +213,6 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                                         {message.content}
                                     </ReactMarkdown>
                                 </div>
-                                {message.requiresConfirmation && (
-                                    <div className="mt-4 flex gap-2">
-                                        <Button size="sm" onClick={() => handlePasteContent(message.documentContent)}>Paste into Editor</Button>
-                                        <Button size="sm" variant="ghost" onClick={handleCancelPaste}>Cancel</Button>
-                                    </div>
-                                )}
                             </div>
                              {message.role === 'user' && (
                                 <Avatar className="h-8 w-8">
@@ -221,7 +228,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                             </Avatar>
                             <div className="rounded-lg p-3 bg-black/10 border border-white/20 backdrop-blur-sm flex items-center gap-2">
                                 <Loader2 className="h-5 w-5 animate-spin" />
-                                <span className='text-sm text-muted-foreground italic'>Typing...</span>
+                                <span className='text-sm text-muted-foreground italic'>Thinking...</span>
                             </div>
                         </div>
                     )}
@@ -233,8 +240,8 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder={isListening ? "Listening..." : "Ask the AI something..."}
-                        className="pr-24 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
+                        placeholder={isListening ? "Listening..." : "Chat with the AI or enter a topic to generate..."}
+                        className="pr-32 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
                         disabled={isPending}
                     />
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -243,15 +250,26 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                             size="icon" 
                             variant={isListening ? "destructive" : "ghost"}
                             onClick={toggleListening}
-                            disabled={!recognitionRef.current}
+                            disabled={!recognitionRef.current || isPending}
+                            title="Voice input"
                         >
                             <Mic className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                            type="button" 
+                            size="icon" 
+                            onClick={handleGenerateContent}
+                            disabled={isPending || !input.trim()}
+                            title="Generate Document from Topic"
+                        >
+                            <Check className="h-5 w-5" />
                         </Button>
                         <Button 
                             type="submit" 
                             size="icon" 
                             onClick={handleSendMessage}
                             disabled={isPending || !input.trim()}
+                            title="Send Chat Message"
                         >
                             <SendHorizonal className="h-5 w-5" />
                         </Button>
@@ -261,3 +279,5 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         </div>
     );
 }
+
+    
