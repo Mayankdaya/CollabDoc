@@ -9,7 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:chat": "genkit eval:run -f src/ai/dev.ts src/ai/test-chat.ts",
-    "test:api": "genkit eval:run -f src/ai/dev.ts src/ai/test-api.ts"
+    "test:api": "genkit eval:run src/ai/dev.ts src/ai/test-api.ts"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
