@@ -183,7 +183,10 @@ export class YFireProvider {
     if (awarenessSnapshot.exists()) {
       const data = awarenessSnapshot.data();
       if (data) {
-        const clients = Object.keys(data).map(Number);
+        const clients = Object.keys(data)
+          .map(Number)
+          .filter(clientID => data[clientID] !== null && data[clientID] !== undefined);
+          
         const awarenessUpdate = new Awareness(new Y.Doc());
         clients.forEach(clientID => {
           awarenessUpdate.setLocalState(clientID, data[clientID]);
