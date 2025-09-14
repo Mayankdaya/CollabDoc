@@ -21,3 +21,21 @@
 {"id":"2038d9fa032aeaee0822ca567b961ae1","type":"UNKNOWN","start":1757879431464,"name":"POST /documents/[id]","end":1757879438317.3213,"status":0}
 {"id":"65e96368ab0eecc83566bdf7c78c5ab3","type":"UNKNOWN","start":1757879440587,"name":"POST /documents/[id]","end":1757879441386.1157,"status":0}
 {"id":"bb8602fa2323cd3e9b5900076d4ccf90","type":"UNKNOWN","start":1757879478699,"name":"RSC GET /documents/[id]","end":1757879480737.2893,"status":0}
+{"id":"cdc35ea2d7c109a94f3ac2aa18156b01","type":"UNKNOWN","start":1757879481190,"name":"GET /documents/[id]","end":1757879482296.4722,"status":0}
+{"id":"4b0ae002c1d41bc58ea3fc08a86635ce","type":"UNKNOWN","start":1757879488116,"name":"POST /_error","end":1757879488286.2625,"status":0}
+{"id":"98bbde83c7478970fd4549456f16c0aa","type":"UNKNOWN","start":1757879496380,"name":"POST /documents/[id]","end":1757879497535.8755,"status":0}
+{"id":"152c2a14ee238d73e2dae233e6b56bd4","type":"flow","start":1757879499336,"name":"generateDocumentFromTopicFlow","end":1757879500521.3123,"status":2}
+{"id":"3176ddedf3a6d074c0cf3a04faebd393","type":"UNKNOWN","start":1757879499142,"name":"POST /documents/[id]","end":1757879501468.8584,"status":2}
+{"id":"11a2b0bf790832b9df0de36f7fb8ebb3","type":"flow","start":1757879509441,"name":"chatFlow","end":1757879510490.7305,"status":2}
+{"id":"6017ba1c5562b1bedb8d6ddd4288dd98","type":"UNKNOWN","start":1757879509306,"name":"POST /documents/[id]","end":1757879511409.486,"status":2}
+{"id":"46a4127396a003a18dfc42bba0a7db77","type":"UNKNOWN","start":1757879524334,"name":"GET /documents/[id]","end":1757879524835.1763,"status":0}
+{"id":"7dc124263117004b84d645908c826472","type":"UNKNOWN","start":1757879526998,"name":"POST /_error","end":1757879527410.7578,"status":0}
+{"id":"b66cb1bc4b1e7f5831167198053ee8fe","type":"UNKNOWN","start":1757879526282,"name":"GET /favicon--route-entry","end":1757879528067.9734,"status":0}
+{"id":"1aa6604449b81db6d3b2f50182af4c31","type":"UNKNOWN","start":1757879528748,"name":"GET /favicon--route-entry","end":1757879528997.232,"status":0}
+{"id":"1e4e84e01ed159773bee0a76b8b1af3b","type":"UNKNOWN","start":1757879534766,"name":"POST /documents/[id]","end":1757879535577.0684,"status":0}
+{"id":"7992c2eead7d23959979669b54cba2c1","type":"UNKNOWN","start":1757879536340,"name":"GET /favicon--route-entry","end":1757879536586.7922,"status":0}
+{"id":"13bbf38b282c1dbdaa637723017d5306","type":"flow","start":1757879552205,"name":"chatFlow","end":1757879553238.3105,"status":2}
+{"id":"469a534c5c76b803f69a97d896af8278","type":"UNKNOWN","start":1757879552071,"name":"POST /documents/[id]","end":1757879554975.714,"status":2}
+{"id":"d92d8bfc42f674dd1db0c90cc583e735","type":"UNKNOWN","start":1757879558215,"name":"GET /favicon--route-entry","end":1757879558468.9365,"status":0}
+{"id":"3b05e49cc5c26b2ce2b1903873bdf6a9","type":"flow","start":1757879582926,"name":"chatFlow","end":1757879583949.1748,"status":2}
+{"id":"3d4509b27d19d4574407f608e857eba2","type":"UNKNOWN","start":1757879582790,"name":"POST /documents/[id]","end":1757879584897.3599,"status":2}
