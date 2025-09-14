@@ -52,7 +52,6 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
-import { TiptapCollabProvider } from '@hocuspocus/provider';
 
 
 function EditorLoading() {
@@ -126,22 +125,34 @@ const EditorCore = ({
     [documentId, user, toast, setIsSaving, setLastSaved, setLastSavedBy]
   );
   
+  const extensions = [
+    StarterKit.configure({ history: false }),
+    TextAlign.configure({ types: ['heading', 'paragraph'] }),
+    TextStyle, FontFamily, FontSize, LineHeight, Color,
+    Highlight.configure({ multicolor: true }),
+    Underline,
+    Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+    Image,
+    Link.configure({ openOnClick: false }),
+    Placeholder.configure({ placeholder: 'Start typing...' }),
+    History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
+    TaskList, TaskItem.configure({ nested: true }),
+  ];
+
   useEffect(() => {
-    if (!room) return;
+    if (!room || !user) return;
 
     const newYDoc = new Y.Doc();
     const newProvider = new LiveblocksYjsProvider(room, newYDoc);
     setProvider(newProvider);
     
-    // Only set up the editor once the provider is connected
     newProvider.on('synced', (isSynced: boolean) => {
       if(isSynced) {
-        // If the Yjs document is empty, populate it with the initial content from Firebase.
-        // This prevents old content from reappearing on new documents.
         const yDocHasContent = newYDoc.getXmlFragment('prosemirror').length > 0;
 
         if (!yDocHasContent && initialData.content) {
           const editorForSetup = new EditorClass({
+            extensions, // Use the same extensions
             content: initialData.content,
           });
           const yjsDoc = Y.encodeStateAsUpdate(editorForSetup.state.doc.toJSON() as any);
@@ -149,30 +160,23 @@ const EditorCore = ({
           editorForSetup.destroy();
         }
 
+        const collaborationExtensions = [
+          Collaboration.configure({
+            document: newYDoc,
+          }),
+          CollaborationCursor.configure({
+            provider: newProvider,
+            user: {
+              name: user?.displayName || 'Anonymous',
+              color: '#' + Math.floor(Math.random()*16777215).toString(16),
+            },
+          }),
+        ]
+
+        const allExtensions = [...extensions, ...collaborationExtensions];
+        
         const newEditor = new EditorClass({
-          extensions: [
-            StarterKit.configure({ history: false }),
-            TextAlign.configure({ types: ['heading', 'paragraph'] }),
-            TextStyle, FontFamily, FontSize, LineHeight, Color,
-            Highlight.configure({ multicolor: true }),
-            Underline,
-            Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-            Image,
-            Link.configure({ openOnClick: false }),
-            Placeholder.configure({ placeholder: 'Start typing...' }),
-            History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
-            TaskList, TaskItem.configure({ nested: true }),
-            Collaboration.configure({
-              document: newYDoc,
-            }),
-            CollaborationCursor.configure({
-              provider: newProvider,
-              user: {
-                name: user?.displayName || 'Anonymous',
-                color: '#' + Math.floor(Math.random()*16777215).toString(16),
-              },
-            }),
-          ],
+          extensions: allExtensions,
           editorProps: {
             attributes: {
               class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
@@ -192,7 +196,7 @@ const EditorCore = ({
       newProvider.destroy();
       newYDoc.destroy();
     };
-  }, [room, user, initialData.content, handleAutoSave]);
+  }, [room, user]);
 
 
   if (!editor || !provider) {
@@ -317,5 +321,3 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({ documentId, initialD
     </LiveblocksProvider>
   );
 };
-
-    
