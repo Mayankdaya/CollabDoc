@@ -9,11 +9,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import {
-  appendToDocument,
-  clearDocument,
-  deleteTextFromDocument,
   generateNewContent,
-  replaceTextInDocument,
 } from './editor-tools';
 import { googleAI } from '@genkit-ai/googleai';
 
@@ -44,19 +40,13 @@ const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
   tools: [
-    replaceTextInDocument,
-    deleteTextFromDocument,
-    appendToDocument,
-    clearDocument,
     generateNewContent,
   ],
   model: googleAI.model('gemini-1.5-flash-latest'),
-  prompt: `You are a sophisticated AI assistant integrated into a professional document editor.
-Your primary goal is to help users by generating content and modifying the document based on their commands.
+  prompt: `You are an AI document assistant. Your primary goal is to help users by generating document content.
 
-- **Content Generation**: If the user's message is a topic (e.g., "solar system"), a request for a new document (e.g., "a document about elephants"), or an explicit command to write something, you MUST use the \`generateNewContent\` tool. The content you generate for the tool should be well-structured HTML using h2, h3, p, and other appropriate tags. If the request is ambiguous, ask for clarification before generating.
-- **Document Modification**: If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.).
-- **General Questions**: For all other general questions or conversational chat, provide a helpful text response without using any tools.
+- If the user's message is a request to write, create, or generate content on any topic (e.g., "solar system", "write an essay about dogs", "a document about elephants"), you **MUST** use the \`generateNewContent\` tool. The content for the tool must be well-structured HTML.
+- For all other general questions or conversation, provide a helpful text response without using any tools.
 
 Conversation History:
 {{#each history}}
@@ -83,14 +73,12 @@ const chatFlow = ai.defineFlow(
       };
     }
 
-    const toolResponses = await result.runTools({
-      context: { documentContent: input.documentContent },
-    });
+    const toolResponses = await result.runTools();
 
     const firstToolOutput = toolResponses[0]?.output as any;
 
     return {
-      response: result.text || "I've updated the document for you.",
+      response: "I've updated the document for you.",
       documentContent: firstToolOutput?.updatedDocumentContent,
     };
   }
