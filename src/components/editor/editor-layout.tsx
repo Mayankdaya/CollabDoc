@@ -174,7 +174,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     }
 
     return (
-        <div className="flex flex-col h-full bg-background text-foreground overflow-hidden">
+        <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
             {callState.active && (
                 <CallPanel
                     callState={callState}
