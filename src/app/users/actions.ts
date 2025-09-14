@@ -57,14 +57,11 @@ export async function getUsersForDocument(documentId: string): Promise<UserProfi
             return [];
         }
 
-        // Firestore 'in' query is limited. Fetching users one by one is more robust for smaller lists
-        // and avoids the 30-item limit for larger lists if we were to scale.
-        const userPromises = allUserIds.map(uid => getDoc(doc(db, 'users', uid)));
-        const userDocs = await Promise.all(userPromises);
-
-        const fetchedUsers = userDocs
-            .filter(d => d.exists())
-            .map(d => d.data() as UserProfile);
+        // Correctly query for all users in a single batch
+        const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
+        const usersSnapshot = await getDocs(usersQuery);
+        
+        const fetchedUsers = usersSnapshot.docs.map(d => d.data() as UserProfile);
 
         return fetchedUsers;
 
