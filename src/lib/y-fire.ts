@@ -110,11 +110,9 @@ export class YFireProvider {
   }
 
   private async onAwarenessUnload() {
-    if (this.awareness.getLocalState() !== null) {
-      await updateDoc(this.awarenessDocRef, {
-        [this.doc.clientID]: deleteField(),
-      });
-    }
+      const awarenessUpdate: { [key: string]: any } = {};
+      awarenessUpdate[String(this.doc.clientID)] = deleteField();
+      await updateDoc(this.awarenessDocRef, awarenessUpdate);
   }
 
   private onDocUpdate(update: Uint8Array, origin: any) {

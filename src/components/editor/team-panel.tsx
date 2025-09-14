@@ -10,6 +10,7 @@ import { Skeleton } from '../ui/skeleton';
 import type { Awareness } from 'y-protocols/awareness';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface TeamPanelProps {
   doc: Document;
@@ -38,6 +39,7 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
 };
 
 export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
+  const { user: currentUser } = useAuth();
   const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
   const [owner, setOwner] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,7 +49,10 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
     if (awareness) {
       const updateOnlineUsers = () => {
         const states = Array.from(awareness.getStates().values());
-        setOnlineUsers(states.map(s => s.user).filter(Boolean));
+        const users = states.map(s => s.user).filter(Boolean);
+        // Deduplicate based on name, as one user might have multiple client IDs
+        const uniqueUsers = Array.from(new Map(users.map(u => [u.name, u])).values());
+        setOnlineUsers(uniqueUsers);
       };
       awareness.on('change', updateOnlineUsers);
       updateOnlineUsers(); // Initial call
@@ -142,7 +147,7 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
                             </div>
                         </div>
                         <div className='flex items-center gap-1'>
-                             {isUserOnline(person) && person.uid !== owner?.uid && (
+                             {isUserOnline(person) && person.uid !== currentUser?.uid && (
                                 <>
                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
                                     <Phone className="h-4 w-4" />
