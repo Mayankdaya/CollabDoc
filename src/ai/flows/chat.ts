@@ -56,15 +56,7 @@ const chatPrompt = ai.definePrompt({
     clearDocument,
     generateNewContent,
   ],
-  config: {
-    model: googleAI.model('gemini-1.5-flash-latest'),
-    safetySettings: [
-      {
-        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-        threshold: 'BLOCK_NONE',
-      },
-    ],
-  },
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: `You are a sophisticated AI assistant integrated into a professional document editor.
   Your goal is to help users by answering their questions, generating content, or by directly modifying the document on their command. The full document content is available to your tools.
 
@@ -93,7 +85,7 @@ const chatFlow = ai.defineFlow(
     
     let documentContent: string | undefined = undefined;
     let requiresConfirmation: boolean | undefined = undefined;
-    let aiResponse = result.text(); // Capture the AI's text response first.
+    let aiResponse = result.text; // Capture the AI's text response first.
 
     if (result.toolRequests.length > 0) {
       const toolResponse = await result.runTools({
