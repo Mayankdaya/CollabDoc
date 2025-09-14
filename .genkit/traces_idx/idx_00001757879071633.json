@@ -138,3 +138,18 @@
 {"id":"7c6252f0da2dfc619ba4147b8ecedf9e","type":"UNKNOWN","start":1757881736058,"name":"GET /documents/[id]","end":1757881736466.1985,"status":0}
 {"id":"91cd48243f2240a0e6ca68907994a140","type":"UNKNOWN","start":1757881738438,"name":"POST /_error","end":1757881738756.942,"status":0}
 {"id":"49bcc55b910c1762974ebc9fae080150","type":"UNKNOWN","start":1757881743351,"name":"POST /documents/[id]","end":1757881744502.0889,"status":0}
+{"id":"69e0d5d9fe64a2bd39fc495ce477c647","type":"UNKNOWN","start":1757881803301,"name":"RSC GET /documents/[id]","end":1757881807119.693,"status":0}
+{"id":"3e8756a493be75460aa8ed4f4ac785a7","type":"UNKNOWN","start":1757881803321,"name":"GET /documents/[id]","end":1757881807385.7097,"status":0}
+{"id":"eb76df4ab7e64d7c02a930bc34fd3b03","type":"UNKNOWN","start":1757881809088,"name":"POST /_error","end":1757881809490.8262,"status":0}
+{"id":"9a22dbadd9d3269876a46e6aff1be8a0","type":"UNKNOWN","start":1757881813217,"name":"POST /documents/[id]","end":1757881814379.6113,"status":0}
+{"id":"39589cfb4b06fa753dd5a69faeaed7b0","type":"UNKNOWN","start":1757881821221,"name":"GET /documents/[id]","end":1757881821601.2512,"status":0}
+{"id":"42aacc3c26912bd0c2ff474d61913b0b","type":"UNKNOWN","start":1757881823629,"name":"GET /favicon--route-entry","end":1757881823927.0422,"status":0}
+{"id":"73e1d17d5b2a5e0e2736b81ffbe3c50f","type":"UNKNOWN","start":1757881823957,"name":"POST /_error","end":1757881824110.2908,"status":0}
+{"id":"77dfe6b90f6550b74619b07d6c9dde4b","type":"UNKNOWN","start":1757881824510,"name":"GET /favicon--route-entry","end":1757881824822.712,"status":0}
+{"id":"cc04b71569895207fcff2cb23a541e3e","type":"UNKNOWN","start":1757881828501,"name":"POST /documents/[id]","end":1757881829330.9172,"status":0}
+{"id":"e22dd15cae235c9700ee7899bbc0042a","type":"UNKNOWN","start":1757881829365,"name":"POST /documents/[id]","end":1757881830172.9846,"status":0}
+{"id":"eeb12c3e8746e1211e4e58eff69738df","type":"UNKNOWN","start":1757881830580,"name":"GET /favicon--route-entry","end":1757881830924.7769,"status":0}
+{"id":"9f4403127e276f6779168d3065848ac5","type":"UNKNOWN","start":1757881830400,"name":"POST /documents/[id]","end":1757881831246.4934,"status":0}
+{"id":"38089edc06ef0cd64b0842ebd82d972b","type":"UNKNOWN","start":1757881842017,"name":"POST /documents/[id]","end":1757881842945.2295,"status":0}
+{"id":"0dbe7bc07b451ac726a4e4a081ceb1b8","type":"UNKNOWN","start":1757881842287,"name":"POST /documents/[id]","end":1757881843134.6995,"status":0}
+{"id":"99c39b9e562b9983149801b65a084e31","type":"UNKNOWN","start":1757881843653,"name":"GET /favicon--route-entry","end":1757881843921.6978,"status":0}
