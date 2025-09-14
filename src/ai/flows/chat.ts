@@ -15,6 +15,7 @@ import {
   generateNewContent,
   replaceTextInDocument,
 } from './editor-tools';
+import { googleAI } from '@genkit-ai/googleai';
 
 const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
@@ -61,6 +62,7 @@ const chatPrompt = ai.definePrompt({
     generateNewContent,
   ],
   config: {
+    model: googleAI.model('gemini-1.5-flash'),
     safetySettings: [
       {
         category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
