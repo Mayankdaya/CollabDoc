@@ -22,3 +22,12 @@
 {"id":"bfb8657d4140d0152b4d63abe92af106","type":"UNKNOWN","start":1757877196060,"name":"POST /dashboard","end":1757877196379.1333,"status":0}
 {"id":"4b5f9c9093a5eda834d791d87ba201b9","type":"UNKNOWN","start":1757877196756,"name":"POST /dashboard","end":1757877197016.1711,"status":0}
 {"id":"d0f7aab1c67620bb4cfedab4516653b7","type":"UNKNOWN","start":1757877199258,"name":"RSC GET /documents/[id]","end":1757877199623.5444,"status":0}
+{"id":"528239ac3e9c184544a6f651304ac894","type":"UNKNOWN","start":1757877204185,"name":"GET /documents/[id]","end":1757877204586.4624,"status":0}
+{"id":"b9d931f42d4bbb91b7c54c46720de7d1","type":"UNKNOWN","start":1757877209393,"name":"POST /_error","end":1757877209569.9998,"status":0}
+{"id":"2084e643590e295d102010d3666a3e5e","type":"UNKNOWN","start":1757877221877,"name":"POST /documents/[id]","end":1757877222989.5405,"status":0}
+{"id":"ae54efdf54ef3cf5fe909a080d221f4e","type":"UNKNOWN","start":1757877245299,"name":"GET /documents/[id]","end":1757877245698.4653,"status":0}
+{"id":"69e3e9b5afa9d6a05498f525c8703c66","type":"UNKNOWN","start":1757877247327,"name":"POST /_error","end":1757877248402.313,"status":0}
+{"id":"9df0c6cf89bf802f4e540cb4e2901a4a","type":"UNKNOWN","start":1757877248947,"name":"GET /favicon--route-entry","end":1757877249800.386,"status":0}
+{"id":"9d43843b9cfeff0ef4e551ea21740092","type":"UNKNOWN","start":1757877247009,"name":"GET /favicon--route-entry","end":1757877249822.6057,"status":0}
+{"id":"427f0ff7e593ce834c5615d79421867b","type":"UNKNOWN","start":1757877252462,"name":"POST /documents/[id]","end":1757877253248.1685,"status":0}
+{"id":"f1e4d344e7d02b4a95d6410746514c68","type":"UNKNOWN","start":1757877253539,"name":"GET /favicon--route-entry","end":1757877253872.5598,"status":0}

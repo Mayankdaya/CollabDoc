@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from 'react';
-import { Loader2, SendHorizonal, Sparkles } from 'lucide-react';
+import { Loader2, SendHorizonal, Sparkles, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -33,6 +33,8 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState('');
     const [isPending, startTransition] = useTransition();
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<SpeechRecognition | null>(null);
     const { toast } = useToast();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -44,6 +46,68 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
             });
         }
     }, [messages]);
+
+    useEffect(() => {
+        // Check for browser support
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            toast({
+                variant: 'destructive',
+                title: "Speech Recognition Not Supported",
+                description: "Your browser does not support voice commands.",
+            });
+            return;
+        }
+
+        const recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = (event) => {
+            let interimTranscript = '';
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                } else {
+                    interimTranscript += event.results[i][0].transcript;
+                }
+            }
+            // Use the final transcript to update the input
+            if (finalTranscript) {
+                setInput(prevInput => prevInput + finalTranscript);
+            }
+        };
+
+        recognition.onerror = (event) => {
+            toast({
+                variant: 'destructive',
+                title: 'Speech Recognition Error',
+                description: event.error,
+            });
+            setIsListening(false);
+        };
+        
+        recognition.onend = () => {
+            setIsListening(false);
+        };
+
+        recognitionRef.current = recognition;
+
+        return () => {
+            recognition.stop();
+        };
+    }, [toast]);
+
+     const toggleListening = () => {
+        if (isListening) {
+            recognitionRef.current?.stop();
+        } else {
+            recognitionRef.current?.start();
+        }
+        setIsListening(!isListening);
+    };
 
     const handleEditorUpdate = (newContent?: string) => {
         if (editor && newContent !== undefined) {
@@ -114,7 +178,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         <div className="flex h-full flex-col">
             <div className='p-4 border-b border-white/30'>
                  <h2 className="font-headline text-lg font-semibold">AI Assistant</h2>
-                 <p className="text-sm text-muted-foreground">Ask questions or tell me to edit the document.</p>
+                 <p className="text-sm text-muted-foreground">Ask questions, give voice commands, or tell me to edit the document.</p>
             </div>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="space-y-4 p-4">
@@ -169,19 +233,29 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ask the AI something..."
-                        className="pr-12 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
+                        placeholder={isListening ? "Listening..." : "Ask the AI something..."}
+                        className="pr-24 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
                         disabled={isPending}
                     />
-                    <Button 
-                        type="submit" 
-                        size="icon" 
-                        className="absolute right-2 top-1/2 -translate-y-1/2"
-                        onClick={handleSendMessage}
-                        disabled={isPending || !input.trim()}
-                    >
-                        <SendHorizonal className="h-5 w-5" />
-                    </Button>
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                        <Button 
+                            type="button" 
+                            size="icon" 
+                            variant={isListening ? "destructive" : "ghost"}
+                            onClick={toggleListening}
+                            disabled={!recognitionRef.current}
+                        >
+                            <Mic className="h-5 w-5" />
+                        </Button>
+                        <Button 
+                            type="submit" 
+                            size="icon" 
+                            onClick={handleSendMessage}
+                            disabled={isPending || !input.trim()}
+                        >
+                            <SendHorizonal className="h-5 w-5" />
+                        </Button>
+                    </div>
                 </div>
             </div>
         </div>
