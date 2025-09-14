@@ -43,7 +43,7 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
     const awarenessChangeHandler = () => {
         const states = Array.from(awareness.getStates().values());
         const users = states
-            .map(state => state.user ? { ...state.user, clientId: Array.from(awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
+            .map(state => state && state.user ? { ...state.user, clientId: Array.from(awareness.getStates().entries()).find(([_, s]) => s === state)?.[0] } : null)
             .filter((user): user is { name: string; color: string; clientId: any } => user !== null && !!user.name && user.clientId);
         
         // Deduplicate users based on name
