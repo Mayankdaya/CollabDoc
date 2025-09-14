@@ -49,7 +49,7 @@ import {
   RoomProvider,
   ClientSideSuspense,
 } from '@liveblocks/react/suspense';
-import { LiveblocksYjsProvider }d from '@liveblocks/yjs';
+import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
 import { yDocToProsemirrorJSON } from 'y-prosemirror';
@@ -149,55 +149,51 @@ const EditorCore = ({
     const newProvider = new LiveblocksYjsProvider(room, ydoc);
     setProvider(newProvider);
 
-    const collaborationExtensions = [
-      Collaboration.configure({
-        document: ydoc,
-        field: 'prosemirror',
-      }),
-      CollaborationCursor.configure({
-        provider: newProvider,
-        user: {
-          name: user?.displayName || 'Anonymous',
-          color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-        },
-      }),
-    ];
-
-    const allExtensions = [...extensions, ...collaborationExtensions];
-
-    const newEditor = new EditorClass({
-      extensions: allExtensions,
-      editorProps: {
-        attributes: {
-          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-        },
-      },
-      // DO NOT PASS CONTENT HERE. The collaboration extension will handle it.
-      onUpdate: ({ editor: updatedEditor }) => {
-        handleAutoSave(updatedEditor.getHTML());
-      },
-    });
-
-    setEditor(newEditor);
-
     newProvider.on('synced', (isSynced: boolean) => {
       if (isSynced) {
         const yDocFragment = ydoc.getXmlFragment('prosemirror');
         const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
 
-        if (!newEditor.isDestroyed && yDocFragment.length === 0) {
-          // Document is empty, populate from initial data
-          const tempEditor = new EditorClass({
-            extensions,
-            content: initialData.content,
-          });
-          const prosemirrorJson = tempEditor.getJSON();
-          const yjsUpdate = Y.encodeStateAsUpdate(
-            prosemirrorJSONToYDoc(extensions, prosemirrorJson)
-          );
-          Y.applyUpdate(ydoc, yjsUpdate);
-          tempEditor.destroy();
+        if (yDocFragment.length === 0 && initialData.content) {
+            // Document is empty on the server, populate from initial data
+            const tempEditor = new EditorClass({
+                extensions,
+                content: initialData.content,
+            });
+            const prosemirrorJson = tempEditor.getJSON();
+            const yjsUpdate = Y.encodeStateAsUpdate(
+                prosemirrorJSONToYDoc(extensions, prosemirrorJson)
+            );
+            Y.applyUpdate(ydoc, yjsUpdate);
+            tempEditor.destroy();
         }
+
+        const newEditor = new EditorClass({
+          extensions: [
+            ...extensions,
+            Collaboration.configure({
+                document: ydoc,
+                field: 'prosemirror',
+            }),
+            CollaborationCursor.configure({
+                provider: newProvider,
+                user: {
+                  name: user?.displayName || 'Anonymous',
+                  color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+                },
+            }),
+          ],
+          editorProps: {
+            attributes: {
+              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+            },
+          },
+          onUpdate: ({ editor: updatedEditor }) => {
+            handleAutoSave(updatedEditor.getHTML());
+          },
+        });
+
+        setEditor(newEditor);
       }
     });
 
@@ -335,4 +331,16 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
   );
 };
 
+// Helper to convert Prosemirror JSON to a Y.Doc
+function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
+    const tempEditor = new EditorClass({
+      extensions: extensions,
+      content: json,
+    });
+    const yDoc = Y.encodeStateAsUpdate(tempEditor.state.doc.toJSON() as any);
+    tempEditor.destroy();
+    const doc = new Y.Doc();
+    Y.applyUpdate(doc, yDoc);
+    return doc;
+}
     
