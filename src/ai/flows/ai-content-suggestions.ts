@@ -143,9 +143,19 @@ const generateDocumentFromTopicPrompt = ai.definePrompt({
   input: {schema: GenerateDocumentFromTopicInputSchema},
   output: {schema: GenerateDocumentFromTopicOutputSchema},
   model: googleAI.model('gemini-1.5-flash-latest'),
-  prompt: `You are an AI assistant that generates well-structured HTML documents.
-  Based on the topic "{{topic}}", create a comprehensive document.
-  The output MUST be valid HTML content, including headings, paragraphs, and lists where appropriate.`,
+  prompt: `You are an expert content creator and AI assistant tasked with generating a beautiful and professional document.
+  Based on the topic "{{topic}}", create a comprehensive, well-structured, and visually engaging document using rich HTML.
+
+  Your response MUST be a single HTML string.
+
+  To make the document professional and beautiful, you should:
+  - Start with a main <h1> title for the topic.
+  - Use a mix of <h2> and <h3> for sub-sections to create a clear hierarchy.
+  - Write detailed paragraphs (<p>).
+  - Incorporate at least one <blockquote> to highlight a key quote or important point.
+  - Use bulleted lists (<ul><li>) for unordered information and ordered lists (<ol><li>) for sequential steps or rankings.
+  - Ensure the entire output is valid HTML that can be rendered directly in a document editor.
+  - Do not include <html> or <body> tags.`,
 });
 
 const generateDocumentFromTopicFlow = ai.defineFlow(
