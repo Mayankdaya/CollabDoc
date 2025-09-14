@@ -28,6 +28,7 @@ import { useAuth } from '@/hooks/use-auth';
 import * as Y from 'yjs';
 import type { Document as Doc } from '@/app/documents/actions';
 import { updateDocument } from '@/app/documents/actions';
+import { getUsersForDocument } from '@/app/users/actions';
 import { useToast } from '@/hooks/use-toast';
 import { EditorToolbar } from './editor-toolbar';
 import EditorHeader from './editor-header';
@@ -45,10 +46,7 @@ import {
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
-import { useRoom } from '@/liveblocks.config';
 import type { FoundUser } from './share-dialog';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 
 function EditorLoading() {
   return (
@@ -65,7 +63,6 @@ interface EditorLayoutProps {
 }
 
 function EditorCore({ documentId, initialData }: EditorLayoutProps) {
-    const room = useRoom();
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -115,141 +112,102 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
       setPeopleWithAccess(people);
     }, []);
 
-
     useEffect(() => {
-        const fetchUsers = async () => {
-            const docRef = doc(db, 'documents', documentId);
-            const docSnap = await getDoc(docRef);
-
-            if (docSnap.exists()) {
-                const docData = docSnap.data();
-                const ownerId = docData.userId;
-                const collaboratorIds = docData.collaborators || [];
-                const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
-
-                if (allUserIds.length > 0) {
-                    try {
-                        const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
-                        const userDocs = await getDocs(usersQuery);
-                        const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
-                        setPeopleWithAccess(fetchedUsers);
-                    } catch (error) {
-                        console.error("Error fetching user profiles:", error);
-                    }
-                }
-            }
-        };
-
-        fetchUsers();
+        if (!documentId) return;
+        getUsersForDocument(documentId).then(users => {
+            setPeopleWithAccess(users);
+        });
     }, [documentId]);
 
 
     useEffect(() => {
-        if (!room || !user) return;
+        if (!user || !provider) return;
 
+        const awareness = provider.awareness;
+
+        const updateOnlineUsers = () => {
+            const states = Array.from(awareness.getStates().values());
+            const users = states
+                .map((state) => state.user)
+                .filter((user): user is { name: string; color: string; uid: string, clientId: number } => !!user?.uid);
+            
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
+            setOnlineUsers(uniqueUsers);
+            setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
+        };
+
+        awareness.on('change', updateOnlineUsers);
+        updateOnlineUsers(); // Initial call
+
+        return () => {
+            awareness.off('change', updateOnlineUsers);
+        };
+    }, [provider, user]);
+
+    useEffect(() => {
         let ydoc: Y.Doc;
         let newProvider: LiveblocksYjsProvider;
         let newEditor: EditorClass;
 
-        if (provider && editor) {
-             // Already initialized
-            const awareness = provider.awareness;
-             const updateOnlineUsers = () => {
-                const states = Array.from(awareness.getStates().values());
-                const users = states
-                    .map((state) => state.user)
-                    .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
-                
-                const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
-                setOnlineUsers(uniqueUsers);
-                setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
-            };
-            awareness.on('change', updateOnlineUsers);
-            updateOnlineUsers();
-            return () => {
-                 awareness.off('change', updateOnlineUsers);
-            }
+        if (!user) return;
 
-        } else {
-            ydoc = new Y.Doc();
-            newProvider = new LiveblocksYjsProvider(room, ydoc);
-            setProvider(newProvider);
+        ydoc = new Y.Doc();
+        newProvider = new LiveblocksYjsProvider(documentId, ydoc);
+        setProvider(newProvider);
 
-            const awareness = newProvider.awareness;
-            const updateOnlineUsers = () => {
-                const states = Array.from(awareness.getStates().values());
-                const users = states
-                    .map((state) => state.user)
-                    .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
-                
-                const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
-                setOnlineUsers(uniqueUsers);
-                setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
-            };
-            awareness.on('change', updateOnlineUsers);
-            updateOnlineUsers();
-
-
-            newEditor = new EditorClass({
-                extensions: [
-                    StarterKit.configure({ 
-                        history: false,
-                    }),
-                    TextAlign.configure({ types: ['heading', 'paragraph'] }),
-                    TextStyle, FontFamily, FontSize, LineHeight, Color,
-                    Highlight.configure({ multicolor: true }),
-                    Underline,
-                    Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-                    Image,
-                    Link.configure({ openOnClick: false }),
-                    Placeholder.configure({ placeholder: 'Start typing...' }),
-                    CharacterCount,
-                    TaskList, TaskItem.configure({ nested: true }),
-                    Collaboration.configure({
-                        document: ydoc,
-                    }),
-                    CollaborationCursor.configure({
-                        provider: newProvider,
-                        user: {
-                            name: user?.displayName || 'Anonymous',
-                            color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-                            uid: user.uid,
-                        },
-                    })
-                ],
-                editorProps: {
-                    attributes: {
-                        class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+        newEditor = new EditorClass({
+            extensions: [
+                StarterKit.configure({ history: false }),
+                TextAlign.configure({ types: ['heading', 'paragraph'] }),
+                TextStyle, FontFamily, FontSize, LineHeight, Color,
+                Highlight.configure({ multicolor: true }),
+                Underline,
+                Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+                Image,
+                Link.configure({ openOnClick: false }),
+                Placeholder.configure({ placeholder: 'Start typing...' }),
+                CharacterCount,
+                TaskList, TaskItem.configure({ nested: true }),
+                Collaboration.configure({ document: ydoc }),
+                CollaborationCursor.configure({
+                    provider: newProvider,
+                    user: {
+                        name: user?.displayName || 'Anonymous',
+                        color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+                        uid: user.uid,
                     },
+                })
+            ],
+            editorProps: {
+                attributes: {
+                    class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
                 },
-            });
-            
-            setEditor(newEditor);
-            
-            const handleSync = () => {
-                if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
-                    const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
-                    if (yDocFragment.length === 0 && initialData.content) {
-                        newEditor.commands.setContent(initialData.content, false);
-                    }
+            },
+        });
+        
+        setEditor(newEditor);
+        
+        const handleSync = () => {
+            if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
+                const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
+                if (yDocFragment.length === 0 && initialData.content) {
+                    newEditor.commands.setContent(initialData.content, false);
                 }
-            };
-
-            newProvider.on('synced', handleSync);
-            handleSync();
-
-            return () => {
-                awareness.off('change', updateOnlineUsers);
-                newProvider.off('synced', handleSync);
-                ydoc.destroy();
-                newProvider.destroy();
-                newEditor.destroy();
             }
+        };
+
+        newProvider.on('synced', handleSync);
+        handleSync();
+
+        return () => {
+            ydoc.destroy();
+            newProvider.destroy();
+            newEditor.destroy();
         }
-    }, [room, user]);
+    }, [user, documentId, initialData.content]);
 
     useEffect(() => {
-        if (!editor || !provider) return;
+        if (!editor) return;
 
         let timeoutId: NodeJS.Timeout;
 
@@ -266,7 +224,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             clearTimeout(timeoutId);
             editor.off('update', updateHandler);
         };
-    }, [editor, provider, handleAutoSave]);
+    }, [editor, handleAutoSave]);
 
     if (!editor || !provider) {
         return <EditorLoading />;
@@ -321,7 +279,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                         </TabsContent>
                         <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                             <TeamPanel 
-                                doc={initialData}
                                 peopleWithAccess={peopleWithAccess}
                                 onlineUserUIDs={onlineUserUIDs}
                                 onStartCall={(user, type) => setCallState({ active: true, user, type })}

@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useCallback } from 'react';
-import type { Document } from '@/app/documents/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
@@ -10,21 +9,23 @@ import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
 
 interface TeamPanelProps {
-  doc: Document;
   peopleWithAccess: FoundUser[];
   onlineUserUIDs: string[];
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc, peopleWithAccess, onlineUserUIDs, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
   
   const isUserOnline = useCallback((personUid: string) => {
     return onlineUserUIDs.includes(personUid);
   }, [onlineUserUIDs]);
 
-  const owner = peopleWithAccess.find(p => p.uid === doc.userId);
-  const collaborators = peopleWithAccess.filter(p => p.uid !== doc.userId);
+  // Separate owner from collaborators
+  const owner = peopleWithAccess.find(p => p.uid === currentUser?.uid) || peopleWithAccess[0]; // Fallback for safety
+  const collaborators = peopleWithAccess.filter(p => p.uid !== owner?.uid);
+  const ownerFromList = peopleWithAccess.find(p => isUserOnline(p.uid) && p.uid !== currentUser?.uid);
+
 
   return (
     <div className="flex h-full flex-col">
@@ -35,18 +36,18 @@ export default function TeamPanel({ doc, peopleWithAccess, onlineUserUIDs, onSta
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {peopleWithAccess.length > 0 ? (
             <>
-                {owner && (
-                    <>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase">Owner</p>
-                        <UserRow
-                            person={owner}
-                            isOnline={isUserOnline(owner.uid)}
-                            isCurrentUser={owner.uid === currentUser?.uid}
-                            role="Owner"
-                            onStartCall={onStartCall}
-                        />
-                    </>
-                )}
+                <p className="text-xs font-semibold text-muted-foreground uppercase">Owner</p>
+                {peopleWithAccess.map(person => (
+                    <UserRow
+                        key={person.uid}
+                        person={person}
+                        isOnline={isUserOnline(person.uid)}
+                        isCurrentUser={person.uid === currentUser?.uid}
+                        role="Owner"
+                        onStartCall={onStartCall}
+                    />
+                ))}
+
                 {collaborators.length > 0 && (
                      <>
                         <p className="text-xs font-semibold text-muted-foreground uppercase pt-4">Editors</p>
