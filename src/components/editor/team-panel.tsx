@@ -156,3 +156,4 @@ export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: T
     </div>
   );
 }
+
