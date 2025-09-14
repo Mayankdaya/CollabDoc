@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/sidebar';
 import { CollabDocLogo } from '@/components/collab-doc-logo';
 import { UserMenu } from '@/components/user-menu';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const menuItems = [
   {
@@ -56,6 +57,7 @@ export default function ProtectedLayout({
                 </Link>
             </SidebarHeader>
             <SidebarContent>
+              <ScrollArea className="h-full">
                 <SidebarMenu>
                     {menuItems.map(item => (
                         <SidebarMenuItem key={item.label}>
@@ -72,6 +74,7 @@ export default function ProtectedLayout({
                         </SidebarMenuItem>
                     ))}
                 </SidebarMenu>
+              </ScrollArea>
             </SidebarContent>
             <SidebarFooter>
                 <UserMenu />
