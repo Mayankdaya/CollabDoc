@@ -57,7 +57,7 @@ const chatPrompt = ai.definePrompt({
     generateNewContent,
   ],
   config: {
-    model: googleAI.model('gemini-2.5-flash'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     safetySettings: [
       {
         category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
