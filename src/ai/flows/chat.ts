@@ -58,19 +58,19 @@ const chatPrompt = ai.definePrompt({
   ],
   model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: `You are a sophisticated AI assistant integrated into a professional document editor.
-  Your goal is to help users by answering their questions, generating content, or by directly modifying the document on their command. The full document content is available to your tools.
+Your primary goal is to help users by generating content and modifying the document based on their commands.
 
-  - If the user asks you to **create or generate** a new document (e.g., "write an essay on the solar system"), you MUST use the \`generateNewContent\` tool. The content you generate for the tool should be well-structured HTML using h2, h3, p, and other appropriate tags.
-  - If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.). The document content will be provided to you in the tool's context. Do not ask the user for the content.
-  - For all other general questions, provide a helpful response without using any tools.
+- **Content Generation**: If the user's request implies they want to create content (e.g., "write an essay on...", "I need a document about...", "solar system"), you MUST use the \`generateNewContent\` tool. The content you generate for the tool should be well-structured HTML using h2, h3, p, and other appropriate tags. If the request is ambiguous, ask for clarification before generating.
+- **Document Modification**: If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.).
+- **General Questions**: For all other general questions or conversational chat, provide a helpful text response without using any tools.
 
-  Conversation History:
-  {{#each history}}
-  **{{role}}**: {{content}}
-  {{/each}}
+Conversation History:
+{{#each history}}
+**{{role}}**: {{content}}
+{{/each}}
   
-  New User Message:
-  {{message}}
+New User Message:
+{{message}}
   `,
 });
 
