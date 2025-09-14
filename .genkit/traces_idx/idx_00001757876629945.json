@@ -1,2 +1,7 @@
 {"id":"19953e2ef87b4ac6e72d340d89a22d2d","type":"flow","start":1757876684568,"name":"chatFlow","end":1757876686247.677,"status":2}
 {"id":"8f34907ce065574e4e8c6843a438ee15","type":"UNKNOWN","start":1757876687186,"name":"start response","end":1757876687186.2122,"status":0}
+{"id":"9c1c6b34c6751e0d002026b40a34c798","type":"UNKNOWN","start":1757876728124,"name":"GET /documents/[id]","end":1757876728628.4778,"status":0}
+{"id":"f77b5d28a1a618b87017de4d8a0f6eb7","type":"UNKNOWN","start":1757876731052,"name":"POST /_error","end":1757876731380.3887,"status":0}
+{"id":"0b415e60c7583c4c46fb5115e5ec58c8","type":"UNKNOWN","start":1757876735858,"name":"POST /documents/[id]","end":1757876736919.223,"status":0}
+{"id":"20ec8609cd4a6a727127c53972b6f59d","type":"flow","start":1757876737752,"name":"chatFlow","end":1757876739074.8245,"status":2}
+{"id":"3dc294842883d44a8fd5ab35e63aea82","type":"UNKNOWN","start":1757876737591,"name":"POST /documents/[id]","end":1757876739790.2302,"status":2}

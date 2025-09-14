@@ -82,7 +82,7 @@ const chatFlow = ai.defineFlow(
   },
   async input => {
     const result = await chatPrompt(input);
-    const resultText = result.text();
+    const resultText = result.text;
 
     if (result.toolRequests.length === 0) {
       return {
