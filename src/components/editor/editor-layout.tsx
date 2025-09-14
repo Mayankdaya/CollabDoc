@@ -70,7 +70,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     const [editor, setEditor] = useState<EditorClass | null>(null);
     const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
 
-    const [zoom, setZoom] = useState(1);
     const [docName, setDocName] = useState(initialData.name);
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(initialData.lastModified);
@@ -208,22 +207,15 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             <EditorToolbar 
                 editor={editor} 
                 wordCount={editor.storage.characterCount.words() || 0}
-                onZoomIn={() => setZoom(z => Math.min(z + 0.1, 2))}
-                onZoomOut={() => setZoom(z => Math.max(z - 0.1, 0.5))}
+                onZoomIn={() => {}}
+                onZoomOut={() => {}}
                 docName={docName}
                 doc={initialData}
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel className="flex-1 editor-page-background overflow-auto">
-                    <div
-                        className="mx-auto my-8 p-8 sm:p-12"
-                        style={{
-                            width: '8.5in',
-                            minHeight: '11in',
-                            transition: 'transform 0.2s',
-                        }}
-                    >
-                        <div className={cn("bg-card shadow-lg p-[1in] min-h-[9in]")}>
+                <ResizablePanel className="flex flex-col editor-page-background overflow-auto">
+                     <div className="flex-1 mx-auto my-8" style={{ width: '8.5in' }}>
+                        <div className={cn("bg-card shadow-lg p-[1in] h-full")}>
                             <EditorContent editor={editor} />
                         </div>
                     </div>
