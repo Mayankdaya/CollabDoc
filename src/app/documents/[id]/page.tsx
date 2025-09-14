@@ -5,8 +5,7 @@ import DocumentLoader from './document-loader';
 
 
 // This is a server component that fetches the initial data.
-export default async function DocumentPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default async function DocumentPage({ params: { id } }: { params: { id: string } }) {
   const documentData = await getDocument(id);
 
   if (!documentData) {
