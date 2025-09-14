@@ -135,7 +135,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         <div className="flex h-full flex-col">
             <div className='p-4 border-b border-white/30'>
                  <h2 className="font-headline text-lg font-semibold">AI Assistant</h2>
-                 <p className="text-sm text-muted-foreground">Ask questions, give commands, or use the generate button to create a new document from a topic.</p>
+                 <p className="text-sm text-muted-foreground">To generate a new document from a topic, enter the topic in the text area below and click the 'Generate' button.</p>
             </div>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="space-y-4 p-4">

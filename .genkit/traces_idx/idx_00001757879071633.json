@@ -1,2 +1,5 @@
 {"id":"9a3cc6672e87005a4f8871f6818f99c1","type":"flow","start":1757879197532,"name":"chatFlow","end":1757879199240.594,"status":0}
 {"id":"b44d7d3ebbf0c47b7c102ee7e4270c47","type":"UNKNOWN","start":1757879199246,"name":"start response","end":1757879199246.0652,"status":0}
+{"id":"91b7fe145bacbaeb22464bd02d0c36a9","type":"UNKNOWN","start":1757879212411,"name":"GET /documents/[id]","end":1757879214331.903,"status":0}
+{"id":"52fae725d56632cf7029edef200a610a","type":"UNKNOWN","start":1757879216728,"name":"POST /_error","end":1757879216915.6548,"status":0}
+{"id":"0eddf415f281bfbbd0d2fa59ba821331","type":"UNKNOWN","start":1757879220872,"name":"POST /documents/[id]","end":1757879221986.7405,"status":0}
