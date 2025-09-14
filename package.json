@@ -8,8 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test:chat": "genkit eval:run -f src/ai/dev.ts src/ai/test-chat.ts",
-    "test:api": "genkit eval:run api-key-test"
+    "test:chat": "genkit eval:run -f src/ai/dev.ts chat-test",
+    "test:api": "genkit eval:run -f src/ai/dev.ts api-key-test"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.14.1",
