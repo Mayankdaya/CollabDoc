@@ -93,14 +93,22 @@ export async function createDocument({ name, userId, userName }: { name: string,
     if (!name || name.trim().length === 0) {
         name = "Untitled Document";
     }
-    const docRef = await addDoc(collection(db, "documents"), {
-        name: name,
-        content: "",
-        userId: userId,
-        lastModified: serverTimestamp(),
-        lastModifiedBy: userName,
-        collaborators: [], // Initialize with no collaborators
-    });
+
+    let docRef;
+    try {
+        docRef = await addDoc(collection(db, "documents"), {
+            name: name,
+            content: "",
+            userId: userId,
+            lastModified: serverTimestamp(),
+            lastModifiedBy: userName,
+            collaborators: [], // Initialize with no collaborators
+        });
+    } catch (error) {
+        console.error("Error creating document:", error);
+        throw new Error("Could not create document.");
+    }
+    
     revalidatePath("/dashboard");
     redirect(`/documents/${docRef.id}`);
 }
