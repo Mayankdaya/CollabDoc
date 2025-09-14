@@ -1,6 +1,3 @@
-import { config } from 'dotenv';
-config();
-
 import '@/ai/flows/ai-content-suggestions.ts';
 import '@/ai/flows/document-actions.ts';
 import '@/ai/flows/chat.ts';
