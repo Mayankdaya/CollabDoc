@@ -118,6 +118,13 @@ const chatFlow = ai.defineFlow(
     let requiresConfirmation: boolean | undefined = undefined;
 
     if (result.toolRequests.length > 0) {
+      // Add documentContent to the input of each tool that requires it.
+      result.toolRequests.forEach(req => {
+        if (req.tool?.input) {
+          (req.tool.input as any).documentContent = input.documentContent;
+        }
+      });
+      
       const toolResponse = await result.runTools();
       
       // In this simple case, we just take the first tool's output.
