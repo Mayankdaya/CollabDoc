@@ -25,6 +25,8 @@ import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
 import Blockquote from '@tiptap/extension-blockquote';
 import CodeBlock from '@tiptap/extension-code-block';
 import CharacterCount from '@tiptap/extension-character-count';
+import TaskList from '@tiptap/extension-task-list';
+import TaskItem from '@tiptap/extension-task-item';
 import { FontSize } from './extensions/font-size';
 import { LineHeight } from './extensions/line-height';
 import { useAuth } from '@/hooks/use-auth';
@@ -99,6 +101,10 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
           name: user?.displayName || 'Anonymous',
           color: '#' + Math.floor(Math.random()*16777215).toString(16),
         },
+      }),
+      TaskList,
+      TaskItem.configure({
+        nested: true,
       }),
     ],
     content: initialData.content,

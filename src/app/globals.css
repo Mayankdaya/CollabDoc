@@ -183,6 +183,26 @@
     height: 0;
     pointer-events: none;
   }
+  
+  ul[data-type="taskList"] {
+    list-style: none;
+    padding: 0;
+  }
+
+  li[data-type="taskItem"] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  li[data-type="taskItem"] > label {
+    flex: 0 0 auto;
+  }
+
+  li[data-type="taskItem"] > div {
+    flex: 1 1 auto;
+  }
+
 
   .dark .ProseMirror {
     color: hsl(var(--foreground));

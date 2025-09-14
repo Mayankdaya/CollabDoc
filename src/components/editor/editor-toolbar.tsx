@@ -63,6 +63,7 @@ import {
   Code,
   Quote,
   Link as LinkIcon,
+  ListTodo,
 } from 'lucide-react';
 
 import {
@@ -190,7 +191,7 @@ export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, on
         const printWindow = window.open('', '', 'height=600,width=800');
         printWindow?.document.write('<html><head><title>Print</title>');
         // You might want to include your app's CSS here for consistent styling
-        printWindow?.document.write('<style>body { font-family: sans-serif; } .prose { max-width: none; color: black; } </style>');
+        printWindow?.document.write('<style>body { font-family: sans-serif; } .prose { max-width: none; color: black; } ul[data-type="taskList"] { list-style: none; padding: 0; } li[data-type="taskItem"] { display: flex; align-items: center; } li[data-type="taskItem"] > label { margin-right: 0.5rem; } </style>');
         printWindow?.document.write('</head><body >');
         printWindow?.document.write('<div class="prose">');
         printWindow?.document.write(printContent);
@@ -500,6 +501,14 @@ export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, on
                     className="h-9 w-9"
                 >
                     <ListOrdered className="h-4 w-4" />
+                </Toggle>
+                <Toggle
+                    aria-label="Toggle task list"
+                    pressed={editor.isActive('taskList')}
+                    onPressedChange={() => editor.chain().focus().toggleTaskList().run()}
+                    className="h-9 w-9"
+                >
+                    <ListTodo className="h-4 w-4" />
                 </Toggle>
                 <Separator orientation="vertical" className="h-8" />
                 <Toggle 
