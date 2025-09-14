@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useTransition, useRef, useEffect } from 'react';
-import { Loader2, SendHorizonal, Sparkles, Mic, Check } from 'lucide-react';
+import { Loader2, SendHorizonal, Sparkles, Mic, Wand2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -191,7 +191,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         <div className="flex h-full flex-col">
             <div className='p-4 border-b border-white/30'>
                  <h2 className="font-headline text-lg font-semibold">AI Assistant</h2>
-                 <p className="text-sm text-muted-foreground">Ask questions, give commands, or use the checkmark to generate a document from a topic.</p>
+                 <p className="text-sm text-muted-foreground">Ask questions, give commands, or use the generate button to create a new document from a topic.</p>
             </div>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="space-y-4 p-4">
@@ -234,17 +234,26 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                     )}
                 </div>
             </ScrollArea>
-            <div className="border-t border-white/30 p-4">
+            <div className="border-t border-white/30 p-4 space-y-2">
                 <div className="relative">
                     <Textarea
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
                         placeholder={isListening ? "Listening..." : "Chat with the AI or enter a topic to generate..."}
-                        className="pr-32 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
+                        className="pr-12 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
                         disabled={isPending}
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                    <div className="absolute right-2 top-2 flex flex-col gap-2">
+                         <Button 
+                            type="submit" 
+                            size="icon" 
+                            onClick={handleSendMessage}
+                            disabled={isPending || !input.trim()}
+                            title="Send Chat Message"
+                        >
+                            <SendHorizonal className="h-5 w-5" />
+                        </Button>
                         <Button 
                             type="button" 
                             size="icon" 
@@ -255,25 +264,19 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         >
                             <Mic className="h-5 w-5" />
                         </Button>
-                        <Button 
-                            type="button" 
-                            size="icon" 
-                            onClick={handleGenerateContent}
-                            disabled={isPending || !input.trim()}
-                            title="Generate Document from Topic"
-                        >
-                            <Check className="h-5 w-5" />
-                        </Button>
-                        <Button 
-                            type="submit" 
-                            size="icon" 
-                            onClick={handleSendMessage}
-                            disabled={isPending || !input.trim()}
-                            title="Send Chat Message"
-                        >
-                            <SendHorizonal className="h-5 w-5" />
-                        </Button>
                     </div>
+                </div>
+                <div className='flex items-center gap-2'>
+                    <Button 
+                        type="button"
+                        className='w-full'
+                        onClick={handleGenerateContent}
+                        disabled={isPending || !input.trim()}
+                        title="Generate Document from Topic"
+                    >
+                        <Wand2 className="h-5 w-5 mr-2" />
+                        <span className="sm:inline">Generate</span>
+                    </Button>
                 </div>
             </div>
         </div>
