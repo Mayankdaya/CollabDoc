@@ -104,7 +104,7 @@ const chatFlow = ai.defineFlow(
 
     if (firstToolName === 'generateNewContent' && documentContent) {
       requiresConfirmation = true;
-      // Overwrite the default response with a more specific one for confirmation.
+      // ALWAYS overwrite the default response with a more specific one for confirmation.
       aiResponse = "I have generated the content for you. Would you like to paste it into the editor?";
     }
     
