@@ -43,6 +43,7 @@ import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
+  useRoom,
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
@@ -62,7 +63,8 @@ interface EditorLayoutProps {
   initialData: Doc;
 }
 
-function EditorCore({ documentId, initialData }: EditorLayoutProps) {
+function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
+    const room = useRoom();
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -152,7 +154,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
         if (!user) return;
 
         ydoc = new Y.Doc();
-        newProvider = new LiveblocksYjsProvider(documentId, ydoc);
+        newProvider = new LiveblocksYjsProvider(room, ydoc);
         setProvider(newProvider);
 
         newEditor = new EditorClass({
@@ -204,7 +206,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             newProvider.destroy();
             newEditor.destroy();
         }
-    }, [user, documentId, initialData.content]);
+    }, [user, documentId, initialData.content, room]);
 
     useEffect(() => {
         if (!editor) return;
@@ -296,7 +298,7 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     <LiveblocksProvider publicApiKey={"pk_dev_W4eVr8avX7cJ_dC1Q1XKAhfY_2qiTOjSHCRgaeovMLrjAB0aHCDuoVZ_AETFGgik"}>
       <RoomProvider id={documentId}>
         <ClientSideSuspense fallback={<EditorLoading />}>
-          <EditorCore documentId={documentId} initialData={initialData} />
+          <EditorWithLiveblocks documentId={documentId} initialData={initialData} />
         </ClientSideSuspense>
       </RoomProvider>
     </LiveblocksProvider>
