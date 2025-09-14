@@ -48,6 +48,8 @@ import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
 import type { FoundUser } from './share-dialog';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 
 function EditorLoading() {
   return (
@@ -80,6 +82,9 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
         type: null,
         user: null,
     });
+    
+    const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
+    const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -107,10 +112,48 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     );
 
     useEffect(() => {
+        const fetchUsers = async () => {
+            const docRef = doc(db, 'documents', documentId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const docData = docSnap.data();
+                const ownerId = docData.userId;
+                const collaboratorIds = docData.collaborators || [];
+                const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
+
+                if (allUserIds.length > 0) {
+                    const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
+                    const userDocs = await getDocs(usersQuery);
+                    const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
+                    setPeopleWithAccess(fetchedUsers);
+                }
+            }
+        };
+
+        fetchUsers();
+    }, [documentId]);
+
+
+    useEffect(() => {
         if (!room || !user || provider) return;
 
         const ydoc = new Y.Doc();
         const newProvider = new LiveblocksYjsProvider(room, ydoc);
+
+        // Listen for awareness changes to update online users
+        const awareness = newProvider.awareness;
+        const updateOnlineUsers = () => {
+            const states = Array.from(awareness.getStates().values());
+            const users = states
+                .map((state) => state.user)
+                .filter((user): user is { name: string; color: string; uid: string } => user !== null && !!user.uid);
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
+            setOnlineUsers(uniqueUsers);
+        };
+        awareness.on('change', updateOnlineUsers);
+        updateOnlineUsers(); // Initial call
+
 
         const newEditor = new EditorClass({
             extensions: [
@@ -163,6 +206,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
 
 
         return () => {
+            awareness.off('change', updateOnlineUsers);
             newProvider.off('synced', handleSync);
             ydoc.destroy();
             newProvider.destroy();
@@ -211,7 +255,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
-                onPeopleListChange={() => {}}
+                onPeopleListChange={setPeopleWithAccess}
             />
             <EditorToolbar 
                 editor={editor} 
@@ -246,7 +290,8 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                         <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                             <TeamPanel 
                                 doc={initialData}
-                                awareness={provider.awareness}
+                                peopleWithAccess={peopleWithAccess}
+                                onlineUsers={onlineUsers}
                                 onStartCall={(user, type) => setCallState({ active: true, user, type })}
                             />
                         </TabsContent>

@@ -5,84 +5,26 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Document } from '@/app/documents/actions';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
-import type { Awareness } from 'y-protocols/awareness';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
-import { db } from '@/lib/firebase';
-import { doc, getDoc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
-
 
 interface TeamPanelProps {
   doc: Document;
-  awareness: Awareness | null;
+  peopleWithAccess: FoundUser[];
+  onlineUsers: any[];
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-  const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (awareness) {
-        const updateOnlineUsers = () => {
-            const states = Array.from(awareness.getStates().values());
-            const users = states
-                .map((state) => state.user)
-                .filter((user): user is { name: string; color: string; uid: string } => user !== null && !!user.uid);
-            
-            const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
-            setOnlineUsers(uniqueUsers);
-        };
-        awareness.on('change', updateOnlineUsers);
-        updateOnlineUsers(); // Initial call
-        return () => awareness.off('change', updateOnlineUsers);
-    }
-  }, [awareness]);
-
-  useEffect(() => {
-    if (!initialDoc.id) return;
-    
-    const docRef = doc(db, 'documents', initialDoc.id);
-    
-    const unsubscribe = onSnapshot(docRef, async (snap) => {
-        setIsLoading(true);
-        const docData = snap.data();
-        if (!docData) {
-            setIsLoading(false);
-            return;
-        }
-
-        const ownerId = docData.userId;
-        const collaboratorIds: string[] = docData.collaborators || [];
-        const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
-
-        if (allUserIds.length > 0) {
-            try {
-                // Firestore 'in' query is limited to 30 items, which is fine for this use case.
-                const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
-                const userDocs = await getDocs(usersQuery);
-                const fetchedUsers = userDocs.docs
-                    .filter(d => d.exists())
-                    .map(d => d.data() as FoundUser);
-                
-                setPeopleWithAccess(fetchedUsers);
-            } catch (e) {
-                console.error("Error fetching user profiles:", e);
-                setPeopleWithAccess([]);
-            }
-        } else {
-            setPeopleWithAccess([]);
-        }
-        setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [initialDoc.id]);
-  
+    // We determine loading status based on whether the peopleWithAccess prop has been populated
+    setIsLoading(peopleWithAccess.length === 0);
+  }, [peopleWithAccess]);
 
   const isUserOnline = useCallback((person: FoundUser) => {
     return onlineUsers.some(onlineUser => onlineUser.uid === person.uid);
@@ -142,7 +84,7 @@ export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: T
                                 </>
                             )}
                             <span className="text-sm text-muted-foreground">
-                                {person.uid === initialDoc.userId ? 'Owner' : 'Editor'}
+                                {person.uid === doc.userId ? 'Owner' : 'Editor'}
                             </span>
                         </div>
                     </div>
