@@ -41,8 +41,10 @@ export default function TeamPanel({ doc, awareness, onStartCall, peopleWithAcces
   }, [awareness]);
 
   useEffect(() => {
-    setIsLoading(peopleWithAccess.length === 0);
-  }, [peopleWithAccess]);
+    // We are loading as long as peopleWithAccess is empty,
+    // but only if there *should* be at least one person (the owner).
+    setIsLoading(peopleWithAccess.length === 0 && !!doc.userId);
+  }, [peopleWithAccess, doc.userId]);
   
 
   const isUserOnline = useCallback((user: FoundUser) => {
