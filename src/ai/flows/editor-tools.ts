@@ -32,7 +32,7 @@ export const replaceTextInDocument = ai.defineTool(
     }),
   },
   async ({documentContent, textToFind, textToReplaceWith}) => {
-    // Use a safe split-and-join method to prevent infinite loops and stack overflows.
+    // Prevent infinite loops by checking for an empty search string.
     if (!textToFind) {
       return { updatedDocumentContent: documentContent };
     }
@@ -61,7 +61,7 @@ export const deleteTextFromDocument = ai.defineTool(
     }),
   },
   async ({documentContent, textToDelete}) => {
-    // Use a safe split-and-join method to prevent infinite loops and stack overflows.
+     // Prevent infinite loops by checking for an empty search string.
      if (!textToDelete) {
       return { updatedDocumentContent: documentContent };
     }
