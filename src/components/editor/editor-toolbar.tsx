@@ -64,6 +64,7 @@ import {
   Quote,
   Link as LinkIcon,
   ListTodo,
+  Baseline,
 } from 'lucide-react';
 
 import {
@@ -485,6 +486,30 @@ export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, on
                         <AlignJustify className="h-4 w-4" />
                     </ToggleGroupItem>
                 </ToggleGroup>
+                 <Separator orientation="vertical" className="h-8" />
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-9 w-9"><Baseline className="h-4 w-4"/></Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48">
+                         <div className="grid gap-4">
+                            <h4 className="font-medium leading-none">Line Spacing</h4>
+                            <div className='flex flex-col'>
+                                {['1.0', '1.15', '1.5', '2.0', '2.5'].map(spacing => (
+                                     <Button 
+                                        key={spacing} 
+                                        variant="ghost" 
+                                        className='justify-start'
+                                        onClick={() => editor.chain().focus().setLineHeight(spacing).run()}
+                                        >
+                                        {spacing}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                    </PopoverContent>
+                </Popover>
+
                 <Separator orientation="vertical" className="h-8" />
                 <Toggle 
                     aria-label="Toggle bullet list" 

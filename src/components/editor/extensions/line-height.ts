@@ -8,10 +8,8 @@ type LineHeightOptions = {
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
-    lineHeight: {
-      setLineHeight: (lineHeight: string) => ReturnType;
-      unsetLineHeight: () => ReturnType;
-    };
+    setLineHeight: (lineHeight: string) => ReturnType;
+    unsetLineHeight: () => ReturnType;
   }
 }
 
@@ -49,12 +47,14 @@ export const LineHeight = Extension.create<LineHeightOptions>({
     return {
       setLineHeight: (lineHeight: string) => ({ chain }) => {
         return chain()
-          .setNodeAttribute('lineHeight', lineHeight)
+          .setNodeAttributes('paragraph', { lineHeight })
+          .setNodeAttributes('heading', { lineHeight })
           .run();
       },
       unsetLineHeight: () => ({ chain }) => {
         return chain()
-          .setNodeAttribute('lineHeight', null)
+          .setNodeAttributes('paragraph', { lineHeight: null })
+          .setNodeAttributes('heading', { lineHeight: null })
           .run();
       },
     };
