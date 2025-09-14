@@ -55,37 +55,34 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
     const docRef = firestoreDoc(db, 'documents', doc.id);
 
     const unsubscribe = onSnapshot(docRef, async (snap) => {
-        const docData = snap.data();
-        if (!docData) return;
+      const docData = snap.data();
+      if (!docData) return;
 
-        const ownerId = docData.userId;
-        const collaboratorIds = docData.collaborators || [];
-        
-        const userIdsToFetch = [ownerId, ...collaboratorIds].filter(Boolean);
-        const uniqueUserIds = [...new Set(userIdsToFetch)];
+      const ownerId = docData.userId;
+      const collaboratorIds: string[] = docData.collaborators || [];
+      const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
 
-        if (uniqueUserIds.length > 0) {
-             try {
-                const usersRef = collection(db, 'users');
-                const usersQuery = query(usersRef, where('uid', 'in', uniqueUserIds));
-                const querySnapshot = await getDocs(usersQuery);
-                const fetchedUsers = querySnapshot.docs.map(d => d.data() as FoundUser);
+      if (allUserIds.length > 0) {
+        try {
+          const userPromises = allUserIds.map(uid => getDoc(firestoreDoc(db, 'users', uid)));
+          const userDocs = await Promise.all(userPromises);
+          const fetchedUsers = userDocs.filter(d => d.exists()).map(d => d.data() as FoundUser);
+          
+          const ownerProfile = fetchedUsers.find(u => u.uid === ownerId) || null;
+          const collaboratorProfiles = fetchedUsers.filter(u => u.uid !== ownerId);
+          
+          setOwner(ownerProfile);
+          setDbCollaborators(fetchedUsers);
 
-                const ownerProfile = fetchedUsers.find(u => u.uid === ownerId) || null;
-                const collaboratorProfiles = fetchedUsers.filter(u => collaboratorIds.includes(u.uid));
-
-                setOwner(ownerProfile);
-                setDbCollaborators(collaboratorProfiles);
-
-            } catch (e) {
-                console.error("Error fetching user profiles:", e);
-                setOwner(null);
-                setDbCollaborators([]);
-            }
-        } else {
-            setOwner(null);
-            setDbCollaborators([]);
+        } catch (e) {
+          console.error("Error fetching user profiles:", e);
+          setOwner(null);
+          setDbCollaborators([]);
         }
+      } else {
+        setOwner(null);
+        setDbCollaborators([]);
+      }
     });
 
     return () => unsubscribe();
