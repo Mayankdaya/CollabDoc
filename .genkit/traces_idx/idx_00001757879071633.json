@@ -100,3 +100,5 @@
 {"id":"280091124cf8dbd97c3d52318e5a177d","type":"UNKNOWN","start":1757881011631,"name":"GET /documents/[id]","end":1757881012645.2844,"status":0}
 {"id":"7d4e24d3f17b4b65dac19f174f3d52c9","type":"UNKNOWN","start":1757881014285,"name":"POST /_error","end":1757881014765.4104,"status":0}
 {"id":"a20026ee69c1dd63004ba1976bd3e804","type":"UNKNOWN","start":1757881018591,"name":"POST /documents/[id]","end":1757881019394.8276,"status":0}
+{"id":"5b1dd96d4ea2366f5d3fea91413090a5","type":"UNKNOWN","start":1757881079954,"name":"GET /documents/[id]","end":1757881080449.585,"status":0}
+{"id":"3e6fd91abea28164977e542f58f7e0e2","type":"UNKNOWN","start":1757881082579,"name":"POST /_error","end":1757881082914.5342,"status":0}

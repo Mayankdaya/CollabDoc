@@ -11,7 +11,7 @@ import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
 import { db } from '@/lib/firebase';
-import { doc, getDoc, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 
 
 interface TeamPanelProps {
@@ -20,7 +20,7 @@ interface TeamPanelProps {
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
   const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
@@ -44,9 +44,9 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   }, [awareness]);
 
   useEffect(() => {
-    if (!doc.id) return;
+    if (!initialDoc.id) return;
     
-    const docRef = doc(db, 'documents', doc.id);
+    const docRef = doc(db, 'documents', initialDoc.id);
     
     const unsubscribe = onSnapshot(docRef, async (snap) => {
         setIsLoading(true);
@@ -81,7 +81,7 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
     });
 
     return () => unsubscribe();
-  }, [doc.id]);
+  }, [initialDoc.id]);
   
 
   const isUserOnline = useCallback((user: FoundUser) => {
@@ -142,7 +142,7 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
                                 </>
                             )}
                             <span className="text-sm text-muted-foreground">
-                                {person.uid === doc.userId ? 'Owner' : 'Editor'}
+                                {person.uid === initialDoc.userId ? 'Owner' : 'Editor'}
                             </span>
                         </div>
                     </div>

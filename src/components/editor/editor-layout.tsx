@@ -75,7 +75,6 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(initialData.lastModified);
     const [lastSavedBy, setLastSavedBy] = useState(initialData.lastModifiedBy);
-    const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
     const [callState, setCallState] = useState<{ active: boolean; type: 'voice' | 'video' | null; user: any | null }>({
         active: false,
         type: null,
@@ -212,7 +211,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
-                onPeopleListChange={setPeopleWithAccess}
+                onPeopleListChange={() => {}}
             />
             <EditorToolbar 
                 editor={editor} 
