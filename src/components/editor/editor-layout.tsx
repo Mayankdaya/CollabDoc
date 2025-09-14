@@ -152,7 +152,6 @@ const EditorCore = ({
     const collaborationExtensions = [
         Collaboration.configure({
             document: ydoc,
-            field: 'prosemirror',
         }),
         CollaborationCursor.configure({
             provider: newProvider,
