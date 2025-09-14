@@ -449,13 +449,13 @@ export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, on
                     <Button variant="ghost" size="icon" asChild className="h-9 w-9">
                         <label className='cursor-pointer'>
                             <Paintbrush className="h-4 w-4" />
-                            <input type="color" className="sr-only" onInput={(event) => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()} value={editor.getAttributes('textStyle').color || ''} />
+                            <input type="color" className="sr-only" onInput={(event) => editor.chain().focus().setColor((event.target as HTMLInputElement).value).run()} value={editor.getAttributes('textStyle').color || '#000000'} />
                         </label>
                     </Button>
                      <Button variant="ghost" size="icon" asChild className="h-9 w-9">
                         <label className='cursor-pointer'>
                             <Highlighter className="h-4 w-4" />
-                            <input type="color" className="sr-only" onInput={(event) => editor.chain().focus().toggleHighlight({ color: (event.target as HTMLInputElement).value }).run()} value={editor.getAttributes('highlight').color || ''} />
+                            <input type="color" className="sr-only" onInput={(event) => editor.chain().focus().toggleHighlight({ color: (event.target as HTMLInputElement).value }).run()} value={editor.getAttributes('highlight').color || '#000000'} />
                         </label>
                     </Button>
                 </div>

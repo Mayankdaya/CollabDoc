@@ -17,13 +17,8 @@ import TableHeader from '@tiptap/extension-table-header';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import Placeholder from '@tiptap/extension-placeholder';
-import History from '@tiptap/extension-history';
-import Gapcursor from '@tiptap/extension-gapcursor';
-import Dropcursor from '@tiptap/extension-dropcursor';
 import Collaboration from '@tiptap/extension-collaboration';
 import CollaborationCursor from '@tiptap/extension-collaboration-cursor';
-import Blockquote from '@tiptap/extension-blockquote';
-import CodeBlock from '@tiptap/extension-code-block';
 import CharacterCount from '@tiptap/extension-character-count';
 import TaskList from '@tiptap/extension-task-list';
 import TaskItem from '@tiptap/extension-task-item';
@@ -127,7 +122,7 @@ const EditorCore = ({
   );
   
   const extensions = useMemo(() => [
-    StarterKit.configure({ history: false }),
+    StarterKit.configure({ history: false, heading: { levels: [1, 2, 3] } }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TextStyle, FontFamily, FontSize, LineHeight, Color,
     Highlight.configure({ multicolor: true }),
@@ -136,7 +131,7 @@ const EditorCore = ({
     Image,
     Link.configure({ openOnClick: false }),
     Placeholder.configure({ placeholder: 'Start typing...' }),
-    History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
+    CharacterCount,
     TaskList, TaskItem.configure({ nested: true }),
   ], []);
 
@@ -157,7 +152,7 @@ const EditorCore = ({
             provider: newProvider,
             user: {
               name: user?.displayName || 'Anonymous',
-              color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+              color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
             },
         }),
       ];
@@ -182,7 +177,7 @@ const EditorCore = ({
       newProvider.on('synced', (isSynced: boolean) => {
         if (isSynced && newEditor) {
           const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
-          if (yDocFragment.length === 0) {
+          if (yDocFragment.length === 0 && initialData.content) {
               const prosemirrorJson = generateJSON(initialData.content, extensions);
               if (!newEditor.isDestroyed) {
                 newEditor.commands.setContent(prosemirrorJson, false);
