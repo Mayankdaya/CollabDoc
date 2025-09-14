@@ -218,11 +218,9 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                     <div
                         className="mx-auto my-8 p-8 sm:p-12"
                         style={{
-                        width: '8.5in',
-                        minHeight: '11in',
-                        transform: `scale(${zoom})`,
-                        transformOrigin: 'top center',
-                        transition: 'transform 0.2s',
+                            width: '8.5in',
+                            minHeight: '11in',
+                            transition: 'transform 0.2s',
                         }}
                     >
                         <div className={cn("bg-card shadow-lg p-[1in] min-h-[9in]")}>
@@ -269,5 +267,7 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
+
+    
 
     
