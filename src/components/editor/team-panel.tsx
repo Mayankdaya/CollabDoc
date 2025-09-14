@@ -101,17 +101,19 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
                 </div>
             </div>
             <div className='flex items-center gap-1'>
+                <div className="flex items-center">
                     {isOnline && !isCurrentUser && (
-                    <>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
-                        <Phone className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
-                        <Video className="h-4 w-4" />
-                    </Button>
-                    </>
-                )}
-                <span className="text-sm text-muted-foreground">
+                        <>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
+                                <Phone className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
+                                <Video className="h-4 w-4" />
+                            </Button>
+                        </>
+                    )}
+                </div>
+                <span className="text-sm text-muted-foreground ml-2">
                     {role}
                 </span>
             </div>
