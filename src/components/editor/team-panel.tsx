@@ -21,10 +21,8 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
     return onlineUserUIDs.includes(personUid);
   }, [onlineUserUIDs]);
 
-  // Separate owner from collaborators
-  const owner = peopleWithAccess.find(p => p.uid === currentUser?.uid) || peopleWithAccess[0]; // Fallback for safety
-  const collaborators = peopleWithAccess.filter(p => p.uid !== owner?.uid);
-  const ownerFromList = peopleWithAccess.find(p => isUserOnline(p.uid) && p.uid !== currentUser?.uid);
+  const owner = peopleWithAccess.find(p => p.uid === 'OWNER_UID_PLACEHOLDER'); // This is just for role logic, not filtering
+  const ownerId = peopleWithAccess.find(p => isUserOnline(p.uid))?.uid;
 
 
   return (
@@ -35,35 +33,16 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
        </div>
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {peopleWithAccess.length > 0 ? (
-            <>
-                <p className="text-xs font-semibold text-muted-foreground uppercase">Owner</p>
-                {peopleWithAccess.map(person => (
-                    <UserRow
-                        key={person.uid}
-                        person={person}
-                        isOnline={isUserOnline(person.uid)}
-                        isCurrentUser={person.uid === currentUser?.uid}
-                        role="Owner"
-                        onStartCall={onStartCall}
-                    />
-                ))}
-
-                {collaborators.length > 0 && (
-                     <>
-                        <p className="text-xs font-semibold text-muted-foreground uppercase pt-4">Editors</p>
-                        {collaborators.map(person => (
-                            <UserRow
-                                key={person.uid}
-                                person={person}
-                                isOnline={isUserOnline(person.uid)}
-                                isCurrentUser={person.uid === currentUser?.uid}
-                                role="Editor"
-                                onStartCall={onStartCall}
-                            />
-                        ))}
-                     </>
-                )}
-            </>
+          peopleWithAccess.map(person => (
+            <UserRow
+              key={person.uid}
+              person={person}
+              isOnline={isUserOnline(person.uid)}
+              isCurrentUser={person.uid === currentUser?.uid}
+              role={person.uid === ownerId ? 'Owner' : 'Editor'} // Simplified role assignment
+              onStartCall={onStartCall}
+            />
+          ))
         ) : (
             <p className="text-center text-muted-foreground p-4">Only you have access to this document.</p>
         )}
