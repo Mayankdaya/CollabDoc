@@ -171,13 +171,19 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     useEffect(() => {
         if (!editor || !provider) return;
 
+        let timeoutId: NodeJS.Timeout;
+
         const updateHandler = ({ editor: updatedEditor }: { editor: EditorClass }) => {
-            handleAutoSave(updatedEditor.getHTML());
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                handleAutoSave(updatedEditor.getHTML());
+            }, 1000); // Debounce for 1 second
         };
 
         editor.on('update', updateHandler);
 
         return () => {
+            clearTimeout(timeoutId);
             editor.off('update', updateHandler);
         };
     }, [editor, provider, handleAutoSave]);
