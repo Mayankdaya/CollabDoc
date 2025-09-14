@@ -31,15 +31,16 @@ import { onSnapshot, doc as firestoreDoc, getDoc, collection, query, where, getD
 interface ShareDialogProps {
   doc: Document;
   children?: ReactNode;
+  onPeopleListChange?: (people: FoundUser[]) => void;
 }
 
-type FoundUser = {
+export type FoundUser = {
     uid: string;
     displayName: string;
     email: string;
 }
 
-export function ShareDialog({ doc, children }: ShareDialogProps) {
+export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [dbCollaborators, setDbCollaborators] = useState<FoundUser[]>([]);
@@ -49,6 +50,14 @@ export function ShareDialog({ doc, children }: ShareDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<FoundUser[]>([]);
 
+  const peopleWithAccess = useMemo(() => {
+    const allPeople = new Map<string, FoundUser>();
+    if (owner) {
+        allPeople.set(owner.uid, owner);
+    }
+    dbCollaborators.forEach(c => allPeople.set(c.uid, c));
+    return Array.from(allPeople.values());
+  }, [owner, dbCollaborators]);
 
    useEffect(() => {
     if (!doc.id) return;
@@ -85,7 +94,13 @@ export function ShareDialog({ doc, children }: ShareDialogProps) {
     });
 
     return () => unsubscribe();
-  }, [doc.id, owner]);
+  }, [doc.id]);
+
+  useEffect(() => {
+    if(onPeopleListChange) {
+        onPeopleListChange(peopleWithAccess);
+    }
+  }, [peopleWithAccess, onPeopleListChange]);
 
 
   const trigger = children ? (
@@ -100,15 +115,6 @@ export function ShareDialog({ doc, children }: ShareDialogProps) {
   
   const isOwner = user?.uid === doc.userId;
 
-  const peopleWithAccess = useMemo(() => {
-    const allPeople = new Map<string, FoundUser>();
-    if (owner) {
-        allPeople.set(owner.uid, owner);
-    }
-    dbCollaborators.forEach(c => allPeople.set(c.uid, c));
-    return Array.from(allPeople.values());
-  }, [owner, dbCollaborators]);
-  
   const shareLink = typeof window !== 'undefined' ? `${window.location.origin}/documents/${doc.id}` : '';
 
   const handleSearchUsers = () => {

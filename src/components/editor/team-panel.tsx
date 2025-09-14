@@ -1,9 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { db } from '@/lib/firebase';
-import { onSnapshot, doc as firestoreDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { useState, useEffect, useCallback } from 'react';
 import type { Document } from '@/app/documents/actions';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
@@ -11,38 +9,19 @@ import type { Awareness } from 'y-protocols/awareness';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import type { FoundUser } from './share-dialog';
 
 interface TeamPanelProps {
   doc: Document;
   awareness: Awareness | null;
-  onStartCall: (user: UserProfile, type: 'voice' | 'video') => void;
+  onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
+  peopleWithAccess: FoundUser[];
 }
 
-type UserProfile = {
-    uid: string;
-    displayName: string;
-    email: string;
-}
-
-const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
-    if (uids.length === 0) return [];
-    try {
-        const usersRef = collection(db, 'users');
-        // Firestore 'in' query is limited to 30 items. We may need to batch this for >30 collaborators
-        const q = query(usersRef, where('uid', 'in', uids));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(doc => doc.data() as UserProfile);
-    } catch (e) {
-        console.error("Error fetching user profiles:", e);
-        return [];
-    }
-};
-
-export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc, awareness, onStartCall, peopleWithAccess }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
-  const [peopleWithAccess, setPeopleWithAccess] = useState<UserProfile[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (awareness) {
@@ -62,36 +41,11 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   }, [awareness]);
 
   useEffect(() => {
-    if (!doc.id) return;
+    setIsLoading(peopleWithAccess.length === 0);
+  }, [peopleWithAccess]);
+  
 
-    setIsLoading(true);
-    const docRef = firestoreDoc(db, 'documents', doc.id);
-
-    const unsubscribe = onSnapshot(docRef, async (snap) => {
-        const docData = snap.data();
-        if (!docData) {
-            setIsLoading(false);
-            return;
-        }
-
-        const ownerId = docData.userId;
-        const collaboratorIds = docData.collaborators || [];
-        const allMemberIds = Array.from(new Set([ownerId, ...collaboratorIds])).filter(Boolean);
-
-        if (allMemberIds.length > 0) {
-            const profiles = await fetchUserProfiles(allMemberIds);
-            setPeopleWithAccess(profiles);
-        } else {
-            setPeopleWithAccess([]);
-        }
-        
-        setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [doc.id]);
-
-  const isUserOnline = useCallback((user: UserProfile) => {
+  const isUserOnline = useCallback((user: FoundUser) => {
     return onlineUsers.some(onlineUser => onlineUser.uid === user.uid);
   }, [onlineUsers]);
 

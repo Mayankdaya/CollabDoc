@@ -47,6 +47,7 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
+import type { FoundUser } from './share-dialog';
 
 function EditorLoading() {
   return (
@@ -74,6 +75,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(initialData.lastModified);
     const [lastSavedBy, setLastSavedBy] = useState(initialData.lastModifiedBy);
+    const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
     const [callState, setCallState] = useState<{ active: boolean; type: 'voice' | 'video' | null; user: any | null }>({
         active: false,
         type: null,
@@ -210,6 +212,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
+                onPeopleListChange={setPeopleWithAccess}
             />
             <EditorToolbar 
                 editor={editor} 
@@ -243,7 +246,8 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                         </TabsContent>
                         <TabsContent value="team" className="flex-1 overflow-auto mt-0">
                             <TeamPanel 
-                                doc={initialData} 
+                                doc={initialData}
+                                peopleWithAccess={peopleWithAccess}
                                 awareness={provider.awareness}
                                 onStartCall={(user, type) => setCallState({ active: true, user, type })}
                             />

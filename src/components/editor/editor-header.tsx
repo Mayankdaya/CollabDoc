@@ -11,7 +11,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShareDialog } from './share-dialog';
+import { ShareDialog, FoundUser } from './share-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserMenu } from '../user-menu';
 import { updateDocument } from '@/app/documents/actions';
@@ -28,11 +28,12 @@ interface EditorHeaderProps {
   docName: string;
   setDocName: (name: string) => void;
   isSaving: boolean;
-  lastSaved: string; // Now a string
+  lastSaved: string;
   lastSavedBy: string;
+  onPeopleListChange: (people: FoundUser[]) => void;
 }
 
-export default function EditorHeader({ doc, editor, awareness, docName, setDocName, isSaving, lastSaved, lastSavedBy }: EditorHeaderProps) {
+export default function EditorHeader({ doc, editor, awareness, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange }: EditorHeaderProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
@@ -46,7 +47,6 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
             .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
             .filter((user): user is { name: string; color: string; clientId: number } => user !== null && !!user.name);
         
-        // Deduplicate users based on clientId
         const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
         setOnlineUsers(uniqueUsers);
     };
@@ -144,7 +144,7 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
         
         <Separator orientation="vertical" className="h-8 mx-1 sm:mx-2" />
 
-        <ShareDialog doc={doc} />
+        <ShareDialog doc={doc} onPeopleListChange={onPeopleListChange} />
         <div className='hidden sm:block'>
             <UserMenu />
         </div>
