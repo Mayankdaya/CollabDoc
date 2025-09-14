@@ -74,3 +74,6 @@
 {"id":"bf50e474f56578ca8ab2e5819bf7e1c8","type":"UNKNOWN","start":1757880089110,"name":"RSC GET /documents/[id]","end":1757880091512.0706,"status":0}
 {"id":"41eb01716db06a29059b3c5333133cb6","type":"flow","start":1757880102969,"name":"chatFlow","end":1757880104180.1172,"status":2}
 {"id":"36cad1e1881f664bc50832f75f6cd424","type":"UNKNOWN","start":1757880102765,"name":"POST /documents/[id]","end":1757880105293.526,"status":2}
+{"id":"36887d20b258e51bab3e5c5fb05c7752","type":"UNKNOWN","start":1757880312543,"name":"GET /documents/[id]","end":1757880313101.0508,"status":0}
+{"id":"8b31d13b10cbafda1f443f09a51ab755","type":"UNKNOWN","start":1757880314892,"name":"POST /_error","end":1757880315251.864,"status":0}
+{"id":"8ec99cde57847d1f572f891c6aad98d4","type":"UNKNOWN","start":1757880318603,"name":"POST /documents/[id]","end":1757880319696.165,"status":0}

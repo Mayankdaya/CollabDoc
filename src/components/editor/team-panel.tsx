@@ -40,8 +40,7 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
 
 export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
-  const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
-  const [owner, setOwner] = useState<UserProfile | null>(null);
+  const [peopleWithAccess, setPeopleWithAccess] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
@@ -51,7 +50,7 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
             const states = Array.from(awareness.getStates().entries());
             const users = states
                 .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
-                .filter((user): user is { name: string; color: string; clientId: number } => user !== null && !!user.name);
+                .filter((user): user is { name: string; color: string; clientId: number, uid: string } => user !== null && !!user.name);
             
             const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
             setOnlineUsers(uniqueUsers);
@@ -79,30 +78,18 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
         const collaboratorIds = docData.collaborators || [];
         const allMemberIds = Array.from(new Set([ownerId, ...collaboratorIds])).filter(Boolean);
 
-        const profiles = await fetchUserProfiles(allMemberIds);
-        const profileMap = new Map(profiles.map(p => [p.uid, p]));
-
-        setOwner(ownerId ? profileMap.get(ownerId) || null : null);
-        setCollaborators(collaboratorIds.map((id: string) => profileMap.get(id)).filter(Boolean));
+        if (allMemberIds.length > 0) {
+            const profiles = await fetchUserProfiles(allMemberIds);
+            setPeopleWithAccess(profiles);
+        } else {
+            setPeopleWithAccess([]);
+        }
         
         setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [doc.id]);
-
-  const peopleWithAccess = useMemo(() => {
-    const allPeople = new Map<string, UserProfile>();
-    if (owner) {
-        allPeople.set(owner.uid, owner);
-    }
-    collaborators.forEach(c => {
-        if (!allPeople.has(c.uid)) {
-            allPeople.set(c.uid, c);
-        }
-    });
-    return Array.from(allPeople.values());
-  }, [owner, collaborators]);
 
   const isUserOnline = useCallback((user: UserProfile) => {
     return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
