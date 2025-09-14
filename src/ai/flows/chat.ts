@@ -82,30 +82,30 @@ const chatFlow = ai.defineFlow(
   },
   async input => {
     const result = await chatPrompt(input);
-    
-    let documentContent: string | undefined = undefined;
-    let requiresConfirmation: boolean | undefined = undefined;
-    let aiResponse = result.text(); // Capture the AI's text response first.
+    const resultText = result.text();
 
-    if (result.toolRequests.length > 0) {
-      const toolResponse = await result.runTools({
-        context: {documentContent: input.documentContent},
-      });
-      
-      const firstToolOutput = toolResponse[0]?.output?.updatedDocumentContent;
-      const firstToolName = result.toolRequests[0]?.name;
-      
-      if (firstToolOutput !== undefined) {
-        documentContent = firstToolOutput;
-        if (firstToolName === 'generateNewContent') {
-            requiresConfirmation = true;
-        }
-      }
-      // If the AI didn't provide a text response along with the tool call, create a default one.
-      if (!aiResponse) {
-          aiResponse = "I've updated the document for you.";
-      }
+    if (result.toolRequests.length === 0) {
+      return {
+        response: resultText,
+      };
     }
+
+    const toolResponses = await result.runTools({
+      context: { documentContent: input.documentContent },
+    });
+
+    const firstToolOutput = toolResponses[0]?.output as any;
+    const firstToolName = result.toolRequests[0]?.name;
+
+    const documentContent = firstToolOutput?.updatedDocumentContent;
+    
+    let requiresConfirmation = false;
+    if (firstToolName === 'generateNewContent' && documentContent) {
+      requiresConfirmation = true;
+    }
+    
+    // If the model provided a text response, use it. Otherwise, create a default one.
+    const aiResponse = resultText || "I've updated the document for you.";
 
     return {
       response: aiResponse,
