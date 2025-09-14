@@ -47,12 +47,12 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   useEffect(() => {
     if (awareness) {
         const updateOnlineUsers = () => {
-            const states = Array.from(awareness.getStates().entries());
+            const states = Array.from(awareness.getStates().values());
             const users = states
-                .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
-                .filter((user): user is { name: string; color: string; clientId: number, uid: string } => user !== null && !!user.name);
+                .map((state) => state.user)
+                .filter((user): user is { name: string; color: string; uid: string } => user !== null && !!user.uid);
             
-            const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
+            const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
             setOnlineUsers(uniqueUsers);
         };
         awareness.on('change', updateOnlineUsers);
@@ -92,7 +92,7 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
   }, [doc.id]);
 
   const isUserOnline = useCallback((user: UserProfile) => {
-    return onlineUsers.some(onlineUser => onlineUser.name === user.displayName);
+    return onlineUsers.some(onlineUser => onlineUser.uid === user.uid);
   }, [onlineUsers]);
 
 
