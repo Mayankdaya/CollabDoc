@@ -49,7 +49,7 @@ import {
   RoomProvider,
   ClientSideSuspense,
 } from '@liveblocks/react/suspense';
-import { LiveblocksYjsProvider } from '@liveblocks/yjs';
+import { LiveblocksYjsProvider }d from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
 import { yDocToProsemirrorJSON } from 'y-prosemirror';
@@ -141,62 +141,74 @@ const EditorCore = ({
   ], []);
 
   useEffect(() => {
-    if (!room || !user) {
+    if (!room || !user || editor) {
       return;
     }
 
     const ydoc = new Y.Doc();
     const newProvider = new LiveblocksYjsProvider(room, ydoc);
     setProvider(newProvider);
-    
+
     const collaborationExtensions = [
-        Collaboration.configure({
-            document: ydoc,
-        }),
-        CollaborationCursor.configure({
-            provider: newProvider,
-            user: {
-                name: user?.displayName || 'Anonymous',
-                color: '#' + Math.floor(Math.random()*16777215).toString(16),
-            },
-        }),
+      Collaboration.configure({
+        document: ydoc,
+        field: 'prosemirror',
+      }),
+      CollaborationCursor.configure({
+        provider: newProvider,
+        user: {
+          name: user?.displayName || 'Anonymous',
+          color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+        },
+      }),
     ];
 
     const allExtensions = [...extensions, ...collaborationExtensions];
 
     const newEditor = new EditorClass({
-        extensions: allExtensions,
-        editorProps: {
-          attributes: {
-            class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-          },
+      extensions: allExtensions,
+      editorProps: {
+        attributes: {
+          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
         },
-        // DO NOT PASS CONTENT HERE. The collaboration extension will handle it.
-        onUpdate: ({ editor: updatedEditor }) => {
-          handleAutoSave(updatedEditor.getHTML());
-        },
-      });
-  
-      setEditor(newEditor);
-
-    newProvider.on('synced', (isSynced: boolean) => {
-        if (isSynced) {
-            const yDocFragment = ydoc.getXmlFragment('prosemirror');
-            const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
-
-            if (!newEditor.isDestroyed && yDocFragment.length === 0) {
-                 newEditor.commands.setContent(prosemirrorContent, false);
-            }
-        }
+      },
+      // DO NOT PASS CONTENT HERE. The collaboration extension will handle it.
+      onUpdate: ({ editor: updatedEditor }) => {
+        handleAutoSave(updatedEditor.getHTML());
+      },
     });
 
+    setEditor(newEditor);
+
+    newProvider.on('synced', (isSynced: boolean) => {
+      if (isSynced) {
+        const yDocFragment = ydoc.getXmlFragment('prosemirror');
+        const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
+
+        if (!newEditor.isDestroyed && yDocFragment.length === 0) {
+          // Document is empty, populate from initial data
+          const tempEditor = new EditorClass({
+            extensions,
+            content: initialData.content,
+          });
+          const prosemirrorJson = tempEditor.getJSON();
+          const yjsUpdate = Y.encodeStateAsUpdate(
+            prosemirrorJSONToYDoc(extensions, prosemirrorJson)
+          );
+          Y.applyUpdate(ydoc, yjsUpdate);
+          tempEditor.destroy();
+        }
+      }
+    });
 
     return () => {
       newProvider.destroy();
       ydoc.destroy();
       editor?.destroy();
+      setEditor(null);
+      setProvider(null);
     };
-  }, [room, user, extensions, handleAutoSave, initialData.content]);
+  }, [room, user, extensions, handleAutoSave, initialData.content, editor]);
 
 
   if (!editor || !provider) {
@@ -278,7 +290,7 @@ interface EditorLayoutProps {
   initialData: Doc;
 }
 
-export const EditorLayout: React.FC<EditorLayoutProps> = ({ documentId, initialData }) => {
+export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
   const [zoom, setZoom] = useState(1);
   const [docName, setDocName] = useState(initialData.name);
   const [isSaving, setIsSaving] = useState(false);
@@ -322,3 +334,5 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({ documentId, initialD
     </LiveblocksProvider>
   );
 };
+
+    
