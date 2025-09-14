@@ -86,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      // **THIS IS THE CRITICAL FIX**: Update the profile immediately after creation
       await updateProfile(userCredential.user, { displayName: name });
       
       // Manually create the user document with the new display name
@@ -99,8 +98,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await createUserDocument(updatedUser as User);
 
-      // We don't need to call setUser here as onAuthStateChanged will fire
-      // and it will now have the correct displayName.
+      // Refresh the user state to make sure the displayName is updated in the app
+      await auth.currentUser?.reload();
+      const refreshedUser = auth.currentUser;
+      if (refreshedUser) {
+        setUser(refreshedUser);
+        const idToken = await refreshedUser.getIdToken(true);
+        await createSession(idToken);
+      }
+
       router.push('/dashboard');
     } catch (error) {
       console.error("Error signing up with email: ", error);
@@ -114,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
+      // Ensure user document exists upon sign-in as well
       await createUserDocument(result.user);
       router.push('/dashboard');
     } catch (error) {

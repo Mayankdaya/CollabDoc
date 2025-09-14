@@ -124,7 +124,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
       
       setIsSaving(true);
       try {
-        const result = await updateDocument(documentId, { content: currentContent }, user);
+        const result = await updateDocument(documentId, { content: currentContent }, { uid: user.uid, displayName: user.displayName });
         if (result.success) {
           setLastSaved(result.lastModified);
           setLastSavedBy(result.lastModifiedBy);
