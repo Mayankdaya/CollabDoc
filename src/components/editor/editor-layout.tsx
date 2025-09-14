@@ -46,6 +46,7 @@ import TeamPanel from './team-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MessageSquare, Bot, Users } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { CallPanel } from './call-panel';
 
 interface EditorLayoutProps {
   documentId: string;
@@ -64,6 +65,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(initialData.lastModified);
   const [lastSavedBy, setLastSavedBy] = useState(initialData.lastModifiedBy);
+  const [callState, setCallState] = useState<{ active: boolean; type: 'voice' | 'video' | null; user: any | null }>({
+    active: false,
+    type: null,
+    user: null,
+  });
 
   const { ydoc, provider } = useMemo(() => {
     const docY = new Y.Doc();
@@ -158,6 +164,12 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
+        {callState.active && (
+            <CallPanel
+                callState={callState}
+                onEndCall={() => setCallState({ active: false, type: null, user: null })}
+            />
+        )}
         <EditorHeader 
             doc={initialData} 
             editor={editor}
@@ -209,7 +221,11 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({
                     <AiChatPanel documentContent={editor.getHTML()} editor={editor} />
                 </TabsContent>
                 <TabsContent value="team" className="flex-1 overflow-auto mt-0">
-                    <TeamPanel doc={initialData} awareness={provider.awareness} />
+                    <TeamPanel 
+                        doc={initialData} 
+                        awareness={provider.awareness}
+                        onStartCall={(user, type) => setCallState({ active: true, user, type })}
+                    />
                 </TabsContent>
             </Tabs>
         </ResizablePanel>

@@ -7,13 +7,14 @@ import { onSnapshot, doc as firestoreDoc, getDoc, collection, query, where, getD
 import type { Document } from '@/app/documents/actions';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import { Skeleton } from '../ui/skeleton';
-import { getAllUsers } from '@/app/users/actions';
-import { Separator } from '../ui/separator';
 import type { Awareness } from 'y-protocols/awareness';
+import { Button } from '../ui/button';
+import { Phone, Video } from 'lucide-react';
 
 interface TeamPanelProps {
   doc: Document;
   awareness: Awareness | null;
+  onStartCall: (user: UserProfile, type: 'voice' | 'video') => void;
 }
 
 type UserProfile = {
@@ -36,7 +37,7 @@ const fetchUserProfiles = async (uids: string[]): Promise<UserProfile[]> => {
     }
 };
 
-export default function TeamPanel({ doc, awareness }: TeamPanelProps) {
+export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProps) {
   const [collaborators, setCollaborators] = useState<UserProfile[]>([]);
   const [owner, setOwner] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -140,9 +141,21 @@ export default function TeamPanel({ doc, awareness }: TeamPanelProps) {
                                 </div>
                             </div>
                         </div>
-                        <span className="text-sm text-muted-foreground">
-                            {person.uid === doc.userId ? 'Owner' : 'Editor'}
-                        </span>
+                        <div className='flex items-center gap-1'>
+                             {isUserOnline(person) && person.uid !== owner?.uid && (
+                                <>
+                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
+                                    <Phone className="h-4 w-4" />
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
+                                    <Video className="h-4 w-4" />
+                                </Button>
+                                </>
+                            )}
+                            <span className="text-sm text-muted-foreground">
+                                {person.uid === doc.userId ? 'Owner' : 'Editor'}
+                            </span>
+                        </div>
                     </div>
                 ))}
             </>
