@@ -148,42 +148,48 @@ const EditorCore = ({
     const ydoc = new Y.Doc();
     const newProvider = new LiveblocksYjsProvider(room, ydoc);
     setProvider(newProvider);
-
-    newProvider.on('synced', (isSynced: boolean) => {
-      if (!isSynced) return;
-
-      const yDocFragment = ydoc.getXmlFragment('prosemirror');
-      const collaborationExtensions = [
+    
+    const collaborationExtensions = [
         Collaboration.configure({
-          document: ydoc,
+            document: ydoc,
         }),
         CollaborationCursor.configure({
-          provider: newProvider,
-          user: {
-            name: user?.displayName || 'Anonymous',
-            color: '#' + Math.floor(Math.random()*16777215).toString(16),
-          },
+            provider: newProvider,
+            user: {
+                name: user?.displayName || 'Anonymous',
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+            },
         }),
-      ];
-  
-      const allExtensions = [...extensions, ...collaborationExtensions];
-      
-      const content = yDocFragment.length > 0 ? undefined : initialData.content;
-  
-      const newEditor = new EditorClass({
+    ];
+
+    const allExtensions = [...extensions, ...collaborationExtensions];
+
+    const newEditor = new EditorClass({
         extensions: allExtensions,
         editorProps: {
           attributes: {
             class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
           },
         },
-        content: content,
+        // DO NOT PASS CONTENT HERE. The collaboration extension will handle it.
         onUpdate: ({ editor: updatedEditor }) => {
           handleAutoSave(updatedEditor.getHTML());
         },
       });
   
       setEditor(newEditor);
+
+    newProvider.on('synced', (isSynced: boolean) => {
+        if (isSynced) {
+            const yDocFragment = ydoc.getXmlFragment('prosemirror');
+            const prosemirrorContent = yDocFragment.length > 0
+                ? yDocToProsemirrorJSON(yDocFragment)
+                : generateJSON(initialData.content, extensions);
+
+            if (!newEditor.isDestroyed && yDocFragment.length === 0) {
+                 newEditor.commands.setContent(prosemirrorContent, false);
+            }
+        }
     });
 
 
