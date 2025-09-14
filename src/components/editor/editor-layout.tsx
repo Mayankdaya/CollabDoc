@@ -147,8 +147,22 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
         
         setEditor(newEditor);
         setProvider(newProvider);
+        
+        const handleSync = () => {
+            if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
+                const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
+                if (yDocFragment.length === 0 && initialData.content) {
+                    newEditor.commands.setContent(initialData.content, false);
+                }
+            }
+        };
+
+        newProvider.on('synced', handleSync);
+        handleSync(); // Also run on initial setup
+
 
         return () => {
+            newProvider.off('synced', handleSync);
             ydoc.destroy();
             newProvider.destroy();
             newEditor.destroy();
@@ -200,7 +214,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
                 doc={initialData}
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel className="flex-1 overflow-auto editor-page-background">
+                <ResizablePanel className="flex-1 editor-page-background overflow-auto">
                     <div
                         className="mx-auto my-8 p-8 sm:p-12"
                         style={{
@@ -255,3 +269,5 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 }
+
+    
