@@ -130,7 +130,8 @@ export async function chat(input: z.infer<typeof ChatInputSchema>) {
         return result;
     } catch (error) {
         console.error("Error in chat flow. Full error object:", error);
-        throw new Error("Failed to get chat response.");
+        // Re-throw the original error to see the real message in the UI
+        throw error;
     }
 }
 
