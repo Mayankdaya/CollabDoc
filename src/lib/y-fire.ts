@@ -71,8 +71,11 @@ export class YFireProvider {
     // Subscribe to awareness changes
     const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
       const data = snapshot.data() || {};
-      const remoteStates = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
-
+      const remoteStates = new Map<number, any>();
+      for (const key in data) {
+          remoteStates.set(parseInt(key, 10), data[key]);
+      }
+      
       const localClientIDs = Array.from(this.awareness.getStates().keys());
       const remoteClientIDs = Array.from(remoteStates.keys());
 
@@ -82,28 +85,21 @@ export class YFireProvider {
       });
 
       // Find clients that have updated states
-      const updatedClients = remoteClientIDs.filter(clientID => {
-          return clientID !== this.doc.clientID;
-      });
-
+      const updatedClients = remoteClientIDs.filter(clientID => clientID !== this.doc.clientID);
+      
       if (removedClients.length > 0) {
           removeAwarenessStates(this.awareness, removedClients, 'firestore');
       }
 
-      if (updatedClients.length > 0) {
-          const tempAwareness = new Awareness(new Y.Doc());
-          updatedClients.forEach(clientID => {
-              const state = remoteStates.get(clientID);
-              if (state) {
-                  tempAwareness.setLocalState(clientID, state as any);
-              }
-          });
-          if (tempAwareness.getStates().size > 0) {
-             const update = encodeAwarenessUpdate(tempAwareness, updatedClients);
-             applyAwarenessUpdate(this.awareness, update, 'firestore');
-          }
-      }
+      // Apply remote states directly
+      updatedClients.forEach(clientID => {
+        const state = remoteStates.get(clientID);
+        if (state) {
+            this.awareness.setLocalState(clientID, state);
+        }
+      });
     });
+
 
     this.unsubscribes.push(unsubscribeAwareness);
 
