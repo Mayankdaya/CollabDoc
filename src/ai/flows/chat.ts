@@ -29,11 +29,6 @@ const ChatInputSchema = z.object({
 });
 type ChatInput = z.infer<typeof ChatInputSchema>;
 
-// Internal schema includes the escaped content
-const InternalChatInputSchema = ChatInputSchema.extend({
-  escapedDocumentContent: z.string(),
-});
-
 const ChatOutputSchema = z.object({
   response: z.string().describe("The AI's response."),
   documentContent: z
@@ -53,7 +48,7 @@ type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
-  input: {schema: InternalChatInputSchema},
+  input: {schema: ChatInputSchema},
   tools: [
     replaceTextInDocument,
     deleteTextFromDocument,
@@ -74,11 +69,8 @@ const chatPrompt = ai.definePrompt({
   Your goal is to help users by answering their questions, generating content, or by directly modifying the document on their command.
 
   - If the user asks you to **create or generate** a new document (e.g., "write an essay on the solar system"), you MUST use the \`generateNewContent\` tool. The content you generate for the tool should be well-structured HTML using h2, h3, p, and other appropriate tags.
-  - If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.).
+  - If the user asks you to **modify** the document (e.g., "remove the first paragraph," "replace 'cat' with 'dog'"), you MUST use the other provided tools (\`replaceTextInDocument\`, \`deleteTextFromDocument\`, etc.). The document content will be provided to you in the tool's context. Do not ask the user for the content.
   - For all other general questions, provide a helpful response without using any tools.
-
-  Current Document Content:
-  {{{escapedDocumentContent}}}
 
   Conversation History:
   {{#each history}}
@@ -97,22 +89,7 @@ const chatFlow = ai.defineFlow(
     outputSchema: ChatOutputSchema,
   },
   async input => {
-    // This is the simplest way to escape HTML to prevent prompt corruption
-    const escapeHtml = (unsafe: string): string => {
-      return unsafe
-        .replace(/&(?!(amp|lt|gt|quot|#039);)/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    };
-
-    const internalInput = {
-      ...input,
-      escapedDocumentContent: escapeHtml(input.documentContent),
-    };
-    
-    const result = await chatPrompt(internalInput);
+    const result = await chatPrompt(input);
     
     let documentContent: string | undefined = undefined;
     let requiresConfirmation: boolean | undefined = undefined;
