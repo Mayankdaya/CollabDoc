@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, Editor as EditorClass } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
@@ -16,7 +16,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import Placeholder from '@tiptap/extension-placeholder';
+import Placeholder from '@tiap/extension-placeholder';
 import History from '@tiptap/extension-history';
 import Gapcursor from '@tiptap/extension-gapcursor';
 import Dropcursor from '@tiptap/extension-dropcursor';
@@ -95,45 +95,13 @@ const EditorCore = ({
   const room = useRoom();
   const { user } = useAuth();
   const { toast } = useToast();
+  const [editor, setEditor] = useState<EditorClass | null>(null);
   const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({ history: false }),
-      TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      TextStyle, FontFamily, FontSize, LineHeight, Color,
-      Highlight.configure({ multicolor: true }),
-      Underline,
-      Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-      Image,
-      Link.configure({ openOnClick: false }),
-      Placeholder.configure({ placeholder: 'Start typing...' }),
-      History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
-      TaskList, TaskItem.configure({ nested: true }),
-      Collaboration.configure({
-        document: provider?.document,
-      }),
-      CollaborationCursor.configure({
-        provider: provider,
-        user: {
-          name: user?.displayName || 'Anonymous',
-          color: '#' + Math.floor(Math.random()*16777215).toString(16),
-        },
-      }),
-    ],
-    editorProps: {
-      attributes: {
-        class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-      },
-    },
-    onUpdate: ({ editor }) => {
-      handleAutoSave(editor.getHTML());
-    },
-  });
+  const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
-      if (!user || !editor) return;
+      if (!user) return;
       
       setIsSaving(true);
       try {
@@ -153,56 +121,64 @@ const EditorCore = ({
         setIsSaving(false);
       }
     },
-    [documentId, user, editor, toast, setIsSaving, setLastSaved, setLastSavedBy]
+    [documentId, user, toast, setIsSaving, setLastSaved, setLastSavedBy]
   );
   
   useEffect(() => {
-    if (!room || editor) return;
+    if (!room) return;
 
-    const ydoc = new Y.Doc();
-    const yprovider = new LiveblocksYjsProvider(room, ydoc);
-    setProvider(yprovider);
+    const newYDoc = new Y.Doc();
+    const newProvider = new LiveblocksYjsProvider(room, newYDoc);
 
-    return () => {
-      ydoc.destroy();
-      yprovider.destroy();
-    };
-  }, [room, editor]);
+    setYdoc(newYDoc);
+    setProvider(newProvider);
+    
+    const newEditor = new EditorClass({
+      extensions: [
+        StarterKit.configure({ history: false }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        TextStyle, FontFamily, FontSize, LineHeight, Color,
+        Highlight.configure({ multicolor: true }),
+        Underline,
+        Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+        Image,
+        Link.configure({ openOnClick: false }),
+        Placeholder.configure({ placeholder: 'Start typing...' }),
+        History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
+        TaskList, TaskItem.configure({ nested: true }),
+        Collaboration.configure({
+          document: newYDoc,
+        }),
+        CollaborationCursor.configure({
+          provider: newProvider,
+          user: {
+            name: user?.displayName || 'Anonymous',
+            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+          },
+        }),
+      ],
+      editorProps: {
+        attributes: {
+          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+        },
+      },
+      onUpdate: ({ editor: updatedEditor }) => {
+        handleAutoSave(updatedEditor.getHTML());
+      },
+    });
 
-  useEffect(() => {
-    if (editor && provider) {
-      editor.setOptions({
-        extensions: [
-          StarterKit.configure({ history: false }),
-          TextAlign.configure({ types: ['heading', 'paragraph'] }),
-          TextStyle, FontFamily, FontSize, LineHeight, Color,
-          Highlight.configure({ multicolor: true }),
-          Underline,
-          Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-          Image,
-          Link.configure({ openOnClick: false }),
-          Placeholder.configure({ placeholder: 'Start typing...' }),
-          History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
-          TaskList, TaskItem.configure({ nested: true }),
-          Collaboration.configure({
-            document: provider.document,
-          }),
-          CollaborationCursor.configure({
-            provider: provider,
-            user: {
-              name: user?.displayName || 'Anonymous',
-              color: '#' + Math.floor(Math.random()*16777215).toString(16),
-            },
-          }),
-        ]
-      })
+    setEditor(newEditor);
 
-      // Set initial content if the editor is empty and the document has content
-      if (editor.isEmpty && initialData.content) {
-         editor.commands.setContent(initialData.content, false);
-      }
+    if (newEditor.isEmpty && initialData.content) {
+       newEditor.commands.setContent(initialData.content, false);
     }
-  }, [editor, provider, user, initialData.content]);
+    
+    return () => {
+      newEditor.destroy();
+      newProvider.destroy();
+      newYDoc.destroy();
+    };
+  }, [room, user, initialData.content, handleAutoSave]);
 
 
   if (!editor || !provider) {
