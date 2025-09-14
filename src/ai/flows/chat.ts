@@ -96,13 +96,12 @@ const chatFlow = ai.defineFlow(
     let aiResponse = result.text(); // Capture the AI's text response first.
 
     if (result.toolRequests.length > 0) {
-      // If there's a tool request, we still want to preserve the text response.
       const toolResponse = await result.runTools({
         context: {documentContent: input.documentContent},
       });
       
-      const firstToolOutput = toolResponse[0]?.tool?.output?.updatedDocumentContent;
-      const firstToolName = toolResponse[0]?.tool?.name;
+      const firstToolOutput = toolResponse[0]?.output?.updatedDocumentContent;
+      const firstToolName = result.toolRequests[0]?.name;
       
       if (firstToolOutput !== undefined) {
         documentContent = firstToolOutput;
