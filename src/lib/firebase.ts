@@ -10,7 +10,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyD7U1bJDvB_gwgy4F38Q67hoNXr1kuVznU",
   authDomain: "latexresumeai.firebaseapp.com",
   projectId: "latexresumeai",
-  storageBucket: "latexresumeai.firebasestorage.app",
+  storageBucket: "latexresumeai.appspot.com",
   messagingSenderId: "103879047575",
   appId: "1:103879047575:web:f058f14b7043eebde9acd2"
 };
