@@ -263,12 +263,10 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
 
     return (
         <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-            {callState.active && (
-                <CallPanel
-                    callState={callState}
-                    onEndCall={() => setCallState({ active: false, type: null, user: null })}
-                />
-            )}
+            <CallPanel
+                callState={callState}
+                onEndCall={() => setCallState({ active: false, type: null, user: null })}
+            />
             <EditorHeader 
                 doc={initialData} 
                 editor={editor}
