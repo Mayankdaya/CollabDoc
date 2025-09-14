@@ -16,7 +16,7 @@ if (!geminiApiKey) {
 
 export const ai = genkit({
   plugins: [
-    nextPlugin(),
+    nextPlugin,
     googleAI({
       apiKey: geminiApiKey,
     }),
