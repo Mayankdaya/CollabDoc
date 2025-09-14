@@ -52,6 +52,7 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
+import { TiptapCollabProvider } from '@hocuspocus/provider';
 
 
 function EditorLoading() {
@@ -76,6 +77,7 @@ interface EditorCoreProps {
   lastSavedBy: string;
   setLastSavedBy: (name: string) => void;
   zoom: number;
+  setZoom: (zoom: number) => void;
 }
 
 const EditorCore = ({
@@ -91,13 +93,13 @@ const EditorCore = ({
   lastSavedBy,
   setLastSavedBy,
   zoom,
+  setZoom
 }: EditorCoreProps) => {
   const room = useRoom();
   const { user } = useAuth();
   const { toast } = useToast();
   const [editor, setEditor] = useState<EditorClass | null>(null);
   const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
-  const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -129,52 +131,64 @@ const EditorCore = ({
 
     const newYDoc = new Y.Doc();
     const newProvider = new LiveblocksYjsProvider(room, newYDoc);
-
-    setYdoc(newYDoc);
     setProvider(newProvider);
     
-    const newEditor = new EditorClass({
-      extensions: [
-        StarterKit.configure({ history: false }),
-        TextAlign.configure({ types: ['heading', 'paragraph'] }),
-        TextStyle, FontFamily, FontSize, LineHeight, Color,
-        Highlight.configure({ multicolor: true }),
-        Underline,
-        Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
-        Image,
-        Link.configure({ openOnClick: false }),
-        Placeholder.configure({ placeholder: 'Start typing...' }),
-        History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
-        TaskList, TaskItem.configure({ nested: true }),
-        Collaboration.configure({
-          document: newYDoc,
-        }),
-        CollaborationCursor.configure({
-          provider: newProvider,
-          user: {
-            name: user?.displayName || 'Anonymous',
-            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+    // Only set up the editor once the provider is connected
+    newProvider.on('synced', (isSynced: boolean) => {
+      if(isSynced) {
+        // If the Yjs document is empty, populate it with the initial content from Firebase.
+        // This prevents old content from reappearing on new documents.
+        const yDocHasContent = newYDoc.getXmlFragment('prosemirror').length > 0;
+
+        if (!yDocHasContent && initialData.content) {
+          const editorForSetup = new EditorClass({
+            content: initialData.content,
+          });
+          const yjsDoc = Y.encodeStateAsUpdate(editorForSetup.state.doc.toJSON() as any);
+          Y.applyUpdate(newYDoc, yjsDoc);
+          editorForSetup.destroy();
+        }
+
+        const newEditor = new EditorClass({
+          extensions: [
+            StarterKit.configure({ history: false }),
+            TextAlign.configure({ types: ['heading', 'paragraph'] }),
+            TextStyle, FontFamily, FontSize, LineHeight, Color,
+            Highlight.configure({ multicolor: true }),
+            Underline,
+            Table.configure({ resizable: true }), TableRow, TableHeader, TableCell,
+            Image,
+            Link.configure({ openOnClick: false }),
+            Placeholder.configure({ placeholder: 'Start typing...' }),
+            History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
+            TaskList, TaskItem.configure({ nested: true }),
+            Collaboration.configure({
+              document: newYDoc,
+            }),
+            CollaborationCursor.configure({
+              provider: newProvider,
+              user: {
+                name: user?.displayName || 'Anonymous',
+                color: '#' + Math.floor(Math.random()*16777215).toString(16),
+              },
+            }),
+          ],
+          editorProps: {
+            attributes: {
+              class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+            },
           },
-        }),
-      ],
-      editorProps: {
-        attributes: {
-          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-        },
-      },
-      onUpdate: ({ editor: updatedEditor }) => {
-        handleAutoSave(updatedEditor.getHTML());
-      },
+          onUpdate: ({ editor: updatedEditor }) => {
+            handleAutoSave(updatedEditor.getHTML());
+          },
+        });
+
+        setEditor(newEditor);
+      }
     });
 
-    setEditor(newEditor);
-
-    if (newEditor.isEmpty && initialData.content) {
-       newEditor.commands.setContent(initialData.content, false);
-    }
-    
     return () => {
-      newEditor.destroy();
+      editor?.destroy();
       newProvider.destroy();
       newYDoc.destroy();
     };
@@ -295,6 +309,7 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({ documentId, initialD
               lastSavedBy={lastSavedBy}
               setLastSavedBy={setLastSavedBy}
               zoom={zoom}
+              setZoom={setZoom}
             />
           </div>
         </ClientSideSuspense>
@@ -302,3 +317,5 @@ export const EditorLayout: React.FC<EditorLayoutProps> = ({ documentId, initialD
     </LiveblocksProvider>
   );
 };
+
+    
