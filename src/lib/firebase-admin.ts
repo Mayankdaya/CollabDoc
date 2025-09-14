@@ -9,6 +9,7 @@ if (!admin.apps.length) {
     if (serviceAccount) {
         admin.initializeApp({
             credential: admin.credential.cert(serviceAccount),
+            projectId: 'latexresumeai',
         });
     } else {
         // In a server environment, we must have credentials to initialize the Admin SDK.
@@ -26,3 +27,4 @@ if (!admin.apps.length) {
 
 export const auth = admin.apps.length ? admin.auth() : {} as admin.auth.Auth;
 export const db = admin.apps.length ? admin.firestore() : {} as admin.firestore.Firestore;
+
