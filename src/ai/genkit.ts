@@ -1,6 +1,5 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import nextPlugin from '@genkit-ai/next';
 import {config} from 'dotenv';
 
 // Load environment variables from .env
@@ -16,7 +15,6 @@ if (!geminiApiKey) {
 
 export const ai = genkit({
   plugins: [
-    nextPlugin,
     googleAI({
       apiKey: geminiApiKey,
     }),
