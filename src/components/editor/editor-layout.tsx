@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useEditor, EditorContent, Editor as EditorClass, generateJSON } from '@tiptap/react';
+import { useEditor, EditorContent, Editor as EditorClass } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
@@ -47,6 +47,8 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
+import { yDocToProsemirrorJSON, prosemirrorJSONToYDoc } from 'y-prosemirror';
+
 
 function EditorLoading() {
   return (
@@ -91,8 +93,9 @@ const EditorCore = ({
   const room = useRoom();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [editor, setEditor] = useState<EditorClass | null>(null);
+  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
+
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -133,65 +136,83 @@ const EditorCore = ({
     TaskList, TaskItem.configure({ nested: true }),
   ], []);
 
+  // Effect to create the Y.Doc and provider
   useEffect(() => {
-    let newEditor: EditorClass | null = null;
-    let newProvider: LiveblocksYjsProvider | null = null;
+    if (!room || !user || yDoc) return;
 
-    if (room && user && !editor) {
-      const ydoc = new Y.Doc();
-      newProvider = new LiveblocksYjsProvider(room, ydoc);
-      setProvider(newProvider);
-      
-      const collaborationExtensions = [
-        Collaboration.configure({
-            document: ydoc,
-        }),
-        CollaborationCursor.configure({
-            provider: newProvider,
-            user: {
-              name: user?.displayName || 'Anonymous',
-              color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
-            },
-        }),
-      ];
-
-      newEditor = new EditorClass({
-        extensions: [
-          ...extensions,
-          ...collaborationExtensions,
-        ],
-        editorProps: {
-          attributes: {
-            class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
-          },
-        },
-        onUpdate: ({ editor: updatedEditor }) => {
-          handleAutoSave(updatedEditor.getHTML());
-        },
-      });
-
-      setEditor(newEditor);
-
-      newProvider.on('synced', (isSynced: boolean) => {
-        if (isSynced && newEditor) {
-          const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
-          if (yDocFragment.length === 0 && initialData.content) {
-              const prosemirrorJson = generateJSON(initialData.content, extensions);
-              if (!newEditor.isDestroyed) {
-                newEditor.commands.setContent(prosemirrorJson, false);
-              }
-          }
-        }
-      });
-    }
+    const newYDoc = new Y.Doc();
+    const newProvider = new LiveblocksYjsProvider(room, newYDoc);
+    setYDoc(newYDoc);
+    setProvider(newProvider);
 
     return () => {
-      newProvider?.destroy();
-      newEditor?.destroy();
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [room, user, extensions, handleAutoSave, initialData.content]);
+      newYDoc.destroy();
+      newProvider.destroy();
+    }
+  }, [room, user, yDoc]);
 
+  // Effect to handle editor creation and content syncing
+  const editor = useEditor({
+    // Pass the extensions without collaboration first
+    extensions,
+    // The editor will be created with empty content initially
+    content: ``,
+    // Important: The editor is created but remains null until yDoc is ready
+    editorProps: {
+        attributes: {
+            class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+        },
+    },
+  }, [extensions]);
+
+  // Effect to manage collaboration and initial content once the editor is ready
+  useEffect(() => {
+    if (!editor || !yDoc || !provider || !user) {
+      return;
+    }
+
+    // Configure collaboration extensions
+    editor.registerPlugin(Collaboration.configure({
+        document: yDoc,
+    }).createPlugin());
+
+    editor.registerPlugin(CollaborationCursor.configure({
+        provider: provider,
+        user: {
+          name: user?.displayName || 'Anonymous',
+          color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
+        },
+    }).createPlugin());
+
+    // Function to handle content sync
+    const handleSync = () => {
+      const yDocFragment = yDoc.getXmlFragment('prosemirror');
+
+      if (yDocFragment.length === 0 && initialData.content) {
+        Y.applyUpdate(yDoc, Y.encodeStateAsUpdate(prosemirrorJSONToYDoc(extensions, initialData.content)));
+      }
+
+      const prosemirrorContent = yDocToProsemirrorJSON(yDoc.get('prosemirror', Y.XmlFragment));
+
+      if (editor && !editor.isDestroyed) {
+          editor.commands.setContent(prosemirrorContent, false);
+      }
+    };
+    
+    // Listen for the sync event
+    provider.on('synced', handleSync);
+    
+    // Set up the update listener for autosaving
+    editor.on('update', ({ editor: updatedEditor }) => {
+        handleAutoSave(updatedEditor.getHTML());
+    });
+    
+
+    return () => {
+      provider.off('synced', handleSync);
+    };
+
+  }, [editor, yDoc, provider, user, extensions, initialData.content, handleAutoSave]);
 
   if (!editor || !provider) {
     return <EditorLoading />;
@@ -323,4 +344,5 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
 
 
     
+
 
