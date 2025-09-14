@@ -70,30 +70,27 @@ export class YFireProvider {
 
     // Subscribe to awareness changes
     const unsubscribeAwareness = onSnapshot(this.awarenessDocRef, (snapshot) => {
-        if (snapshot.exists()) {
-            const data = snapshot.data();
-            if (data) {
-                const remoteClientIDs = Object.keys(data).map(Number);
-                const localClientIDs = Array.from(this.awareness.getStates().keys());
-                const removedClientIDs = localClientIDs.filter(id => !remoteClientIDs.includes(id) && id !== this.doc.clientID);
-                
-                if (removedClientIDs.length > 0) {
-                    removeAwarenessStates(this.awareness, removedClientIDs, 'firestore');
-                }
+        const data = snapshot.data() || {};
+        const newStates = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
 
-                const states = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
-                const tempAwareness = new Awareness(new Y.Doc());
-                states.forEach((state, clientID) => {
+        const localStates = this.awareness.getStates();
+        const removedClients = Array.from(localStates.keys()).filter(clientID => !newStates.has(clientID) && clientID !== this.doc.clientID);
+        const updatedClients = Array.from(newStates.keys()).filter(clientID => clientID !== this.doc.clientID);
+
+        if (removedClients.length > 0) {
+            removeAwarenessStates(this.awareness, removedClients, 'firestore');
+        }
+        
+        if (updatedClients.length > 0) {
+            const tempAwareness = new Awareness(new Y.Doc());
+            updatedClients.forEach(clientID => {
+                const state = newStates.get(clientID);
+                if (state) {
                     tempAwareness.setLocalState(clientID, state);
-                });
-
-                const updatedClients = Array.from(tempAwareness.getStates().keys());
-                
-                if (updatedClients.length > 0) {
-                    const encodedUpdate = encodeAwarenessUpdate(tempAwareness, updatedClients);
-                    applyAwarenessUpdate(this.awareness, encodedUpdate, 'firestore');
                 }
-            }
+            });
+            const update = encodeAwarenessUpdate(tempAwareness, updatedClients);
+            applyAwarenessUpdate(this.awareness, update, 'firestore');
         }
     });
 
