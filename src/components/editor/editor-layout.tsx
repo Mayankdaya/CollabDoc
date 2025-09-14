@@ -191,7 +191,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         
         const handleSync = () => {
             if (newProvider.synced && newEditor && !newEditor.isDestroyed) {
-                const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
+                const yDocFragment = ydoc.getXmlFragment('prosemirror');
                 if (yDocFragment.length === 0 && initialData.content) {
                     newEditor.commands.setContent(initialData.content, false);
                 }
