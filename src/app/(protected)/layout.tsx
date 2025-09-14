@@ -56,8 +56,7 @@ export default function ProtectedLayout({
                     <span className="text-xl font-bold font-headline">CollabDoc</span>
                 </Link>
             </SidebarHeader>
-            <SidebarContent>
-              <ScrollArea className="h-full">
+            <SidebarContent className="overflow-auto">
                 <SidebarMenu>
                     {menuItems.map(item => (
                         <SidebarMenuItem key={item.label}>
@@ -74,7 +73,6 @@ export default function ProtectedLayout({
                         </SidebarMenuItem>
                     ))}
                 </SidebarMenu>
-              </ScrollArea>
             </SidebarContent>
             <SidebarFooter>
                 <UserMenu />
