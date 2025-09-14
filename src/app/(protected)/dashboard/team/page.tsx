@@ -1,7 +1,7 @@
 
 import { getAllUsers, UserProfile } from '@/app/users/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
     Table,
     TableBody,
@@ -19,11 +19,14 @@ export default async function TeamPage() {
         <div className="flex flex-col gap-8">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
-                <p className="text-muted-foreground">Manage your team members and their roles.</p>
+                <p className="text-muted-foreground">A list of all users registered in the system.</p>
             </div>
             <Card>
                 <CardHeader>
-                    <CardTitle>Users</CardTitle>
+                    <CardTitle>All Users</CardTitle>
+                    <CardDescription>
+                        This table shows every user who has an account.
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -35,7 +38,8 @@ export default async function TeamPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {users.map((user) => (
+                            {users.length > 0 ? (
+                                users.map((user) => (
                                 <TableRow key={user.uid}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -49,7 +53,14 @@ export default async function TeamPage() {
                                     <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                                     <TableCell>Editor</TableCell>
                                 </TableRow>
-                            ))}
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center p-4 text-muted-foreground">
+                                        No users found.
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </CardContent>

@@ -3,6 +3,7 @@
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query } from "firebase/firestore";
+import { auth } from "@/lib/firebase-admin";
 
 export interface UserProfile {
     uid: string;
@@ -19,6 +20,18 @@ export async function getAllUsers(): Promise<UserProfile[]> {
         return users;
     } catch (error) {
         console.error("Error fetching all users:", error);
-        return [];
+        // As a fallback, try listing users from Firebase Auth if Firestore fails
+        try {
+            const listUsersResult = await auth.listUsers(1000);
+            return listUsersResult.users.map(userRecord => ({
+                uid: userRecord.uid,
+                displayName: userRecord.displayName || 'No Name',
+                email: userRecord.email || 'No Email',
+                photoURL: userRecord.photoURL,
+            }));
+        } catch (authError) {
+             console.error("Error fetching users from Auth:", authError);
+             return [];
+        }
     }
 }
