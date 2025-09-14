@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -141,15 +142,15 @@ const EditorCore = ({
   ], []);
 
   useEffect(() => {
-    if (!room || !user || editor) {
-      return;
-    }
+    let newEditor: EditorClass | null = null;
+    let newProvider: LiveblocksYjsProvider | null = null;
 
-    const ydoc = new Y.Doc();
-    const newProvider = new LiveblocksYjsProvider(room, ydoc);
-    setProvider(newProvider);
-
-    const collaborationExtensions = [
+    if (room && user && !editor) {
+      const ydoc = new Y.Doc();
+      newProvider = new LiveblocksYjsProvider(room, ydoc);
+      setProvider(newProvider);
+      
+      const collaborationExtensions = [
         Collaboration.configure({
             document: ydoc,
         }),
@@ -160,44 +161,45 @@ const EditorCore = ({
               color: '#' + Math.floor(Math.random() * 16777215).toString(16),
             },
         }),
-    ];
+      ];
 
-    const newEditor = new EditorClass({
-      extensions: [
-        ...extensions,
-        ...collaborationExtensions,
-      ],
-      editorProps: {
-        attributes: {
-          class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+      newEditor = new EditorClass({
+        extensions: [
+          ...extensions,
+          ...collaborationExtensions,
+        ],
+        editorProps: {
+          attributes: {
+            class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
+          },
         },
-      },
-      onUpdate: ({ editor: updatedEditor }) => {
-        handleAutoSave(updatedEditor.getHTML());
-      },
-    });
+        onUpdate: ({ editor: updatedEditor }) => {
+          handleAutoSave(updatedEditor.getHTML());
+        },
+      });
 
-    setEditor(newEditor);
+      setEditor(newEditor);
 
-    newProvider.on('synced', (isSynced: boolean) => {
-      if (isSynced) {
-        const yDocFragment = ydoc.getXmlFragment('prosemirror');
-        const prosemirrorContent = yDocToProsemirrorJSON(yDocFragment);
-
-        if (!newEditor.isDestroyed && yDocFragment.length === 0) {
-            newEditor.commands.setContent(initialData.content || '', false);
+      newProvider.on('synced', (isSynced: boolean) => {
+        if (isSynced && newEditor) {
+          const yDocFragment = ydoc.get('prosemirror', Y.XmlFragment);
+          if (yDocFragment.length === 0) {
+              const prosemirrorJson = generateJSON(initialData.content, extensions);
+              const content = prosemirrorJson.content;
+              if (content && Array.isArray(content) && content.length > 0) {
+                  newEditor.commands.setContent(prosemirrorJson, false);
+              }
+          }
         }
-      }
-    });
+      });
+    }
 
     return () => {
-      newProvider.destroy();
-      ydoc.destroy();
-      editor?.destroy();
-      setEditor(null);
-      setProvider(null);
+      newProvider?.destroy();
+      newEditor?.destroy();
     };
-  }, [room, user, extensions, handleAutoSave, initialData.content, editor]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [room, user, extensions, handleAutoSave, initialData.content]);
 
 
   if (!editor || !provider) {
@@ -339,3 +341,4 @@ function prosemirrorJSONToYDoc(extensions: any[], json: any): Y.Doc {
     
 
     
+
