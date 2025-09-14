@@ -1,5 +1,5 @@
 
-import { createClient, LiveblocksProvider, RoomProvider, ClientSideSuspense } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -48,8 +48,7 @@ export type ThreadMetadata = {
 };
 
 export const {
-  suspense: {
-    RoomProvider: RoomProviderWithSuspense,
+    RoomProvider,
     useRoom,
     useMyPresence,
     useUpdateMyPresence,
@@ -79,7 +78,4 @@ export const {
     useEditThreadMetadata,
     useAddReaction,
     useRemoveReaction,
-  }
 } = createRoomContext<Presence, any, any, any, ThreadMetadata>(client);
-
-export { LiveblocksProvider, RoomProvider, ClientSideSuspense };

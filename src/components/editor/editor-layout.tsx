@@ -48,7 +48,7 @@ import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
-} from '@/liveblocks.config';
+} from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
