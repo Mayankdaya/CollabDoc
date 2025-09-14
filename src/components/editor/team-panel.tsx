@@ -4,13 +4,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Document } from '@/app/documents/actions';
 import { Avatar, AvatarFallback } from '../ui/avatar';
-import { Skeleton } from '../ui/skeleton';
 import { Button } from '../ui/button';
 import { Phone, Video } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import type { FoundUser } from './share-dialog';
-import { db } from '@/lib/firebase';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 
 interface TeamPanelProps {
   doc: Document;
@@ -19,113 +16,105 @@ interface TeamPanelProps {
   onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
 }
 
-export default function TeamPanel({ doc: initialDoc, peopleWithAccess: initialPeople, onlineUsers, onStartCall }: TeamPanelProps) {
+export default function TeamPanel({ doc, peopleWithAccess, onlineUsers, onStartCall }: TeamPanelProps) {
   const { user: currentUser } = useAuth();
-  const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>(initialPeople);
-  const [isLoading, setIsLoading] = useState(true);
-
-   useEffect(() => {
-    setIsLoading(true);
-    if (!initialDoc.id) {
-        setIsLoading(false);
-        return;
-    };
-
-    const fetchUsers = async () => {
-        const docRef = doc(db, 'documents', initialDoc.id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const docData = docSnap.data();
-            const ownerId = docData.userId;
-            const collaboratorIds = docData.collaborators || [];
-            const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
-
-            if (allUserIds.length > 0) {
-                const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
-                const userDocs = await getDocs(usersQuery);
-                const fetchedUsers = userDocs.docs.map(d => d.data() as FoundUser);
-                setPeopleWithAccess(fetchedUsers);
-            } else {
-                setPeopleWithAccess([]);
-            }
-        }
-        setIsLoading(false);
-    };
-
-    fetchUsers();
-  }, [initialDoc.id]);
-
-
+  
   const isUserOnline = useCallback((person: FoundUser) => {
     return onlineUsers.some(onlineUser => onlineUser.uid === person.uid);
   }, [onlineUsers]);
 
+  const owner = peopleWithAccess.find(p => p.uid === doc.userId);
+  const collaborators = peopleWithAccess.filter(p => p.uid !== doc.userId);
 
   return (
     <div className="flex h-full flex-col">
        <div className='p-4 border-b border-white/30'>
           <h2 className="font-headline text-lg font-semibold">Team</h2>
-          <p className="text-sm text-muted-foreground">Manage who has access to this document.</p>
+          <p className="text-sm text-muted-foreground">Users with access to this document.</p>
        </div>
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        {isLoading ? (
-            <div className="space-y-4">
-                {[...Array(3)].map((_, i) => (
-                    <div key={i} className="flex items-center gap-4">
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                        <div className="space-y-2 flex-1">
-                            <Skeleton className="h-4 w-3/4" />
-                            <Skeleton className="h-4 w-1/2" />
-                        </div>
-                    </div>
-                ))}
-            </div>
-        ) : (
+        {peopleWithAccess.length > 0 ? (
             <>
-                <p className="text-xs font-semibold text-muted-foreground uppercase">People with Access</p>
-                {peopleWithAccess.map(person => (
-                    <div key={person.uid} className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <Avatar className="h-10 w-10">
-                                <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{person.displayName}</p>
-                                <div className='flex items-center gap-2'>
-                                <p className="text-sm text-muted-foreground">{person.email}</p>
-                                {isUserOnline(person) && (
-                                    <div className="flex items-center gap-1.5" title="Online">
-                                        <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
-                                        <span className="text-xs text-muted-foreground">online</span>
-                                    </div>
-                                )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className='flex items-center gap-1'>
-                             {isUserOnline(person) && person.uid !== currentUser?.uid && (
-                                <>
-                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
-                                    <Phone className="h-4 w-4" />
-                                </Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
-                                    <Video className="h-4 w-4" />
-                                </Button>
-                                </>
-                            )}
-                            <span className="text-sm text-muted-foreground">
-                                {person.uid === initialDoc.userId ? 'Owner' : 'Editor'}
-                            </span>
-                        </div>
-                    </div>
-                ))}
+                {owner && (
+                    <>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase">Owner</p>
+                        <UserRow
+                            person={owner}
+                            isOnline={isUserOnline(owner)}
+                            isCurrentUser={owner.uid === currentUser?.uid}
+                            role="Owner"
+                            onStartCall={onStartCall}
+                        />
+                    </>
+                )}
+                {collaborators.length > 0 && (
+                     <>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase pt-4">Editors</p>
+                        {collaborators.map(person => (
+                            <UserRow
+                                key={person.uid}
+                                person={person}
+                                isOnline={isUserOnline(person)}
+                                isCurrentUser={person.uid === currentUser?.uid}
+                                role="Editor"
+                                onStartCall={onStartCall}
+                            />
+                        ))}
+                     </>
+                )}
             </>
-        )}
-        {!isLoading && peopleWithAccess.length === 0 && (
-            <p className="text-center text-muted-foreground">No users have access to this document.</p>
+        ) : (
+            <p className="text-center text-muted-foreground p-4">Only you have access to this document.</p>
         )}
       </div>
     </div>
   );
+}
+
+
+interface UserRowProps {
+    person: FoundUser;
+    isOnline: boolean;
+    isCurrentUser: boolean;
+    role: string;
+    onStartCall: (user: FoundUser, type: 'voice' | 'video') => void;
+}
+
+function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRowProps) {
+    return (
+        <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                    <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
+                </Avatar>
+                <div>
+                    <p className="font-semibold">{person.displayName} {isCurrentUser && '(You)'}</p>
+                    <div className='flex items-center gap-2'>
+                    <p className="text-sm text-muted-foreground">{person.email}</p>
+                    {isOnline && (
+                        <div className="flex items-center gap-1.5" title="Online">
+                            <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
+                            <span className="text-xs text-muted-foreground">online</span>
+                        </div>
+                    )}
+                    </div>
+                </div>
+            </div>
+            <div className='flex items-center gap-1'>
+                    {isOnline && !isCurrentUser && (
+                    <>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'voice')}>
+                        <Phone className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onStartCall(person, 'video')}>
+                        <Video className="h-4 w-4" />
+                    </Button>
+                    </>
+                )}
+                <span className="text-sm text-muted-foreground">
+                    {role}
+                </span>
+            </div>
+        </div>
+    )
 }

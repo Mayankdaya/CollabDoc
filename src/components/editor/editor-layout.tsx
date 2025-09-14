@@ -147,7 +147,8 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             const states = Array.from(awareness.getStates().values());
             const users = states
                 .map((state) => state.user)
-                .filter((user): user is { name: string; color: string; uid: string } => user !== null && !!user.uid);
+                .filter((user): user is { name: string; color: string; uid: string, clientId: number } => user !== null && !!user.uid);
+            
             const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
             setOnlineUsers(uniqueUsers);
         };
@@ -249,7 +250,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             <EditorHeader 
                 doc={initialData} 
                 editor={editor}
-                awareness={provider.awareness}
+                onlineUsers={onlineUsers}
                 docName={docName}
                 setDocName={setDocName}
                 isSaving={isSaving}

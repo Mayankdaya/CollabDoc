@@ -6,7 +6,6 @@ import { ChevronLeft, History, Loader2, Save } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import type { Editor } from '@tiptap/react';
-import type { Awareness } from 'y-protocols/awareness';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,7 +23,7 @@ import { useAuth } from '@/hooks/use-auth';
 interface EditorHeaderProps {
   doc: Document;
   editor: Editor | null;
-  awareness: Awareness | null;
+  onlineUsers: any[];
   docName: string;
   setDocName: (name: string) => void;
   isSaving: boolean;
@@ -33,32 +32,10 @@ interface EditorHeaderProps {
   onPeopleListChange: (people: FoundUser[]) => void;
 }
 
-export default function EditorHeader({ doc, editor, awareness, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange }: EditorHeaderProps) {
+export default function EditorHeader({ doc, editor, onlineUsers, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange }: EditorHeaderProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!awareness) return;
-
-    const awarenessChangeHandler = () => {
-        const states = Array.from(awareness.getStates().entries());
-        const users = states
-            .map(([clientId, state]) => state.user ? { ...state.user, clientId } : null)
-            .filter((user): user is { name: string; color: string; clientId: number } => user !== null && !!user.name);
-        
-        const uniqueUsers = Array.from(new Map(users.map(u => [u.clientId, u])).values());
-        setOnlineUsers(uniqueUsers);
-    };
-    
-    awareness.on('change', awarenessChangeHandler);
-    awarenessChangeHandler(); // Initial call
-
-    return () => {
-        awareness.off('change', awarenessChangeHandler);
-    }
-  }, [awareness]);
-
+  
   const handleNameChange = async (e: React.FocusEvent<HTMLInputElement>) => {
     if (!user) return;
     const newName = e.target.value;
@@ -126,7 +103,7 @@ export default function EditorHeader({ doc, editor, awareness, docName, setDocNa
         <TooltipProvider>
           <div className="flex -space-x-2">
             {onlineUsers.map((c) => (
-              <Tooltip key={c.clientId}>
+              <Tooltip key={c.uid}>
                   <TooltipTrigger asChild>
                       <Avatar className="h-8 w-8 border-2" style={{ borderColor: c.color }}>
                           <AvatarFallback style={{ backgroundColor: c.color, color: 'white' }}>
