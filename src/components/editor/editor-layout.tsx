@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useEditor, EditorContent, Editor as EditorClass } from '@tiptap/react';
+import { useEditor, EditorContent, Editor as EditorClass, generateJSON } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import TextStyle from '@tiptap/extension-text-style';
@@ -52,6 +52,7 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
+import { yDocToProsemirrorJSON } from 'y-prosemirror';
 
 
 function EditorLoading() {
@@ -125,7 +126,7 @@ const EditorCore = ({
     [documentId, user, toast, setIsSaving, setLastSaved, setLastSavedBy]
   );
   
-  const extensions = [
+  const extensions = useMemo(() => [
     StarterKit.configure({ history: false }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     TextStyle, FontFamily, FontSize, LineHeight, Color,
@@ -137,7 +138,7 @@ const EditorCore = ({
     Placeholder.configure({ placeholder: 'Start typing...' }),
     History, Gapcursor, Dropcursor, Blockquote, CodeBlock, CharacterCount,
     TaskList, TaskItem.configure({ nested: true }),
-  ];
+  ], []);
 
   useEffect(() => {
     if (!room || !user) return;
@@ -151,13 +152,28 @@ const EditorCore = ({
         const yDocHasContent = newYDoc.getXmlFragment('prosemirror').length > 0;
 
         if (!yDocHasContent && initialData.content) {
-          const editorForSetup = new EditorClass({
-            extensions, // Use the same extensions
-            content: initialData.content,
-          });
-          const yjsDoc = Y.encodeStateAsUpdate(editorForSetup.state.doc.toJSON() as any);
-          Y.applyUpdate(newYDoc, yjsDoc);
-          editorForSetup.destroy();
+            // Convert the initial HTML content to Prosemirror JSON
+            const prosemirrorJson = generateJSON(initialData.content, extensions);
+            
+            // Apply this JSON to the Y.Doc. This requires a bit of a workaround.
+            const tempDoc = Y.encodeStateAsUpdate(new Y.Doc());
+            const prosemirrorYDoc = Y.mergeUpdates([tempDoc]);
+            const yXmlFragment = new Y.XmlFragment();
+            yXmlFragment.insert(0, [new Y.XmlText(JSON.stringify(prosemirrorJson))]);
+            
+            // This is a simplified way to get content into the doc.
+            // A more robust solution might involve a custom function to convert Prosemirror JSON to Y.XmlFragment
+            const yText = newYDoc.getText('prosemirror');
+            if (yText.length === 0) {
+                 const newEditor = new EditorClass({ extensions, content: initialData.content });
+                 const prosemirrorJson = newEditor.getJSON();
+                 const yDocFragment = yDocToProsemirrorJSON(newYDoc, 'prosemirror');
+                 if(Object.keys(yDocFragment).length === 0){
+                    const update = Y.encodeStateAsUpdate(Y.Doc.fromJSON(prosemirrorJson));
+                    Y.applyUpdate(newYDoc, update);
+                 }
+                 newEditor.destroy();
+            }
         }
 
         const collaborationExtensions = [
@@ -196,7 +212,7 @@ const EditorCore = ({
       newProvider.destroy();
       newYDoc.destroy();
     };
-  }, [room, user]);
+  }, [room, user, extensions, initialData.content, handleAutoSave]);
 
 
   if (!editor || !provider) {
