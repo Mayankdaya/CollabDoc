@@ -85,7 +85,7 @@ export default function TeamPanel({ doc: initialDoc, awareness, onStartCall }: T
   
 
   const isUserOnline = useCallback((person: FoundUser) => {
-    return onlineUsers.some(onlineUser => onlineUser.uid === person.uid);
+    return onlineUsers.some(onlineUser => onlineUser.name === person.displayName);
   }, [onlineUsers]);
 
 
