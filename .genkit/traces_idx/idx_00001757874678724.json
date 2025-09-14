@@ -1,2 +1,6 @@
 {"id":"0c6b2b832b312e364783ccc1c155355b","type":"flow","start":1757874760511,"name":"chatFlow","end":1757874760547.879,"status":2}
 {"id":"03db9b22b63d2ff9d2119acf722d102c","type":"UNKNOWN","start":1757874761799,"name":"start response","end":1757874761799.12,"status":0}
+{"id":"805b541673ef60079b6014d1df20666f","type":"UNKNOWN","start":1757874801840,"name":"GET /documents/[id]","end":1757874802310.987,"status":0}
+{"id":"48e3a8c52f4b89ca159e28e4960fff59","type":"UNKNOWN","start":1757874806447,"name":"POST /_error","end":1757874806703.828,"status":0}
+{"id":"e6ff70f4ef47e45e967d653f938d5bd5","type":"UNKNOWN","start":1757874812768,"name":"POST /documents/[id]","end":1757874813617.8252,"status":0}
+{"id":"1f842eb7cd5c2fee124103816bad1769","type":"UNKNOWN","start":1757875041799,"name":"fetch GET https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000&key=AIzaSyD7U1bJDvB_gwgy4F38Q67hoNXr1kuVznU","end":1757875042740.4,"status":0}
