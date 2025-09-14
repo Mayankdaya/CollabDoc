@@ -73,34 +73,36 @@ export class YFireProvider {
         const data = snapshot.data() || {};
         const remoteStates = new Map(Object.entries(data).map(([clientID, state]) => [Number(clientID), state]));
 
-        const localStates = this.awareness.getStates();
-        const updatedClients: number[] = [];
+        const localClientIDs = Array.from(this.awareness.getStates().keys());
+        const remoteClientIDs = Array.from(remoteStates.keys());
 
-        remoteStates.forEach((state, clientID) => {
-            if (clientID !== this.doc.clientID) {
-                const localState = localStates.get(clientID);
-                if (JSON.stringify(localState) !== JSON.stringify(state)) {
-                    updatedClients.push(clientID);
-                }
-            }
+        // Find clients that have disconnected
+        const removedClients = localClientIDs.filter(clientID => {
+            return !remoteClientIDs.includes(clientID) && clientID !== this.doc.clientID;
         });
 
-        const removedClients = Array.from(localStates.keys()).filter(clientID => !remoteStates.has(clientID) && clientID !== this.doc.clientID);
+        // Find clients that have updated states
+        const updatedClients = remoteClientIDs.filter(clientID => {
+            return clientID !== this.doc.clientID;
+        });
+
         if (removedClients.length > 0) {
             removeAwarenessStates(this.awareness, removedClients, 'firestore');
         }
 
         if (updatedClients.length > 0) {
-           const update = encodeAwarenessUpdate(this.awareness, updatedClients.filter(clientID => remoteStates.has(clientID)));
-            const newAwareness = new Awareness(new Y.Doc());
+            // We create a temporary awareness instance to generate an update
+            // This is the correct way to apply remote states.
+            const tempAwareness = new Awareness(new Y.Doc());
             updatedClients.forEach(clientID => {
                 const state = remoteStates.get(clientID);
                 if (state) {
-                    newAwareness.setLocalState(clientID, state);
+                    tempAwareness.setLocalState(clientID, state);
                 }
             });
-            const finalUpdate = encodeAwarenessUpdate(newAwareness, Array.from(newAwareness.getStates().keys()));
-            applyAwarenessUpdate(this.awareness, finalUpdate, 'firestore');
+
+            const update = encodeAwarenessUpdate(tempAwareness, updatedClients);
+            applyAwarenessUpdate(this.awareness, update, 'firestore');
         }
     });
 
