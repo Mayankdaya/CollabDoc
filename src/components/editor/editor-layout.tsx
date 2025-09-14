@@ -193,7 +193,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
     }
 
     return (
-        <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
+        <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden theme-word">
             {callState.active && (
                 <CallPanel
                     callState={callState}
@@ -220,7 +220,7 @@ function EditorCore({ documentId, initialData }: EditorLayoutProps) {
             />
             <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
                 <ResizablePanel defaultSize={75} id="editor-panel" className="flex flex-col overflow-hidden">
-                     <div className="flex-1 overflow-auto p-4 sm:p-8">
+                     <div className="flex-1 overflow-auto p-4 sm:p-8 bg-muted">
                         <div className="mx-auto bg-card shadow-lg p-[1in]" style={{width: '8.5in', minHeight: '11in'}}>
                             <EditorContent editor={editor} />
                         </div>
