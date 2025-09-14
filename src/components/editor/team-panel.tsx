@@ -141,7 +141,10 @@ export default function TeamPanel({ doc, awareness, onStartCall }: TeamPanelProp
                                 <div className='flex items-center gap-2'>
                                 <p className="text-sm text-muted-foreground">{person.email}</p>
                                 {isUserOnline(person) && (
-                                    <span title="Online" className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
+                                    <div className="flex items-center gap-1.5" title="Online">
+                                        <span className="flex h-2.5 w-2.5 rounded-full bg-green-500" />
+                                        <span className="text-xs text-muted-foreground">online</span>
+                                    </div>
                                 )}
                                 </div>
                             </div>
