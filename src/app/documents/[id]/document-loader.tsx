@@ -4,20 +4,22 @@
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import type { Document } from '@/app/documents/actions';
+import { EditorLayout } from '@/components/editor/editor-layout';
 
 function EditorLoading() {
     return (
-        <div className="flex h-screen w-full items-center justify-center bg-gray-200">
+        <div className="flex h-screen w-full items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-                <p className="text-gray-500">Loading Microsoft Word Editor...</p>
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground">Loading Editor...</p>
             </div>
         </div>
     );
 }
 
-// Directly import the actual editor component that needs client-side rendering
-const MicrosoftWordEditor = dynamic(() => import('@/components/editor/microsoft-word-editor').then(mod => mod.MicrosoftWordEditor), {
+// Dynamically import the editor layout which contains the editor and all its tooling.
+// This is a heavy component, so we don't want it on the initial page load.
+const EditorLayoutWithNoSSR = dynamic(() => import('@/components/editor/editor-layout').then(mod => mod.EditorLayout), {
   ssr: false,
   loading: () => <EditorLoading />,
 });
@@ -28,5 +30,5 @@ interface DocumentLoaderProps {
 }
 
 export default function DocumentLoader({ documentId, initialData }: DocumentLoaderProps) {
-    return <MicrosoftWordEditor documentId={documentId} initialData={initialData} />;
+    return <EditorLayoutWithNoSSR documentId={documentId} initialData={initialData} />;
 }
