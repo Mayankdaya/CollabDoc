@@ -16,7 +16,7 @@ import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
-import Placeholder from '@tiap/extension-placeholder';
+import Placeholder from '@tiptap/extension-placeholder';
 import History from '@tiptap/extension-history';
 import Gapcursor from '@tiptap/extension-gapcursor';
 import Dropcursor from '@tiptap/extension-dropcursor';
