@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useEditor, EditorContent, Editor as EditorClass } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
@@ -47,8 +47,6 @@ import {
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useRoom } from '@/liveblocks.config';
-import { yDocToProsemirrorJSON, prosemirrorJSONToYDoc } from 'y-prosemirror';
-
 
 function EditorLoading() {
   return (
@@ -93,9 +91,7 @@ const EditorCore = ({
   const room = useRoom();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [yDoc, setYDoc] = useState<Y.Doc | null>(null);
   const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
-
 
   const handleAutoSave = useCallback(
     async (currentContent: string) => {
@@ -122,20 +118,19 @@ const EditorCore = ({
     [documentId, user, toast, setIsSaving, setLastSaved, setLastSavedBy]
   );
   
-  // Effect to create the Y.Doc and provider
+  // Effect to create the provider
   useEffect(() => {
-    if (!room || !user || yDoc) return;
+    if (!room || !user || provider) return;
 
-    const newYDoc = new Y.Doc();
-    const newProvider = new LiveblocksYjsProvider(room, newYDoc);
-    setYDoc(newYDoc);
+    const ydoc = new Y.Doc();
+    const newProvider = new LiveblocksYjsProvider(room, ydoc);
     setProvider(newProvider);
 
     return () => {
-      newYDoc.destroy();
+      ydoc.destroy();
       newProvider.destroy();
     }
-  }, [room, user, yDoc]);
+  }, [room, user, provider]);
 
   const editor = useEditor({
     extensions: [
@@ -150,9 +145,9 @@ const EditorCore = ({
         Placeholder.configure({ placeholder: 'Start typing...' }),
         CharacterCount,
         TaskList, TaskItem.configure({ nested: true }),
-        ...(yDoc && provider && user ? [
+        ...(provider ? [
             Collaboration.configure({
-                document: yDoc,
+                document: provider.doc,
             }),
             CollaborationCursor.configure({
                 provider: provider,
@@ -163,34 +158,26 @@ const EditorCore = ({
             })
         ] : []),
     ],
-    content: ``,
     editorProps: {
         attributes: {
             class: 'prose dark:prose-invert prose-sm sm:prose-base focus:outline-none max-w-full',
         },
     },
-  }, [yDoc, provider, user]);
-
+  }, [provider, user]); // Depend on provider
 
   // Effect to manage collaboration and initial content once the editor is ready
   useEffect(() => {
-    if (!editor || !yDoc || !provider || !user) {
+    if (!editor || !provider || !user) {
       return;
     }
     
-    // Function to handle content sync
+    // Function to handle initial content sync
     const handleSync = () => {
-        const yDocFragment = yDoc.getXmlFragment('prosemirror');
-
-        if (yDocFragment.length === 0 && initialData.content) {
-             const doc = prosemirrorJSONToYDoc(editor.extensionManager.extensions, initialData.content);
-             const update = Y.encodeStateAsUpdate(doc);
-             Y.applyUpdate(yDoc, update);
-        }
-
-        if (editor && !editor.isDestroyed) {
-          const prosemirrorContent = yDocToProsemirrorJSON(yDoc.get('prosemirror', Y.XmlFragment));
-          editor.commands.setContent(prosemirrorContent, false);
+        if (!editor.isDestroyed) {
+             const yDocFragment = provider.doc.get('prosemirror', Y.XmlFragment);
+            if (yDocFragment.length === 0 && initialData.content) {
+                editor.commands.setContent(initialData.content, false);
+            }
         }
     };
     
@@ -207,13 +194,13 @@ const EditorCore = ({
       provider.off('synced', handleSync);
     };
 
-  }, [editor, yDoc, provider, user, initialData.content, handleAutoSave]);
+  }, [editor, provider, user, initialData.content, handleAutoSave]);
 
   if (!editor || !provider) {
     return <EditorLoading />;
   }
 
-  const wordCount = editor?.storage.characterCount.words() || 0;
+  const wordCount = editor.storage.characterCount.words() || 0;
   const awareness = provider.awareness;
 
   return (
@@ -332,15 +319,4 @@ export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
     </LiveblocksProvider>
   );
 };
-    
-
-    
-
-
-
-    
-
-
-
-
     
