@@ -5,7 +5,6 @@ import { db } from "@/lib/firebase";
 import { collection, addDoc, getDocs, getDoc, doc, updateDoc, deleteDoc, serverTimestamp, orderBy, query, where, arrayUnion } from "firebase/firestore";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { auth } from '@/lib/firebase';
 import { headers } from "next/headers";
 
 export interface Document {

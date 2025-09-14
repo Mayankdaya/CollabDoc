@@ -12,19 +12,20 @@ if (!admin.apps.length) {
             projectId: 'latexresumeai',
         });
     } else {
-        // In a server environment, we must have credentials to initialize the Admin SDK.
-        // If they are not available, we should not proceed.
-        if (process.env.NODE_ENV !== 'development') {
-          console.error('Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY is not set.');
+        // For local development and in environments where the service account key is not set,
+        // we can initialize without credentials for features that don't require admin privileges (like auth session cookies).
+        // However, this will not work for server-side database access via the admin SDK.
+        if (process.env.NODE_ENV === 'development' || !process.env.VERCEL) {
+             admin.initializeApp({
+                projectId: 'latexresumeai',
+            });
         } else {
-          // For local development, we can initialize without credentials for some features, but auth will fail.
-          // This prevents a hard crash during local dev if keys are not set.
-          // Note: This path will not work for server-side auth checks.
+            console.error('Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY is not set in a production environment.');
         }
     }
 }
 
 
-export const auth = admin.apps.length ? admin.auth() : {} as admin.auth.Auth;
-export const db = admin.apps.length ? admin.firestore() : {} as admin.firestore.Firestore;
-
+export const auth = admin.apps.length ? admin.auth() : ({} as admin.auth.Auth);
+// The admin db is no longer used for document creation.
+// export const db = admin.apps.length ? admin.firestore() : {} as admin.firestore.Firestore;
