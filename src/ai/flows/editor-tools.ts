@@ -115,6 +115,9 @@ export const clearDocument = ai.defineTool(
         .string()
         .describe('The empty HTML content.'),
     }),
+    context: z.object({
+        documentContent: z.string().describe('The full HTML content of the current document.'),
+    })
   },
   async () => {
     return {
