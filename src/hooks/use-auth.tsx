@@ -7,7 +7,7 @@ import { auth, db } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { SignUpData } from '@/components/auth/sign-up-form';
 import { SignInData } from '@/components/auth/sign-in-form';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
 
 interface AuthContextType {
   user: User | null;
@@ -47,6 +47,24 @@ async function clearSession() {
     });
 }
 
+const managePresence = async (user: User) => {
+    const userStatusRef = doc(db, 'status', user.uid);
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const userData = userDoc.data();
+
+    const isOnlineForFirestore = {
+        state: 'online',
+        last_changed: serverTimestamp(),
+        displayName: userData?.displayName,
+        photoURL: userData?.photoURL,
+        email: userData?.email,
+        uid: user.uid,
+    };
+    
+    await setDoc(userStatusRef, isOnlineForFirestore, { merge: true });
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,8 +74,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
-        // Ensure user document exists on any auth state change
         await createUserDocument(user);
+        await managePresence(user);
         const idToken = await user.getIdToken();
         await createSession(idToken);
       } else {
@@ -90,7 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       await updateProfile(userCredential.user, { displayName: name });
       
-      // Manually create the user document with the new display name
       const updatedUser = {
         uid: userCredential.user.uid,
         email: userCredential.user.email,
@@ -100,7 +117,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await createUserDocument(updatedUser as User);
 
-      // Refresh the user state to make sure the displayName is updated in the app
       await auth.currentUser?.reload();
       const refreshedUser = auth.currentUser;
       if (refreshedUser) {
@@ -122,7 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const result = await signInWithEmailAndPassword(auth, email, password);
-      // Ensure user document exists upon sign-in as well
       await createUserDocument(result.user);
       router.push('/dashboard');
     } catch (error) {
@@ -135,6 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      if (auth.currentUser) {
+        const userStatusRef = doc(db, 'status', auth.currentUser.uid);
+        await updateDoc(userStatusRef, { state: 'offline', last_changed: serverTimestamp() });
+      }
       await firebaseSignOut(auth);
       router.push('/login');
     } catch (error) {
