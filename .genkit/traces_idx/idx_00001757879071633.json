@@ -203,3 +203,8 @@
 {"id":"3b0e3ee4abcd1eb94ae543b40fbbf5dd","type":"UNKNOWN","start":1757882840045,"name":"POST /documents/[id]","end":1757882842753.6255,"status":2}
 {"id":"a23cf9b353496d72de45485e53c159bd","type":"UNKNOWN","start":1757883022661,"name":"POST /documents/[id]","end":1757883023436.3167,"status":0}
 {"id":"e304ca6366083f79e3a006cd5ead7db6","type":"UNKNOWN","start":1757883024262,"name":"POST /documents/[id]","end":1757883025238.1968,"status":0}
+{"id":"76b1d2d8d350a729b6fab826fb881b3c","type":"UNKNOWN","start":1757883291464,"name":"GET /documents/[id]","end":1757883291955.26,"status":0}
+{"id":"740bd0484bf425529a3d974b48631533","type":"UNKNOWN","start":1757883293356,"name":"POST /api/auth/route","end":1757883293604.9758,"status":0}
+{"id":"910774a77fd273b1cc3550452651df2b","type":"UNKNOWN","start":1757883296299,"name":"POST /documents/[id]","end":1757883296862.0862,"status":0}
+{"id":"d3cecc4a06ca2678aae202ff22a7dccd","type":"UNKNOWN","start":1757883297010,"name":"POST /documents/[id]","end":1757883297543.6328,"status":0}
+{"id":"f8791c12f4bd3115676430d7b49d044e","type":"UNKNOWN","start":1757883299231,"name":"POST /documents/[id]","end":1757883300251.6746,"status":0}

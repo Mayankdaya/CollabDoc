@@ -46,7 +46,7 @@ const translatePrompt = ai.definePrompt({
   name: 'translateDocumentPrompt',
   input: {schema: TranslateDocumentInputSchema},
   output: {schema: TranslateDocumentOutputSchema},
-  model: googleAI.model('gemini-1.5-pro-latest'),
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: `You are an expert translator. Translate the following document content into {{targetLanguage}}.
   Return the translated content as an HTML string, preserving the original HTML tags.
 
@@ -96,7 +96,7 @@ const summarizePrompt = ai.definePrompt({
     name: 'summarizeDocumentPrompt',
     input: {schema: SummarizeDocumentInputSchema},
     output: {schema: SummarizeDocumentOutputSchema},
-    model: googleAI.model('gemini-1.5-pro-latest'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: `You are an expert at summarizing text. Provide a concise summary of the following document.
 
     Document Content:
@@ -136,7 +136,7 @@ const generateTableOfContentsPrompt = ai.definePrompt({
     name: 'generateTableOfContentsPrompt',
     input: { schema: GenerateTableOfContentsInputSchema },
     output: { schema: GenerateTableOfContentsOutputSchema },
-    model: googleAI.model('gemini-1.5-pro-latest'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: `You are an expert at creating a Table of Contents from an HTML document. Analyze the following HTML for <h1>, <h2>, and <h3> tags and generate a nested unordered list (<ul>) for the Table of Contents. Each list item should be a link to the corresponding heading ID. If headings don't have IDs, you must add a unique slugified ID to each heading tag in the original content. The entire output, including the ToC and the modified content, must be returned.
 
     Document Content:
@@ -180,7 +180,7 @@ const insertCitationPrompt = ai.definePrompt({
     name: 'insertCitationPrompt',
     input: { schema: InsertCitationInputSchema },
     output: { schema: InsertCitationOutputSchema },
-    model: googleAI.model('gemini-1.5-pro-latest'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: `You are an expert in academic citations. Format the following citation details in {{citationStyle}} style and insert it at the end of the document.
 
     Citation Details: {{citationDetails}}
@@ -224,7 +224,7 @@ const generateBibliographyPrompt = ai.definePrompt({
     name: 'generateBibliographyPrompt',
     input: { schema: GenerateBibliographyInputSchema },
     output: { schema: GenerateBibliographyOutputSchema },
-    model: googleAI.model('gemini-1.5-pro-latest'),
+    model: googleAI.model('gemini-1.5-flash-latest'),
     prompt: `You are an expert in academic writing. Scan the following document for all inline citations. Generate a full bibliography in {{citationStyle}} style.
 
     Document Content:

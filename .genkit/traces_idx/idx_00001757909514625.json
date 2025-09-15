@@ -1,0 +1,6 @@
+{"id":"7176fd0460eeb1e1ce61dbbf9bc6386a","type":"flow","start":1757909848629,"name":"chatFlow","end":1757909849971.9553,"status":2}
+{"id":"54b0c22d8748a92d382303d782bb327b","type":"UNKNOWN","start":1757909852954,"name":"start response","end":1757909852954.1238,"status":0}
+{"id":"3f57fc99e8a84aa1cd8af834429eb4cf","type":"UNKNOWN","start":1757909887241,"name":"GET /","end":1757909887517.981,"status":0}
+{"id":"4e87a2a59e963c4b042527a838a93744","type":"UNKNOWN","start":1757909887710,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757909887724.8035,"status":0}
+{"id":"eb962bc19c3ec9469867ffdf24c32441","type":"UNKNOWN","start":1757909891387,"name":"POST /api/auth/route","end":1757909891578.71,"status":0}
+{"id":"b72a431a1ff20f04936abe77f9c71cea","type":"UNKNOWN","start":1757909931393,"name":"RSC GET /","end":1757909931591.3071,"status":0}

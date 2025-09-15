@@ -42,7 +42,7 @@ const chatPrompt = ai.definePrompt({
   tools: [
     generateNewContent,
   ],
-  model: googleAI.model('gemini-1.5-pro-latest'),
+  model: googleAI.model('gemini-1.5-flash-latest'),
   prompt: `You are an AI document assistant. Your primary goal is to help users by generating document content.
 
 - If the user's message is a request to write, create, or generate content on any topic (e.g., "solar system", "write an essay about dogs", "a document about elephants"), you **MUST** use the \`generateNewContent\` tool. The content for the tool must be well-structured HTML.
