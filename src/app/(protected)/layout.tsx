@@ -5,7 +5,6 @@ import Link from 'next/link';
 import {
   File,
   Settings,
-  Users,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
@@ -27,11 +26,6 @@ const menuItems = [
     href: '/dashboard',
     label: 'Documents',
     icon: File,
-  },
-  {
-    href: '/dashboard/team',
-    label: 'Team',
-    icon: Users,
   },
   {
     href: '/dashboard/settings',

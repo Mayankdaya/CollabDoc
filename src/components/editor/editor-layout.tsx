@@ -34,23 +34,18 @@ import { EditorToolbar } from './editor-toolbar';
 import EditorHeader from './editor-header';
 import AiChatPanel from './ai-chat-panel';
 import ChatPanel from './chat-panel';
-import TeamPanel from './team-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Bot, Users } from 'lucide-react';
+import { MessageSquare, Bot } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
-import { CallPanel } from './call-panel';
 import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
   useRoom,
-  useBroadcastEvent,
-  useEventListener,
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import type { FoundUser } from './share-dialog';
-import { WebRTCManager, SignalingData } from '@/lib/webrtc';
 
 function EditorLoading() {
   return (
@@ -81,144 +76,6 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     
     const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
-    const [onlineUserUIDs, setOnlineUserUIDs] = useState<string[]>([]);
-    
-    // WebRTC and Call State
-    const webRtcManager = useRef<WebRTCManager | null>(null);
-    const [callState, setCallState] = useState<{
-        status: 'idle' | 'outgoing' | 'incoming' | 'connected';
-        type: 'voice' | 'video' | null;
-        peer: FoundUser | null;
-    }>({ status: 'idle', type: null, peer: null });
-    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-    const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
-    const [pendingOffer, setPendingOffer] = useState<RTCSessionDescriptionInit | null>(null);
-
-    const broadcast = useBroadcastEvent();
-
-    const sendSignalingMessage = useCallback((data: SignalingData) => {
-        if (!callState.peer) return;
-        const message: SignalingData = {
-            ...data,
-            from: user!.uid,
-            to: callState.peer.uid
-        };
-        broadcast(message);
-    }, [broadcast, callState.peer, user]);
-    
-    const initializeWebRtcManager = useCallback(() => {
-        if (!user) return null;
-        if (webRtcManager.current) {
-            webRtcManager.current.close();
-        }
-        const manager = new WebRTCManager(
-            user.uid,
-            (stream) => setRemoteStream(stream),
-            (data) => sendSignalingMessage(data)
-        );
-        webRtcManager.current = manager;
-        return manager;
-    }, [user, sendSignalingMessage]);
-
-    const cleanupWebRtc = useCallback(() => {
-        if (webRtcManager.current) {
-            webRtcManager.current.close();
-            webRtcManager.current = null;
-        }
-        setLocalStream(null);
-        setRemoteStream(null);
-        setCallState({ status: 'idle', type: null, peer: null });
-        setPendingOffer(null);
-    }, []);
-
-    useEventListener((event) => {
-        const message = event.event as SignalingData;
-        if (!user || message.to !== user.uid) return;
-        
-        switch (message.type) {
-            case 'offer':
-                const peerUser = peopleWithAccess.find(u => u.uid === message.from);
-                if (peerUser && callState.status === 'idle') {
-                    setCallState({
-                        status: 'incoming',
-                        type: message.data.type,
-                        peer: peerUser,
-                    });
-                    setPendingOffer(message.data.sdp);
-                }
-                break;
-            case 'answer':
-                 if (webRtcManager.current) {
-                    webRtcManager.current.handleAnswer(message.data);
-                    setCallState(prev => ({ ...prev, status: 'connected' }));
-                }
-                break;
-            case 'candidate':
-                if (webRtcManager.current && callState.status !== 'idle') {
-                    webRtcManager.current.handleCandidate(message.data);
-                }
-                break;
-        }
-    });
-    
-    const startCall = useCallback(async (peer: FoundUser, type: 'voice' | 'video') => {
-        if (!user || callState.status !== 'idle') return;
-        
-        const manager = initializeWebRtcManager();
-        if (!manager) return;
-
-        setCallState({ status: 'outgoing', type, peer });
-
-        try {
-            const stream = await manager.getMediaStream(type === 'video');
-            setLocalStream(stream);
-
-            const offer = await manager.createOffer();
-            sendSignalingMessage({
-                type: 'offer',
-                data: { sdp: offer, type },
-                from: user.uid,
-                to: peer.uid,
-            });
-        } catch (error) {
-            console.error("Failed to start call", error);
-            cleanupWebRtc();
-        }
-
-    }, [user, callState.status, initializeWebRtcManager, sendSignalingMessage, cleanupWebRtc]);
-    
-    const answerCall = useCallback(async () => {
-        if (callState.status !== 'incoming' || !pendingOffer || !user) return;
-
-        const manager = initializeWebRtcManager();
-        if (!manager) return;
-        
-        try {
-            const stream = await manager.getMediaStream(callState.type === 'video');
-            setLocalStream(stream);
-
-            const answer = await manager.handleOffer(pendingOffer);
-            
-            sendSignalingMessage({
-                type: 'answer',
-                data: answer,
-                from: user!.uid,
-                to: callState.peer!.uid,
-            });
-
-            setCallState(prev => ({...prev, status: 'connected'}));
-            setPendingOffer(null);
-        } catch (error) {
-             console.error("Failed to answer call", error);
-            cleanupWebRtc();
-        }
-
-    }, [callState, user, pendingOffer, initializeWebRtcManager, sendSignalingMessage, cleanupWebRtc]);
-    
-    const endCall = useCallback(() => {
-        cleanupWebRtc();
-        // Optionally send a 'hangup' signal
-    }, [cleanupWebRtc]);
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -270,7 +127,6 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             
             const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
             setOnlineUsers(uniqueUsers);
-            setOnlineUserUIDs(uniqueUsers.map(u => u.uid));
         };
 
         awareness.on('change', updateOnlineUsers);
@@ -340,9 +196,8 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             ydoc.destroy();
             newProvider.destroy();
             newEditor.destroy();
-            cleanupWebRtc();
         }
-    }, [user, documentId, initialData.content, room, cleanupWebRtc]);
+    }, [user, documentId, initialData.content, room]);
 
     useEffect(() => {
         if (!editor) return;
@@ -370,15 +225,6 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
 
     return (
         <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-             {callState.status !== 'idle' && (
-                <CallPanel
-                    callState={callState}
-                    onEndCall={endCall}
-                    onAcceptCall={answerCall}
-                    localStream={localStream}
-                    remoteStream={remoteStream}
-                />
-            )}
             <EditorHeader 
                 doc={initialData} 
                 editor={editor}
@@ -408,24 +254,16 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                 </ResizablePanel>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={25} maxSize={40} minSize={20} className="flex flex-col">
-                    <Tabs defaultValue="team" className="flex flex-col flex-1 min-h-0">
-                        <TabsList className="grid w-full grid-cols-3 shrink-0 rounded-none bg-background/30">
+                    <Tabs defaultValue="chat" className="flex flex-col flex-1 min-h-0">
+                        <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none bg-background/30">
                             <TabsTrigger value="chat"><MessageSquare className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Chat</span></TabsTrigger>
                             <TabsTrigger value="ai-chat"><Bot className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>AI</span></TabsTrigger>
-                            <TabsTrigger value="team"><Users className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Team</span></TabsTrigger>
                         </TabsList>
                         <TabsContent value="chat" className="flex-1 overflow-auto mt-0">
                             <ChatPanel documentId={documentId} />
                         </TabsContent>
                         <TabsContent value="ai-chat" className="flex-1 overflow-auto mt-0">
                             <AiChatPanel documentContent={editor.getHTML()} editor={editor} />
-                        </TabsContent>
-                        <TabsContent value="team" className="flex-1 overflow-auto mt-0">
-                            <TeamPanel 
-                                peopleWithAccess={peopleWithAccess}
-                                onlineUserUIDs={onlineUserUIDs}
-                                onStartCall={startCall}
-                            />
                         </TabsContent>
                     </Tabs>
                 </ResizablePanel>
