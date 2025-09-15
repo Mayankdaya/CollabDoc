@@ -18,8 +18,6 @@ import { z } from 'zod';
 export const ChatMessageSchema = z.object({
   role: z.enum(['user', 'model']),
   content: z.string(),
-  documentContent: z.string().optional(),
-  requiresConfirmation: z.boolean().optional(),
 });
 export type Message = z.infer<typeof ChatMessageSchema>;
 
@@ -65,17 +63,12 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                 const result = await chat({
                     history: newMessages.slice(0, -1),
                     message: currentInput,
-                    documentContent,
+                    documentContent, // documentContent is not used in chat flow anymore but action expects it
                 });
                 
-                if (result.documentContent !== undefined && result.documentContent !== documentContent) {
-                    handleEditorUpdate(result.documentContent);
-                }
-
                 setMessages(prev => [...prev, { 
                     role: 'model', 
                     content: result.response,
-                    documentContent: result.documentContent,
                 }]);
 
             } catch (error) {
@@ -110,7 +103,8 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         description: 'The document has been updated with the new content.',
                     });
                 } else {
-                    setMessages(prev => [...prev, { role: 'model', content: "I couldn't generate content for that topic." }]);
+                     const errorMessage = result?.documentContent || "I couldn't generate content for that topic.";
+                    setMessages(prev => [...prev, { role: 'model', content: errorMessage }]);
                 }
             } catch (error) {
                  toast({
@@ -126,7 +120,8 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
     const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
         if (event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
-            handleSendMessage();
+            // We are disabling send on enter to prevent accidental API calls.
+            // handleSendMessage();
         }
     }
 
@@ -135,7 +130,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         <div className="flex h-full flex-col">
             <div className='p-4 border-b border-white/30'>
                  <h2 className="font-headline text-lg font-semibold">AI Assistant</h2>
-                 <p className="text-sm text-muted-foreground">To generate a new document from a topic, enter the topic in the text area below and click the 'Generate' button.</p>
+                 <p className="text-sm text-muted-foreground">Chat with the AI or enter a topic and click Generate.</p>
             </div>
             <ScrollArea className="flex-1" ref={scrollAreaRef}>
                 <div className="space-y-4 p-4">
@@ -188,28 +183,28 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         className="pr-12 min-h-[60px] bg-black/20 border-white/20 placeholder:text-muted-foreground backdrop-blur-md"
                         disabled={isPending}
                     />
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                         <Button 
-                            type="submit" 
-                            size="icon" 
-                            onClick={handleSendMessage}
-                            disabled={isPending || !input.trim()}
-                            title="Send Chat Message"
-                        >
-                            <SendHorizonal className="h-5 w-5" />
-                        </Button>
-                    </div>
                 </div>
                 <div className='flex items-center gap-2'>
+                     <Button 
+                        type="submit" 
+                        size="icon" 
+                        onClick={handleSendMessage}
+                        disabled={isPending || !input.trim()}
+                        title="Send Chat Message"
+                        className="flex-1"
+                    >
+                        <SendHorizonal className="h-5 w-5" />
+                         <span className="sr-only sm:not-sr-only sm:ml-2">Send</span>
+                    </Button>
                     <Button 
                         type="button"
-                        className='w-full'
+                        className='flex-1'
                         onClick={handleGenerateContent}
                         disabled={isPending || !input.trim()}
                         title="Generate Document from Topic"
                     >
-                        <Wand2 className="h-5 w-5 mr-2" />
-                        <span className="sm:inline">Generate</span>
+                        <Wand2 className="h-5 w-5" />
+                        <span className="sr-only sm:not-sr-only sm:ml-2">Generate</span>
                     </Button>
                 </div>
             </div>
