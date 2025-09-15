@@ -36,7 +36,7 @@ const generateContentSuggestionsPrompt = ai.definePrompt({
   name: 'generateContentSuggestionsPrompt',
   input: {schema: GenerateContentSuggestionsInputSchema},
   output: {schema: GenerateContentSuggestionsOutputSchema},
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: googleAI.model('gemini-1.5-flash'),
   prompt: `Generate content improvement suggestions based on the document content, cursor position, and desired tone.
   Document: {{documentContent}}
   Cursor at: {{cursorPosition}}
@@ -73,7 +73,7 @@ const findSynonymsPrompt = ai.definePrompt({
     name: 'findSynonymsPrompt',
     input: { schema: FindSynonymsInputSchema },
     output: { schema: FindSynonymsOutputSchema },
-    model: googleAI.model('gemini-1.5-flash-latest'),
+    model: googleAI.model('gemini-1.5-flash'),
     prompt: 'Find synonyms for the word: {{word}}',
 });
 
@@ -105,7 +105,7 @@ const checkSpellingAndGrammarPrompt = ai.definePrompt({
   name: 'checkSpellingAndGrammarPrompt',
   input: { schema: SpellingAndGrammarInputSchema },
   output: { schema: SpellingAndGrammarOutputSchema },
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: googleAI.model('gemini-1.5-flash'),
   prompt: 'Check for spelling and grammar errors and provide suggestions. Document: {{documentContent}}',
 });
 
@@ -142,7 +142,7 @@ const generateDocumentFromTopicPrompt = ai.definePrompt({
   name: 'generateDocumentFromTopicPrompt',
   input: {schema: GenerateDocumentFromTopicInputSchema},
   output: {schema: GenerateDocumentFromTopicOutputSchema},
-  model: googleAI.model('gemini-1.5-flash-latest'),
+  model: googleAI.model('gemini-1.5-flash'),
   prompt: `You are an expert content creator and AI assistant tasked with generating a beautiful and professional document.
   Based on the topic "{{topic}}", create a comprehensive, well-structured, and visually engaging document using rich HTML.
 
