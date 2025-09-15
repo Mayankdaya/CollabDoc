@@ -779,3 +779,5 @@ export const EditorToolbar = memo(function EditorToolbar({ editor, wordCount, on
     </div>
   );
 });
+
+    

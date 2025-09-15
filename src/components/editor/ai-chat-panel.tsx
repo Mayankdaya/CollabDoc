@@ -103,7 +103,7 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                         description: 'The document has been updated with the new content.',
                     });
                 } else {
-                     const errorMessage = result?.documentContent || "I couldn't generate content for that topic.";
+                     const errorMessage = "I couldn't generate content for that topic. Please try a different topic.";
                     setMessages(prev => [...prev, { role: 'model', content: errorMessage }]);
                 }
             } catch (error) {
@@ -211,3 +211,5 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         </div>
     );
 }
+
+    
