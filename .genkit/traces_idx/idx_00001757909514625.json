@@ -73,3 +73,17 @@
 {"id":"e3c059bfe5e10009854f3f06bfb7bdbe","type":"UNKNOWN","start":1757913976870,"name":"POST /documents/[id]","end":1757913977979.726,"status":0}
 {"id":"2877d2b779aa88ae588f5812e7f4158d","type":"flow","start":1757914001623,"name":"chatFlow","end":1757914002135.247,"status":2}
 {"id":"d9c8511b1591a802e475fe5075f76308","type":"UNKNOWN","start":1757914001336,"name":"POST /documents/[id]","end":1757914004419.9346,"status":2}
+{"id":"2e67cc7b1cf76b2c5f7204db01602a85","type":"UNKNOWN","start":1757914578704,"name":"GET /","end":1757914578984.7551,"status":0}
+{"id":"5e912a2a5869c5e0ad6299510e2565f6","type":"UNKNOWN","start":1757914592448,"name":"POST /api/auth/route","end":1757914592645.6458,"status":0}
+{"id":"e857ebda7ae7cd79c510daaf4410fff7","type":"UNKNOWN","start":1757916028341,"name":"GET /","end":1757916028600.3887,"status":0}
+{"id":"0a7b836fdf12da4a755a1540dea828e9","type":"UNKNOWN","start":1757916092931,"name":"POST /api/auth/route","end":1757916093101.8208,"status":0}
+{"id":"d5496ba85d50cfd9e9b426c3b5322e03","type":"UNKNOWN","start":1757916120890,"name":"RSC GET /dashboard","end":1757916121095.7295,"status":0}
+{"id":"0a5047cb9d045d07f34ccac8a2155398","type":"UNKNOWN","start":1757916123041,"name":"POST /dashboard","end":1757916123464.3057,"status":0}
+{"id":"7c4d2f3c2f9cf64f4b8b1830190310fa","type":"UNKNOWN","start":1757916125321,"name":"POST /dashboard","end":1757916125620.3972,"status":0}
+{"id":"1602a6218d32806436e80f5bd22808d3","type":"UNKNOWN","start":1757916128173,"name":"RSC GET /documents/[id]","end":1757916128668.353,"status":0}
+{"id":"b0b882ea8039a573afaf8b3e41a606dc","type":"UNKNOWN","start":1757916150165,"name":"POST /documents/[id]","end":1757916150928.4539,"status":0}
+{"id":"0515b55c7225005ea73387a0282f1ffa","type":"UNKNOWN","start":1757916151140,"name":"POST /documents/[id]","end":1757916151714.042,"status":0}
+{"id":"d59455fbb259498e57d52460e3cdfe0c","type":"UNKNOWN","start":1757916156510,"name":"POST /documents/[id]","end":1757916157695.2969,"status":0}
+{"id":"6de1c8702d5e4bf2dfc0f13e89ba02f6","type":"flow","start":1757916172406,"name":"chatFlow","end":1757916173486.5127,"status":2}
+{"id":"b8613f4dfd399b3b170ad3f49def38ef","type":"UNKNOWN","start":1757916172234,"name":"POST /documents/[id]","end":1757916175435.0146,"status":2}
+{"id":"1627bb75335b66b5fa10ddbefb810465","type":"UNKNOWN","start":1757916202317,"name":"GET /documents/[id]","end":1757916202740.565,"status":0}

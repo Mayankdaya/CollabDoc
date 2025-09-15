@@ -14,25 +14,39 @@ export interface UserProfile {
 
 export async function getAllUsers(): Promise<UserProfile[]> {
     try {
+        // Fetch all users from Firebase Auth
+        const listUsersResult = await auth.listUsers(1000);
+        const authUsers = listUsersResult.users.map(userRecord => ({
+            uid: userRecord.uid,
+            displayName: userRecord.displayName || 'No Name',
+            email: userRecord.email || 'No Email',
+            photoURL: userRecord.photoURL,
+        }));
+
+        // Fetch all users from Firestore 'users' collection
         const usersQuery = query(collection(db, 'users'));
         const querySnapshot = await getDocs(usersQuery);
-        const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
-        return users;
+        const firestoreUsers = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+
+        // Create a map for quick lookup of Firestore users
+        const firestoreUserMap = new Map<string, UserProfile>();
+        firestoreUsers.forEach(user => firestoreUserMap.set(user.uid, user));
+
+        // Merge Auth users with Firestore users, giving precedence to Firestore data
+        // if there's a display name mismatch or other differences.
+        const mergedUsers = authUsers.map(authUser => {
+            const firestoreUser = firestoreUserMap.get(authUser.uid);
+            if (firestoreUser) {
+                return { ...authUser, ...firestoreUser };
+            }
+            return authUser;
+        });
+
+        return mergedUsers;
+
     } catch (error) {
         console.error("Error fetching all users:", error);
-        // As a fallback, try listing users from Firebase Auth if Firestore fails
-        try {
-            const listUsersResult = await auth.listUsers(1000);
-            return listUsersResult.users.map(userRecord => ({
-                uid: userRecord.uid,
-                displayName: userRecord.displayName || 'No Name',
-                email: userRecord.email || 'No Email',
-                photoURL: userRecord.photoURL,
-            }));
-        } catch (authError) {
-             console.error("Error fetching users from Auth:", authError);
-             return [];
-        }
+        return [];
     }
 }
 
