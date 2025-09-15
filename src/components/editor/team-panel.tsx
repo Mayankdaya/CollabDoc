@@ -24,6 +24,8 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
   const getOwnerId = () => {
       // This is a simplification. In a real app, the owner might be stored on the doc.
       if (peopleWithAccess.length > 0) {
+        // A better way would be to check against the doc ownerId if available
+        // For now, we assume the first person in a fetched list might be the owner, or fallback to current user.
         return peopleWithAccess[0].uid;
       }
       return currentUser?.uid;
@@ -71,7 +73,7 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                    {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName} />}
+                    {person.photoURL && <AvatarImage src={person.photoURL as string} alt={person.displayName} />}
                     <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                 </Avatar>
                 <div>

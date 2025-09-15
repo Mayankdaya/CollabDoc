@@ -133,7 +133,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
 
     useEventListener((event) => {
         const message = event.event as SignalingData;
-        if (message.to !== user?.uid) return;
+        if (!user || message.to !== user.uid) return;
         
         switch (message.type) {
             case 'offer':

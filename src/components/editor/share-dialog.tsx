@@ -1,6 +1,6 @@
 
 import { Copy, UserPlus, Search, Loader2 } from 'lucide-react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -38,6 +38,7 @@ export type FoundUser = {
     uid: string;
     displayName: string;
     email: string;
+    photoURL?: string | null;
 }
 
 export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogProps) {
@@ -72,6 +73,7 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
           const collaboratorProfiles = fetchedUsers.filter(u => u.uid !== ownerId);
           
           setOwner(ownerProfile);
+          // Set all users, including owner, for the people list
           setDbCollaborators(fetchedUsers);
 
         } catch (e) {
@@ -80,8 +82,18 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
           setDbCollaborators([]);
         }
       } else {
-        setOwner(null);
-        setDbCollaborators([]);
+        // If no users, try to fetch at least the owner
+        if (ownerId) {
+             const ownerDoc = await getDoc(firestoreDoc(db, 'users', ownerId));
+             if (ownerDoc.exists()) {
+                const ownerData = ownerDoc.data() as FoundUser;
+                setOwner(ownerData);
+                setDbCollaborators([ownerData]);
+             }
+        } else {
+            setOwner(null);
+            setDbCollaborators([]);
+        }
       }
     });
 
@@ -91,12 +103,9 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
 
   const peopleWithAccess = useMemo(() => {
     const allPeople = new Map<string, FoundUser>();
-    if (owner) {
-        allPeople.set(owner.uid, owner);
-    }
     dbCollaborators.forEach(c => allPeople.set(c.uid, c));
     return Array.from(allPeople.values());
-  }, [owner, dbCollaborators]);
+  }, [dbCollaborators]);
 
   useEffect(() => {
     if(onPeopleListChange) {
@@ -133,13 +142,13 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
     });
   }
 
-  const handleAddCollaborator = (collaboratorId: string) => {
-     if (!user) return;
+  const handleAddCollaborator = (collaborator: FoundUser) => {
+     if (!user || !collaborator.uid) return;
      startAdding(async () => {
         try {
             const currentDoc = await getDoc(firestoreDoc(db, 'documents', doc.id));
             const currentCollaborators = currentDoc.data()?.collaborators || [];
-            if (currentCollaborators.includes(collaboratorId)) {
+            if (currentCollaborators.includes(collaborator.uid)) {
                  toast({
                     variant: 'destructive',
                     title: 'User Already Added',
@@ -148,7 +157,11 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
                 return;
             }
 
-            await updateDocument(doc.id, { collaborators: arrayUnion(collaboratorId) }, { uid: user.uid, displayName: user.displayName });
+            await updateDocument(doc.id, { collaborators: arrayUnion(collaborator.uid) }, { uid: user.uid, displayName: user.displayName });
+            
+            // Manually update local state to reflect change immediately
+            setDbCollaborators(prev => [...prev, collaborator]);
+
             toast({
                 title: 'Collaborator Added',
                 description: 'The user now has access to the document.',
@@ -196,7 +209,7 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
                     {searchResults.map(foundUser => (
                         <div key={foundUser.uid} className="flex items-center justify-between">
                             <span>{foundUser.displayName} ({foundUser.email})</span>
-                             <Button size="sm" onClick={() => handleAddCollaborator(foundUser.uid)} disabled={isAdding || peopleWithAccess.some(p => p.uid === foundUser.uid)}>
+                             <Button size="sm" onClick={() => handleAddCollaborator(foundUser)} disabled={isAdding || peopleWithAccess.some(p => p.uid === foundUser.uid)}>
                                 {isAdding && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 Add Editor
                             </Button>
@@ -213,6 +226,7 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
                      <div key={person.uid} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
+                                {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName} />}
                                 <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                             </Avatar>
                             <div>
