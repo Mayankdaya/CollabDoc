@@ -26,6 +26,7 @@ export function useCall({ room }: { room: Room }) {
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
 
     const peerConnections = useRef<Map<number, RTCPeerConnection>>(new Map());
+    const iceCandidateQueues = useRef<Map<number, RTCIceCandidateInit[]>>(new Map());
 
     const startCall = useCallback(async () => {
         try {
@@ -53,6 +54,7 @@ export function useCall({ room }: { room: Room }) {
         peerConnections.current.forEach(pc => pc.close());
         peerConnections.current.clear();
         setRemoteStreams([]);
+        iceCandidateQueues.current.clear();
         broadcast({ type: 'user-left-call', connectionId: self.connectionId });
     }, [localStream, broadcast, self.connectionId]);
 
@@ -85,11 +87,12 @@ export function useCall({ room }: { room: Room }) {
     
 
     const handleNewUser = useCallback((connectionId: number) => {
-        if (!localStream || !self) return;
+        if (!localStream || !self || self.connectionId === connectionId) return;
         if (peerConnections.current.has(connectionId)) return;
 
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConnections.current.set(connectionId, pc);
+        iceCandidateQueues.current.set(connectionId, []);
 
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
@@ -110,7 +113,8 @@ export function useCall({ room }: { room: Room }) {
             .then(offer => pc.setLocalDescription(offer))
             .then(() => {
                 broadcast({ type: 'offer', offer: pc.localDescription, targetId: connectionId, fromId: self.connectionId });
-            });
+            })
+            .catch(e => console.error("Error creating offer:", e));
     }, [broadcast, localStream, self]);
     
     const handleUserLeft = useCallback((connectionId: number) => {
@@ -119,15 +123,16 @@ export function useCall({ room }: { room: Room }) {
             pc.close();
             peerConnections.current.delete(connectionId);
         }
+        iceCandidateQueues.current.delete(connectionId);
         setRemoteStreams(prev => prev.filter(s => s.connectionId !== connectionId));
     }, []);
 
     // Effect to handle users already in the call when we join
     useEffect(() => {
-        if (isCallActive) {
+        if (isCallActive && localStream) {
             others.forEach(other => handleNewUser(other.connectionId));
         }
-    }, [isCallActive, others, handleNewUser]);
+    }, [isCallActive, localStream, others, handleNewUser]);
 
 
     // Listener for all broadcasted events
@@ -147,42 +152,68 @@ export function useCall({ room }: { room: Room }) {
                 break;
             case 'offer':
                 if (event.targetId === self.connectionId) {
+                    const fromId = event.fromId;
                     const pc = new RTCPeerConnection(ICE_SERVERS);
-                    peerConnections.current.set(event.fromId, pc);
+                    peerConnections.current.set(fromId, pc);
+                    iceCandidateQueues.current.set(fromId, []);
 
                     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
                     pc.onicecandidate = e => {
                         if (e.candidate) {
-                            broadcast({ type: 'ice-candidate', candidate: e.candidate, targetId: event.fromId, fromId: self.connectionId });
+                            broadcast({ type: 'ice-candidate', candidate: e.candidate, targetId: fromId, fromId: self.connectionId });
                         }
                     };
 
                     pc.ontrack = e => {
                         setRemoteStreams(prev => {
-                            if (prev.some(s => s.connectionId === event.fromId)) return prev;
-                            return [...prev, { stream: e.streams[0], connectionId: event.fromId }];
+                            if (prev.some(s => s.connectionId === fromId)) return prev;
+                            return [...prev, { stream: e.streams[0], connectionId: fromId }];
                         });
                     };
 
                     pc.setRemoteDescription(new RTCSessionDescription(event.offer))
-                        .then(() => pc.createAnswer())
+                        .then(() => {
+                            // Process any queued candidates
+                            const queue = iceCandidateQueues.current.get(fromId) || [];
+                            queue.forEach(candidate => pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate:", e)));
+                            iceCandidateQueues.current.set(fromId, []);
+
+                            return pc.createAnswer();
+                        })
                         .then(answer => pc.setLocalDescription(answer))
                         .then(() => {
-                            broadcast({ type: 'answer', answer: pc.localDescription, targetId: event.fromId, fromId: self.connectionId });
-                        });
+                            broadcast({ type: 'answer', answer: pc.localDescription, targetId: fromId, fromId: self.connectionId });
+                        })
+                        .catch(e => console.error("Error handling offer:", e));
                 }
                 break;
             case 'answer':
                 if (event.targetId === self.connectionId) {
-                    const pc = peerConnections.current.get(event.fromId);
-                    pc?.setRemoteDescription(new RTCSessionDescription(event.answer));
+                    const fromId = event.fromId;
+                    const pc = peerConnections.current.get(fromId);
+                    pc?.setRemoteDescription(new RTCSessionDescription(event.answer))
+                      .then(() => {
+                          // Process any queued candidates
+                          const queue = iceCandidateQueues.current.get(fromId) || [];
+                          queue.forEach(candidate => pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate:", e)));
+                          iceCandidateQueues.current.set(fromId, []);
+                      })
+                      .catch(e => console.error("Error handling answer:", e));
                 }
                 break;
             case 'ice-candidate':
                 if (event.targetId === self.connectionId) {
-                    const pc = peerConnections.current.get(event.fromId);
-                    pc?.addIceCandidate(new RTCIceCandidate(event.candidate));
+                    const fromId = event.fromId;
+                    const pc = peerConnections.current.get(fromId);
+                    if (pc && pc.remoteDescription) {
+                        pc.addIceCandidate(new RTCIceCandidate(event.candidate)).catch(e => console.error("Error adding ICE candidate:", e));
+                    } else {
+                        // Queue the candidate if the remote description isn't set yet
+                        const queue = iceCandidateQueues.current.get(fromId) || [];
+                        queue.push(event.candidate);
+                        iceCandidateQueues.current.set(fromId, queue);
+                    }
                 }
                 break;
         }
