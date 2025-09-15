@@ -32,7 +32,7 @@ type ChatOutput = z.infer<typeof ChatOutputSchema>;
 const chatPrompt = ai.definePrompt({
   name: 'chatPrompt',
   input: {schema: ChatInputSchema},
-  model: googleAI.model('gemini-pro'),
+  model: googleAI.model('gemini-1.5-flash'),
   prompt: `You are an AI document assistant. Your primary goal is to help users by having a conversation.
 
 Conversation History:
