@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSelf, useOthers, useBroadcastEvent, useRoom } from '@/liveblocks.config';
+import { useSelf, useOthers, useBroadcastEvent } from '@/liveblocks.config';
+import type { Room } from '@liveblocks/client';
 import { useToast } from './use-toast';
 
 const ICE_SERVERS = {
@@ -12,12 +13,11 @@ const ICE_SERVERS = {
     ],
 };
 
-export function useCall() {
+export function useCall({ room }: { room: Room }) {
     const self = useSelf();
     const others = useOthers();
     const broadcast = useBroadcastEvent();
     const { toast } = useToast();
-    const room = useRoom();
 
     const [isCallActive, setIsCallActive] = useState(false);
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);

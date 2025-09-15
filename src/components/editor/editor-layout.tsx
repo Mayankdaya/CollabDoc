@@ -46,6 +46,7 @@ import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import { useCall } from '@/hooks/use-call';
 import CallPanel from './call-panel';
+import { useRoom } from '@/liveblocks.config';
 
 function EditorLoading() {
   return (
@@ -64,6 +65,7 @@ interface EditorLayoutProps {
 function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     const { user } = useAuth();
     const { toast } = useToast();
+    const room = useRoom();
 
     const [editor, setEditor] = useState<EditorClass | null>(null);
     const [provider, setProvider] = useState<LiveblocksYjsProvider | null>(null);
@@ -86,7 +88,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         endCall,
         isAudioEnabled,
         isVideoEnabled,
-    } = useCall();
+    } = useCall({ room });
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -155,9 +157,6 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         let newEditor: EditorClass;
 
         if (!user) return;
-        
-        const room = (window as any).room;
-        if (!room) return;
 
         ydoc = new Y.Doc();
         newProvider = new LiveblocksYjsProvider(room, ydoc);
@@ -213,7 +212,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             newProvider.destroy();
             newEditor.destroy();
         }
-    }, [user, documentId, initialData.content]);
+    }, [user, documentId, initialData.content, room]);
 
     useEffect(() => {
         if (!editor) return;
@@ -301,9 +300,6 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
 }
 
 export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
-  const room = useRoom();
-  (window as any).room = room;
-
   return (
     <LiveblocksProvider publicApiKey={"pk_dev_W4eVr8avX7cJ_dC1Q1XKAhfY_2qiTOjSHCRgaeovMLrjAB0aHCDuoVZ_AETFGgik"}>
       <RoomProvider id={documentId}>
