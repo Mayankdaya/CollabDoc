@@ -132,7 +132,7 @@ export function useCall({ room }: { room: Room }) {
 
     // Listener for all broadcasted events
     useEventListener(({ event, connectionId }) => {
-        if (!isCallActive || !localStream || !self) return;
+        if (!localStream || !self) return;
 
         switch (event.type) {
             case 'user-joined-call':
