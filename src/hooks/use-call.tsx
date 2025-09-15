@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useSelf, useOthers, useBroadcastEvent } from '@/liveblocks.config';
+import { useSelf, useOthers, useBroadcastEvent, useEventListener } from '@/liveblocks.config';
 import type { Room } from '@liveblocks/client';
 import { useToast } from './use-toast';
 
@@ -83,110 +83,110 @@ export function useCall({ room }: { room: Room }) {
         };
     }, [isCallActive, endCall]);
     
-    // Main WebRTC Logic
+
+    const handleNewUser = useCallback((connectionId: number) => {
+        if (!localStream || !self) return;
+        if (peerConnections.current.has(connectionId)) return;
+
+        const pc = new RTCPeerConnection(ICE_SERVERS);
+        peerConnections.current.set(connectionId, pc);
+
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+        pc.onicecandidate = event => {
+            if (event.candidate) {
+                broadcast({ type: 'ice-candidate', candidate: event.candidate, targetId: connectionId, fromId: self.connectionId });
+            }
+        };
+        
+        pc.ontrack = event => {
+            setRemoteStreams(prev => {
+                if (prev.some(s => s.connectionId === connectionId)) return prev;
+                return [...prev, { stream: event.streams[0], connectionId }];
+            });
+        };
+
+        pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+                broadcast({ type: 'offer', offer: pc.localDescription, targetId: connectionId, fromId: self.connectionId });
+            });
+    }, [broadcast, localStream, self]);
+    
+    const handleUserLeft = useCallback((connectionId: number) => {
+        const pc = peerConnections.current.get(connectionId);
+        if (pc) {
+            pc.close();
+            peerConnections.current.delete(connectionId);
+        }
+        setRemoteStreams(prev => prev.filter(s => s.connectionId !== connectionId));
+    }, []);
+
+    // Effect to handle users already in the call when we join
     useEffect(() => {
+        if (isCallActive) {
+            others.forEach(other => handleNewUser(other.connectionId));
+        }
+    }, [isCallActive, others, handleNewUser]);
+
+
+    // Listener for all broadcasted events
+    useEventListener(({ event, connectionId }) => {
         if (!isCallActive || !localStream || !self) return;
 
-        const handleNewUser = (connectionId: number) => {
-            if (peerConnections.current.has(connectionId)) return;
-
-            const pc = new RTCPeerConnection(ICE_SERVERS);
-            peerConnections.current.set(connectionId, pc);
-
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-            pc.onicecandidate = event => {
-                if (event.candidate) {
-                    broadcast({ type: 'ice-candidate', candidate: event.candidate, targetId: connectionId, fromId: self.connectionId });
+        switch (event.type) {
+            case 'user-joined-call':
+                if (event.connectionId !== self.connectionId) {
+                    handleNewUser(event.connectionId);
                 }
-            };
-            
-            pc.ontrack = event => {
-                setRemoteStreams(prev => {
-                    if (prev.some(s => s.connectionId === connectionId)) return prev;
-                    return [...prev, { stream: event.streams[0], connectionId }];
-                });
-            };
+                break;
+            case 'user-left-call':
+                if (event.connectionId !== self.connectionId) {
+                    handleUserLeft(event.connectionId);
+                }
+                break;
+            case 'offer':
+                if (event.targetId === self.connectionId) {
+                    const pc = new RTCPeerConnection(ICE_SERVERS);
+                    peerConnections.current.set(event.fromId, pc);
 
-            pc.createOffer()
-                .then(offer => pc.setLocalDescription(offer))
-                .then(() => {
-                    broadcast({ type: 'offer', offer: pc.localDescription, targetId: connectionId, fromId: self.connectionId });
-                });
-        };
-        
-        const handleUserLeft = (connectionId: number) => {
-            const pc = peerConnections.current.get(connectionId);
-            if (pc) {
-                pc.close();
-                peerConnections.current.delete(connectionId);
-            }
-            setRemoteStreams(prev => prev.filter(s => s.connectionId !== connectionId));
-        };
-        
-        // Handle existing users in the call when we join
-        others.forEach(other => handleNewUser(other.connectionId));
-        
-        // Handle signaling messages from other users
-        const unsubscribe = room.events.subscribe(({ event, connectionId }) => {
-            switch(event.type) {
-                 case 'user-joined-call':
-                    if (event.connectionId !== self.connectionId) {
-                       handleNewUser(event.connectionId);
-                    }
-                    break;
-                case 'user-left-call':
-                     if (event.connectionId !== self.connectionId) {
-                        handleUserLeft(event.connectionId);
-                    }
-                    break;
-                case 'offer':
-                    if (event.targetId === self.connectionId) {
-                        const pc = new RTCPeerConnection(ICE_SERVERS);
-                        peerConnections.current.set(event.fromId, pc);
-                        
-                        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-                        
-                        pc.onicecandidate = e => {
-                           if (e.candidate) {
-                               broadcast({ type: 'ice-candidate', candidate: e.candidate, targetId: event.fromId, fromId: self.connectionId });
-                           }
-                        };
-                        
-                        pc.ontrack = e => {
-                             setRemoteStreams(prev => {
-                                if (prev.some(s => s.connectionId === event.fromId)) return prev;
-                                return [...prev, { stream: e.streams[0], connectionId: event.fromId }];
-                            });
-                        };
-                        
-                        pc.setRemoteDescription(new RTCSessionDescription(event.offer))
-                            .then(() => pc.createAnswer())
-                            .then(answer => pc.setLocalDescription(answer))
-                            .then(() => {
-                                broadcast({ type: 'answer', answer: pc.localDescription, targetId: event.fromId, fromId: self.connectionId });
-                            });
-                    }
-                    break;
-                case 'answer':
-                    if (event.targetId === self.connectionId) {
-                       const pc = peerConnections.current.get(event.fromId);
-                       pc?.setRemoteDescription(new RTCSessionDescription(event.answer));
-                    }
-                    break;
-                case 'ice-candidate':
-                     if (event.targetId === self.connectionId) {
-                        const pc = peerConnections.current.get(event.fromId);
-                        pc?.addIceCandidate(new RTCIceCandidate(event.candidate));
-                     }
-                    break;
-            }
-        });
-        
-        return () => unsubscribe();
+                    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-    }, [isCallActive, localStream, self, others, broadcast, room.events]);
+                    pc.onicecandidate = e => {
+                        if (e.candidate) {
+                            broadcast({ type: 'ice-candidate', candidate: e.candidate, targetId: event.fromId, fromId: self.connectionId });
+                        }
+                    };
 
+                    pc.ontrack = e => {
+                        setRemoteStreams(prev => {
+                            if (prev.some(s => s.connectionId === event.fromId)) return prev;
+                            return [...prev, { stream: e.streams[0], connectionId: event.fromId }];
+                        });
+                    };
+
+                    pc.setRemoteDescription(new RTCSessionDescription(event.offer))
+                        .then(() => pc.createAnswer())
+                        .then(answer => pc.setLocalDescription(answer))
+                        .then(() => {
+                            broadcast({ type: 'answer', answer: pc.localDescription, targetId: event.fromId, fromId: self.connectionId });
+                        });
+                }
+                break;
+            case 'answer':
+                if (event.targetId === self.connectionId) {
+                    const pc = peerConnections.current.get(event.fromId);
+                    pc?.setRemoteDescription(new RTCSessionDescription(event.answer));
+                }
+                break;
+            case 'ice-candidate':
+                if (event.targetId === self.connectionId) {
+                    const pc = peerConnections.current.get(event.fromId);
+                    pc?.addIceCandidate(new RTCIceCandidate(event.candidate));
+                }
+                break;
+        }
+    });
 
     return {
         isCallActive,
