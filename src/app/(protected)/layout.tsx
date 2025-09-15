@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/sidebar';
 import { CollabDocLogo } from '@/components/collab-doc-logo';
 import { UserMenu } from '@/components/user-menu';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const menuItems = [
   {

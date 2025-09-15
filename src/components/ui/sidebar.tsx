@@ -3,16 +3,12 @@
 
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { VariantProps, cva } from "class-variance-authority"
 import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
   TooltipContent,
@@ -24,7 +20,7 @@ const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
 const SIDEBAR_WIDTH = "16rem"
 const SIDEBAR_WIDTH_MOBILE = "18rem"
-const SIDEBAR_WIDTH_ICON = "4rem" // Increased for better spacing
+const SIDEBAR_WIDTH_ICON = "4rem" 
 const SIDEBAR_KEYBOARD_SHORTCUT = "b"
 
 type SidebarContext = {
@@ -70,7 +66,15 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile()
     const [openMobile, setOpenMobile] = React.useState(false)
-    const [_open, _setOpen] = React.useState(defaultOpen)
+    
+    // Read initial state from cookie
+    const getInitialOpen = () => {
+        if (typeof window === 'undefined') return defaultOpen;
+        const cookieValue = document.cookie.split('; ').find(row => row.startsWith(`${SIDEBAR_COOKIE_NAME}=`));
+        return cookieValue ? cookieValue.split('=')[1] === 'true' : defaultOpen;
+    }
+
+    const [_open, _setOpen] = React.useState(getInitialOpen());
     const open = openProp ?? _open
 
     const setOpen = React.useCallback(
@@ -174,7 +178,7 @@ const Sidebar = React.forwardRef<
         <Sheet open={openMobile} onOpenChange={setOpenMobile}>
           <SheetContent
             data-sidebar="sidebar"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground flex flex-col"
+            className="w-[--sidebar-width] bg-background p-0 text-foreground flex flex-col"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -194,7 +198,7 @@ const Sidebar = React.forwardRef<
         data-state={state}
         data-side={side}
         className={cn(
-            "group hidden md:flex h-screen flex-col border-r bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-in-out",
+            "group hidden md:flex h-screen flex-col border-r bg-background text-foreground transition-[width] duration-300 ease-in-out",
             state === 'expanded' ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-width-icon)]',
             className
         )}
@@ -237,11 +241,12 @@ const SidebarHeader = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div">
 >(({ className, ...props }, ref) => {
+    const { state } = useSidebar();
   return (
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex h-16 items-center border-b px-4 shrink-0", className)}
+      className={cn("flex h-16 items-center border-b px-4 shrink-0", state === "collapsed" && "justify-center", className)}
       {...props}
     />
   )
@@ -336,8 +341,8 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-active={isActive}
         className={cn(
-            "flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50",
-            "data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground",
+            "flex w-full items-center gap-3 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-ring transition-all hover:bg-accent hover:text-accent-foreground focus-visible:ring-2 active:bg-accent active:text-accent-foreground disabled:pointer-events-none disabled:opacity-50",
+            "data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground",
             state === 'collapsed' && "justify-center",
             className
         )}
