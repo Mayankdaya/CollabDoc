@@ -46,3 +46,13 @@
 {"id":"5c48ed321b714a8dfa29f37a4e166352","type":"UNKNOWN","start":1757913675998,"name":"POST /documents/[id]","end":1757913677057.9185,"status":0}
 {"id":"d527a6f776fc72bbb16502259cad76b6","type":"flow","start":1757913680337,"name":"chatFlow","end":1757913681600.3555,"status":2}
 {"id":"868de72ba1638149e956019d90bfbbb1","type":"UNKNOWN","start":1757913680087,"name":"POST /documents/[id]","end":1757913683584.6306,"status":2}
+{"id":"5e237ebfaa28edaaadc202b36dfc2ed4","type":"UNKNOWN","start":1757913743618,"name":"RSC GET /documents/[id]","end":1757913746749.9197,"status":0}
+{"id":"0c9dfeafc3cc929cbc19c4e651525c5d","type":"UNKNOWN","start":1757913747144,"name":"GET /documents/[id]","end":1757913748639.926,"status":0}
+{"id":"4977ce03bbbe96d23595f98e677153d2","type":"UNKNOWN","start":1757913750298,"name":"POST /api/auth/route","end":1757913750793.3127,"status":0}
+{"id":"91e7ef204050e5ea016291a1419a9001","type":"UNKNOWN","start":1757913753973,"name":"POST /documents/[id]","end":1757913754734.9224,"status":0}
+{"id":"ba869f6c2cfb0c6f1006f90c6fb9eaa6","type":"UNKNOWN","start":1757913754888,"name":"POST /documents/[id]","end":1757913755499.3235,"status":0}
+{"id":"badac6f02152465691ab2814317ab903","type":"UNKNOWN","start":1757913756554,"name":"POST /documents/[id]","end":1757913757718.317,"status":0}
+{"id":"e0651bea87fea91451bc726c358ea1c7","type":"flow","start":1757913784027,"name":"chatFlow","end":1757913784556.1018,"status":2}
+{"id":"451dc0eae94425ce17d4ad7764917334","type":"UNKNOWN","start":1757913783798,"name":"POST /documents/[id]","end":1757913787004.3892,"status":2}
+{"id":"9df9a41b07bbbd4414d11f1d1726e008","type":"flow","start":1757913799579,"name":"chatFlow","end":1757913800640.629,"status":2}
+{"id":"99c53f4f79199ffbdea8de7c0e762f53","type":"UNKNOWN","start":1757913799429,"name":"POST /documents/[id]","end":1757913802428.9626,"status":2}
