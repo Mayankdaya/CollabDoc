@@ -208,3 +208,5 @@
 {"id":"c416895bc517fc50de6991bee30d5bf0","type":"UNKNOWN","start":1757918541334,"name":"POST /documents/[id]","end":1757918541955.6304,"status":0}
 {"id":"479ff81ac156996d7cc5a1f48d53b661","type":"UNKNOWN","start":1757918543196,"name":"POST /documents/[id]","end":1757918543953.0122,"status":0}
 {"id":"2839163f722df891e3ae9586c0adc89e","type":"UNKNOWN","start":1757918547453,"name":"POST /documents/[id]","end":1757918548718.7366,"status":0}
+{"id":"ce6b54dec4a258671496d03c5c898f19","type":"UNKNOWN","start":1757918754422,"name":"GET /documents/[id]","end":1757918755292.3303,"status":0}
+{"id":"d62b631194e68a7ce570594ffe3cdf1f","type":"UNKNOWN","start":1757918771944,"name":"POST /api/auth/route","end":1757918772170.6978,"status":0}

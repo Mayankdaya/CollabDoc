@@ -11,8 +11,6 @@ import { ScrollArea } from '../ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '../ui/avatar';
 import type { Editor } from '@tiptap/react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { z } from 'zod';
 
 export const ChatMessageSchema = z.object({
@@ -147,10 +145,8 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
                                     ? 'bg-white/10 border border-white/20 text-foreground'
                                     : 'bg-black/10 border border-white/10 backdrop-blur-xl'
                             )}>
-                                <div className="prose prose-sm dark:prose-invert text-foreground">
-                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                        {message.content}
-                                    </ReactMarkdown>
+                                <div className="prose prose-sm dark:prose-invert text-foreground whitespace-pre-wrap">
+                                    {message.content}
                                 </div>
                             </div>
                              {message.role === 'user' && (
@@ -211,5 +207,3 @@ export default function AiChatPanel({ documentContent, editor }: AiChatPanelProp
         </div>
     );
 }
-
-    
