@@ -88,7 +88,12 @@ export function useCall({ room }: { room: Room }) {
 
     const handleNewUser = useCallback((connectionId: number) => {
         if (!localStream || !self || self.connectionId === connectionId) return;
-        if (peerConnections.current.has(connectionId)) return;
+        
+        // Prevent creating a new offer if a connection already exists.
+        // This is the key fix for the "stable" state error.
+        if (peerConnections.current.has(connectionId)) {
+            return;
+        }
 
         const pc = new RTCPeerConnection(ICE_SERVERS);
         peerConnections.current.set(connectionId, pc);
@@ -98,7 +103,7 @@ export function useCall({ room }: { room: Room }) {
 
         pc.onicecandidate = event => {
             if (event.candidate) {
-                broadcast({ type: 'ice-candidate', candidate: event.candidate, targetId: connectionId, fromId: self.connectionId });
+                broadcast({ type: 'ice-candidate', candidate: event.candidate.toJSON(), targetId: connectionId, fromId: self.connectionId });
             }
         };
         
@@ -112,7 +117,9 @@ export function useCall({ room }: { room: Room }) {
         pc.createOffer()
             .then(offer => pc.setLocalDescription(offer))
             .then(() => {
-                broadcast({ type: 'offer', offer: pc.localDescription, targetId: connectionId, fromId: self.connectionId });
+                if (pc.localDescription) {
+                    broadcast({ type: 'offer', offer: pc.localDescription.toJSON(), targetId: connectionId, fromId: self.connectionId });
+                }
             })
             .catch(e => console.error("Error creating offer:", e));
     }, [broadcast, localStream, self]);
@@ -161,7 +168,7 @@ export function useCall({ room }: { room: Room }) {
 
                     pc.onicecandidate = e => {
                         if (e.candidate) {
-                            broadcast({ type: 'ice-candidate', candidate: e.candidate, targetId: fromId, fromId: self.connectionId });
+                            broadcast({ type: 'ice-candidate', candidate: e.candidate.toJSON(), targetId: fromId, fromId: self.connectionId });
                         }
                     };
 
@@ -183,7 +190,9 @@ export function useCall({ room }: { room: Room }) {
                         })
                         .then(answer => pc.setLocalDescription(answer))
                         .then(() => {
-                            broadcast({ type: 'answer', answer: pc.localDescription, targetId: fromId, fromId: self.connectionId });
+                            if (pc.localDescription) {
+                                broadcast({ type: 'answer', answer: pc.localDescription.toJSON(), targetId: fromId, fromId: self.connectionId });
+                            }
                         })
                         .catch(e => console.error("Error handling offer:", e));
                 }
@@ -192,14 +201,16 @@ export function useCall({ room }: { room: Room }) {
                 if (event.targetId === self.connectionId) {
                     const fromId = event.fromId;
                     const pc = peerConnections.current.get(fromId);
-                    pc?.setRemoteDescription(new RTCSessionDescription(event.answer))
-                      .then(() => {
-                          // Process any queued candidates
-                          const queue = iceCandidateQueues.current.get(fromId) || [];
-                          queue.forEach(candidate => pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate:", e)));
-                          iceCandidateQueues.current.set(fromId, []);
-                      })
-                      .catch(e => console.error("Error handling answer:", e));
+                    if (pc && pc.signalingState === 'have-local-offer') {
+                        pc.setRemoteDescription(new RTCSessionDescription(event.answer))
+                        .then(() => {
+                            // Process any queued candidates
+                            const queue = iceCandidateQueues.current.get(fromId) || [];
+                            queue.forEach(candidate => pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(e => console.error("Error adding queued ICE candidate:", e)));
+                            iceCandidateQueues.current.set(fromId, []);
+                        })
+                        .catch(e => console.error("Error handling answer:", e));
+                    }
                 }
                 break;
             case 'ice-candidate':
