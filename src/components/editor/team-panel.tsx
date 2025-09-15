@@ -20,10 +20,16 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
   const isUserOnline = useCallback((personUid: string) => {
     return onlineUserUIDs.includes(personUid);
   }, [onlineUserUIDs]);
-  
-  const owner = peopleWithAccess.find(p => p.uid === 'OWNER_UID_PLACEHOLDER'); // This is just for role logic, not filtering
-  const ownerId = peopleWithAccess.find(p => isUserOnline(p.uid))?.uid;
 
+  const getOwnerId = () => {
+      // This is a simplification. In a real app, the owner might be stored on the doc.
+      if (peopleWithAccess.length > 0) {
+        return peopleWithAccess[0].uid;
+      }
+      return currentUser?.uid;
+  }
+  
+  const ownerId = getOwnerId();
 
   return (
     <div className="flex h-full flex-col">
@@ -39,7 +45,7 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
               person={person}
               isOnline={isUserOnline(person.uid)}
               isCurrentUser={person.uid === currentUser?.uid}
-              role={person.uid === ownerId ? 'Owner' : 'Editor'} // Simplified role assignment
+              role={person.uid === ownerId ? 'Owner' : 'Editor'} 
               onStartCall={onStartCall}
             />
           ))

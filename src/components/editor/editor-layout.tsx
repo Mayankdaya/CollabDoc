@@ -92,6 +92,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     }>({ status: 'idle', type: null, peer: null });
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+    const [pendingOffer, setPendingOffer] = useState<RTCSessionDescriptionInit | null>(null);
 
     const broadcast = useBroadcastEvent();
 
@@ -106,13 +107,17 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     }, [broadcast, callState.peer, user]);
     
     const initializeWebRtcManager = useCallback(() => {
-        if (!user) return;
+        if (!user) return null;
+        if (webRtcManager.current) {
+            webRtcManager.current.close();
+        }
         const manager = new WebRTCManager(
             user.uid,
             (stream) => setRemoteStream(stream),
             (data) => sendSignalingMessage(data)
         );
         webRtcManager.current = manager;
+        return manager;
     }, [user, sendSignalingMessage]);
 
     const cleanupWebRtc = useCallback(() => {
@@ -123,80 +128,92 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         setLocalStream(null);
         setRemoteStream(null);
         setCallState({ status: 'idle', type: null, peer: null });
+        setPendingOffer(null);
     }, []);
 
     useEventListener((event) => {
         const message = event.event as SignalingData;
         if (message.to !== user?.uid) return;
-
-        const manager = webRtcManager.current;
-        if (!manager) return;
         
         switch (message.type) {
             case 'offer':
-                const peerUser = onlineUsers.find(u => u.uid === message.from);
-                if (peerUser) {
-                    initializeWebRtcManager();
+                const peerUser = peopleWithAccess.find(u => u.uid === message.from);
+                if (peerUser && callState.status === 'idle') {
                     setCallState({
                         status: 'incoming',
                         type: message.data.type,
                         peer: peerUser,
                     });
-                     // Store offer temporarily to answer later
-                    (webRtcManager.current! as any).offer = message.data.sdp;
+                    setPendingOffer(message.data.sdp);
                 }
                 break;
             case 'answer':
-                manager.handleAnswer(message.data);
+                 if (webRtcManager.current) {
+                    webRtcManager.current.handleAnswer(message.data);
+                    setCallState(prev => ({ ...prev, status: 'connected' }));
+                }
                 break;
             case 'candidate':
-                if (callState.status !== 'idle') {
-                    manager.handleCandidate(message.data);
+                if (webRtcManager.current && callState.status !== 'idle') {
+                    webRtcManager.current.handleCandidate(message.data);
                 }
                 break;
         }
     });
     
     const startCall = useCallback(async (peer: FoundUser, type: 'voice' | 'video') => {
-        if (!user) return;
-        initializeWebRtcManager();
-        const manager = webRtcManager.current!;
+        if (!user || callState.status !== 'idle') return;
+        
+        const manager = initializeWebRtcManager();
+        if (!manager) return;
 
         setCallState({ status: 'outgoing', type, peer });
 
-        const stream = await manager.getMediaStream(type === 'video');
-        setLocalStream(stream);
+        try {
+            const stream = await manager.getMediaStream(type === 'video');
+            setLocalStream(stream);
 
-        const offer = await manager.createOffer();
-        sendSignalingMessage({
-            type: 'offer',
-            data: { sdp: offer, type },
-            from: user.uid,
-            to: peer.uid,
-        });
+            const offer = await manager.createOffer();
+            sendSignalingMessage({
+                type: 'offer',
+                data: { sdp: offer, type },
+                from: user.uid,
+                to: peer.uid,
+            });
+        } catch (error) {
+            console.error("Failed to start call", error);
+            cleanupWebRtc();
+        }
 
-    }, [user, initializeWebRtcManager, sendSignalingMessage]);
+    }, [user, callState.status, initializeWebRtcManager, sendSignalingMessage, cleanupWebRtc]);
     
     const answerCall = useCallback(async () => {
-        const manager = webRtcManager.current;
-        if (!manager || callState.status !== 'incoming' || !(manager as any).offer) return;
+        if (callState.status !== 'incoming' || !pendingOffer || !user) return;
 
-        const stream = await manager.getMediaStream(callState.type === 'video');
-        setLocalStream(stream);
+        const manager = initializeWebRtcManager();
+        if (!manager) return;
+        
+        try {
+            const stream = await manager.getMediaStream(callState.type === 'video');
+            setLocalStream(stream);
 
-        const offerSdp = (manager as any).offer;
-        const answer = await manager.handleOffer({type: 'offer', sdp: offerSdp});
+            const answer = await manager.handleOffer(pendingOffer);
+            
+            sendSignalingMessage({
+                type: 'answer',
+                data: answer,
+                from: user!.uid,
+                to: callState.peer!.uid,
+            });
 
-        sendSignalingMessage({
-            type: 'answer',
-            data: answer,
-            from: user!.uid,
-            to: callState.peer!.uid,
-        });
+            setCallState(prev => ({...prev, status: 'connected'}));
+            setPendingOffer(null);
+        } catch (error) {
+             console.error("Failed to answer call", error);
+            cleanupWebRtc();
+        }
 
-        setCallState(prev => ({...prev, status: 'connected'}));
-
-    }, [webRtcManager, callState, user, sendSignalingMessage]);
+    }, [callState, user, pendingOffer, initializeWebRtcManager, sendSignalingMessage, cleanupWebRtc]);
     
     const endCall = useCallback(() => {
         cleanupWebRtc();
