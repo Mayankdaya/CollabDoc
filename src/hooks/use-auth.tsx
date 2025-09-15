@@ -51,7 +51,7 @@ async function clearSession() {
     });
 }
 
-const managePresence = async (user: User | null) => {
+const managePresence = async (user: User) => {
     if (!user) return;
 
     const userDocRef = doc(db, 'users', user.uid);
