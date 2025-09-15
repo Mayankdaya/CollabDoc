@@ -10,7 +10,7 @@ import { SignInData } from '@/components/auth/sign-in-form';
 import { doc, setDoc, serverTimestamp, getDoc, updateDoc } from 'firebase/firestore';
 
 interface AuthContextType {
-  user: User | null;
+  user: (User & { photoURL: string | null }) | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
@@ -74,14 +74,14 @@ const managePresence = async (user: User) => {
 
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState< (User & { photoURL: string | null }) | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        setUser(user);
+        setUser(user as User & { photoURL: string | null });
         await createUserDocument(user);
         await managePresence(user);
         const idToken = await user.getIdToken();
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await userCredential.user.reload();
       const refreshedUser = auth.currentUser;
       if (refreshedUser) {
-          setUser(refreshedUser);
+          setUser(refreshedUser as User & { photoURL: string | null });
           const idToken = await refreshedUser.getIdToken(true);
           await createSession(idToken);
           await managePresence(refreshedUser);

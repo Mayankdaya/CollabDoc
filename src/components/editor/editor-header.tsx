@@ -103,9 +103,10 @@ export default function EditorHeader({ doc, editor, onlineUsers, docName, setDoc
         <TooltipProvider>
           <div className="flex -space-x-2">
             {onlineUsers.map((c) => (
-              <Tooltip key={c.uid}>
+              <Tooltip key={c.clientId}>
                   <TooltipTrigger asChild>
                       <Avatar className="h-8 w-8 border-2" style={{ borderColor: c.color }}>
+                          <AvatarImage src={c.photoURL} alt={c.name} />
                           <AvatarFallback style={{ backgroundColor: c.color, color: 'white' }}>
                               {c.name?.charAt(0).toUpperCase() || 'A'}
                           </AvatarFallback>

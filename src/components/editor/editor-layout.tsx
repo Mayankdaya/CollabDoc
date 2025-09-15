@@ -34,9 +34,8 @@ import { EditorToolbar } from './editor-toolbar';
 import EditorHeader from './editor-header';
 import AiChatPanel from './ai-chat-panel';
 import ChatPanel from './chat-panel';
-import TeamPanel from './team-panel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Bot, Users } from 'lucide-react';
+import { MessageSquare, Bot } from 'lucide-react';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import {
   LiveblocksProvider,
@@ -124,7 +123,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             const states = Array.from(awareness.getStates().values());
             const users = states
                 .map((state) => state.user)
-                .filter((user): user is { name: string; color: string; uid: string, clientId: number } => !!user?.uid);
+                .filter((user): user is { name: string; color: string; uid: string, clientId: number, photoURL: string } => !!user?.uid);
             
             const uniqueUsers = Array.from(new Map(users.map(u => [u.uid, u])).values());
             setOnlineUsers(uniqueUsers);
@@ -169,6 +168,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                         name: user?.displayName || 'Anonymous',
                         color: '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0'),
                         uid: user.uid,
+                        photoURL: user.photoURL,
                     },
                 })
             ],
@@ -256,23 +256,15 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={25} maxSize={40} minSize={20} className="flex flex-col">
                     <Tabs defaultValue="chat" className="flex flex-col flex-1 min-h-0">
-                        <TabsList className="grid w-full grid-cols-3 shrink-0 rounded-none bg-background/30">
+                        <TabsList className="grid w-full grid-cols-2 shrink-0 rounded-none bg-background/30">
                             <TabsTrigger value="chat"><MessageSquare className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Chat</span></TabsTrigger>
                             <TabsTrigger value="ai-chat"><Bot className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>AI</span></TabsTrigger>
-                            <TabsTrigger value="team"><Users className='h-5 w-5'/><span className='hidden lg:inline-block ml-2'>Team</span></TabsTrigger>
                         </TabsList>
                         <TabsContent value="chat" className="flex-1 overflow-auto mt-0">
                             <ChatPanel documentId={documentId} />
                         </TabsContent>
                         <TabsContent value="ai-chat" className="flex-1 overflow-auto mt-0">
                             <AiChatPanel documentContent={editor.getHTML()} editor={editor} />
-                        </TabsContent>
-                         <TabsContent value="team" className="flex-1 overflow-auto mt-0">
-                            <TeamPanel 
-                                peopleWithAccess={peopleWithAccess}
-                                onlineUsers={onlineUsers}
-                                ownerId={initialData.userId}
-                             />
                         </TabsContent>
                     </Tabs>
                 </ResizablePanel>
