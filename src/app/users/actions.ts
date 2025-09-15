@@ -2,9 +2,7 @@
 "use server";
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query } from "firebase/firestore";
-import { auth } from "@/lib/firebase-admin";
-import type { UserRecord } from "firebase-admin/auth";
+import { collection, getDocs, query, doc, getDoc, where } from "firebase/firestore";
 
 export interface UserProfile {
     uid: string;
@@ -15,40 +13,29 @@ export interface UserProfile {
 
 export async function getAllUsers(): Promise<UserProfile[]> {
     try {
-        const listUsersResult = await auth.listUsers(1000); // Fetches up to 1000 users
-        const authUsers: UserProfile[] = listUsersResult.users.map((userRecord: UserRecord) => ({
-            uid: userRecord.uid,
-            displayName: userRecord.displayName || null,
-            email: userRecord.email || null,
-            photoURL: userRecord.photoURL || null,
-        }));
-
+        // Query the 'users' collection directly from Firestore
         const usersQuery = query(collection(db, 'users'));
         const querySnapshot = await getDocs(usersQuery);
-        const firestoreUsers = new Map<string, UserProfile>();
+        
+        const users: UserProfile[] = [];
         querySnapshot.forEach(doc => {
-            const data = doc.data() as UserProfile;
-            if (data.uid) {
-                firestoreUsers.set(data.uid, data);
-            }
+            const data = doc.data();
+            users.push({
+                uid: data.uid,
+                displayName: data.displayName || null,
+                email: data.email || null,
+                photoURL: data.photoURL || null,
+            });
         });
 
-        // Merge auth users with firestore data, giving preference to firestore details if they exist
-        const mergedUsers = authUsers.map(authUser => {
-            const firestoreUser = firestoreUsers.get(authUser.uid);
-            if (firestoreUser) {
-                return { ...authUser, ...firestoreUser };
-            }
-            return authUser;
-        });
-
-        return mergedUsers;
+        return users;
 
     } catch (error) {
-        console.error("Error fetching all users:", error);
+        console.error("Error fetching all users from Firestore:", error);
         return [];
     }
 }
+
 
 export async function getUsersForDocument(documentId: string): Promise<UserProfile[]> {
     if (!documentId) return [];

@@ -56,6 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
         setUser(user);
+        // Ensure user document exists on any auth state change
+        await createUserDocument(user);
         const idToken = await user.getIdToken();
         await createSession(idToken);
       } else {
