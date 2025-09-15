@@ -4,3 +4,11 @@
 {"id":"4e87a2a59e963c4b042527a838a93744","type":"UNKNOWN","start":1757909887710,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757909887724.8035,"status":0}
 {"id":"eb962bc19c3ec9469867ffdf24c32441","type":"UNKNOWN","start":1757909891387,"name":"POST /api/auth/route","end":1757909891578.71,"status":0}
 {"id":"b72a431a1ff20f04936abe77f9c71cea","type":"UNKNOWN","start":1757909931393,"name":"RSC GET /","end":1757909931591.3071,"status":0}
+{"id":"f7b43011b69add48a4ca3dcb04f1f82d","type":"UNKNOWN","start":1757910310177,"name":"RSC GET /documents/[id]","end":1757910313967.0068,"status":0}
+{"id":"96ba5971a5ce0df12f88e4394f1fe98a","type":"UNKNOWN","start":1757910316031,"name":"POST /documents/[id]","end":1757910316977.3357,"status":0}
+{"id":"0ee58d4df5e804cb6ea6252b799c0bc5","type":"UNKNOWN","start":1757910319769,"name":"POST /documents/[id]","end":1757910320946.944,"status":0}
+{"id":"0c5132a57524a8e822e70ab790032d8f","type":"UNKNOWN","start":1757910325651,"name":"POST /documents/[id]","end":1757910326304.4102,"status":0}
+{"id":"a452952a9c73ec1d894975625087188b","type":"UNKNOWN","start":1757910326490,"name":"POST /documents/[id]","end":1757910327049.6401,"status":0}
+{"id":"a70837d3138c8f5bc9746efbfcda367b","type":"UNKNOWN","start":1757910329653,"name":"POST /documents/[id]","end":1757910330517.6763,"status":0}
+{"id":"41d0eb714d514f3346647695926eb732","type":"flow","start":1757910395001,"name":"chatFlow","end":1757910395565.0444,"status":2}
+{"id":"2bd8c48ff3693c740711b9bf3bcc6d9f","type":"UNKNOWN","start":1757910394662,"name":"POST /documents/[id]","end":1757910398845.7673,"status":2}
