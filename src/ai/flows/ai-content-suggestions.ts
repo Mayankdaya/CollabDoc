@@ -172,7 +172,7 @@ const generateDocumentFromTopicFlow = ai.defineFlow(
   },
   async input => {
     if (["hi", "hello", "hey"].includes(input.topic.toLowerCase().trim())) {
-      return { documentContent: "" };
+      return { documentContent: "<p>Hello! What topic would you like me to write about today?</p>" };
     }
     const {output} = await generateDocumentFromTopicPrompt(input);
     return output!;
