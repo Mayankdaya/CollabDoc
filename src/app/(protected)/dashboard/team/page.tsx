@@ -1,15 +1,8 @@
 
-import { getAllUsers, UserProfile } from '@/app/users/actions';
+import { getAllUsers } from '@/app/users/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { Badge } from '@/components/ui/badge';
 
 
 export default async function TeamPage() {
@@ -21,50 +14,26 @@ export default async function TeamPage() {
                 <h1 className="text-3xl font-bold tracking-tight">Team Members</h1>
                 <p className="text-muted-foreground">A list of all users registered in the system.</p>
             </div>
-            <Card>
-                <CardHeader>
-                    <CardTitle>All Users</CardTitle>
-                    <CardDescription>
-                        This table shows every user who has an account.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Member</TableHead>
-                                <TableHead className="hidden md:table-cell">Email</TableHead>
-                                <TableHead>Role</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {users.length > 0 ? (
-                                users.map((user) => (
-                                <TableRow key={user.uid}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9">
-                                                {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'Avatar'} />}
-                                                <AvatarFallback>{user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="font-medium">{user.displayName}</div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="hidden md:table-cell">{user.email}</TableCell>
-                                    <TableCell>Editor</TableCell>
-                                </TableRow>
-                                ))
-                            ) : (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center p-4 text-muted-foreground">
-                                        No users found.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                {users.length > 0 ? (
+                    users.map((user) => (
+                        <Card key={user.uid} className="flex flex-col items-center justify-center p-6 text-center">
+                            <Avatar className="h-20 w-20 mb-4">
+                                {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'Avatar'} />}
+                                <AvatarFallback className="text-2xl">{user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+                            </Avatar>
+                            <h3 className="text-lg font-semibold">{user.displayName}</h3>
+                            <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
+                            <Badge variant="secondary">Editor</Badge>
+                        </Card>
+                    ))
+                ) : (
+                   <Card className="col-span-full flex items-center justify-center p-10">
+                        <p className="text-muted-foreground">No users found.</p>
+                   </Card>
+                )}
+            </div>
         </div>
     );
 }
