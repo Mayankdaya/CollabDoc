@@ -3,6 +3,7 @@
 
 import { db } from "@/lib/firebase";
 import { collection, getDocs, query, doc, getDoc, where } from "firebase/firestore";
+import { auth as adminAuth } from "@/lib/firebase-admin";
 
 export interface UserProfile {
     uid: string;
@@ -12,27 +13,45 @@ export interface UserProfile {
 }
 
 export async function getAllUsers(): Promise<UserProfile[]> {
+    const userProfiles: UserProfile[] = [];
     try {
-        // Query the 'users' collection directly from Firestore
-        const usersQuery = query(collection(db, 'users'));
-        const querySnapshot = await getDocs(usersQuery);
+        const listUsersResult = await adminAuth.listUsers();
         
-        const users: UserProfile[] = [];
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
-            users.push({
-                uid: data.uid,
-                displayName: data.displayName || null,
-                email: data.email || null,
-                photoURL: data.photoURL || null,
+        const firestoreUsersQuery = query(collection(db, 'users'));
+        const querySnapshot = await getDocs(firestoreUsersQuery);
+        const firestoreUsers = new Map(querySnapshot.docs.map(doc => [doc.id, doc.data()]));
+
+        listUsersResult.users.forEach(userRecord => {
+            const firestoreData = firestoreUsers.get(userRecord.uid);
+            userProfiles.push({
+                uid: userRecord.uid,
+                email: userRecord.email || null,
+                displayName: firestoreData?.displayName || userRecord.displayName || 'Unnamed User',
+                photoURL: firestoreData?.photoURL || userRecord.photoURL || null,
             });
         });
-
-        return users;
-
+        
+        return userProfiles;
     } catch (error) {
-        console.error("Error fetching all users from Firestore:", error);
-        return [];
+        console.error("Error fetching all users:", error);
+        // Fallback to only firestore if admin fails (e.g. local dev without creds)
+        try {
+            const usersQuery = query(collection(db, 'users'));
+            const querySnapshot = await getDocs(usersQuery);
+            querySnapshot.forEach(doc => {
+                const data = doc.data();
+                userProfiles.push({
+                    uid: data.uid,
+                    displayName: data.displayName || null,
+                    email: data.email || null,
+                    photoURL: data.photoURL || null,
+                });
+            });
+            return userProfiles;
+        } catch (dbError) {
+             console.error("Error fetching all users from Firestore as fallback:", dbError);
+             return [];
+        }
     }
 }
 

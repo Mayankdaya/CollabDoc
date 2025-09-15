@@ -20,7 +20,7 @@ export default function TeamPanel({ peopleWithAccess, onlineUserUIDs, onStartCal
   const isUserOnline = useCallback((personUid: string) => {
     return onlineUserUIDs.includes(personUid);
   }, [onlineUserUIDs]);
-
+  
   const owner = peopleWithAccess.find(p => p.uid === 'OWNER_UID_PLACEHOLDER'); // This is just for role logic, not filtering
   const ownerId = peopleWithAccess.find(p => isUserOnline(p.uid))?.uid;
 
@@ -65,6 +65,7 @@ function UserRow({ person, isOnline, isCurrentUser, role, onStartCall }: UserRow
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
+                    {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName} />}
                     <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                 </Avatar>
                 <div>

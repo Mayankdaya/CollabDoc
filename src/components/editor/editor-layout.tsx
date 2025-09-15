@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useEditor, EditorContent, Editor as EditorClass } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
@@ -44,10 +44,13 @@ import {
   RoomProvider,
   ClientSideSuspense,
   useRoom,
+  useBroadcastEvent,
+  useEventListener,
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
 import type { FoundUser } from './share-dialog';
+import { WebRTCManager, SignalingData } from '@/lib/webrtc';
 
 function EditorLoading() {
   return (
@@ -75,15 +78,130 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     const [isSaving, setIsSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(initialData.lastModified);
     const [lastSavedBy, setLastSavedBy] = useState(initialData.lastModifiedBy);
-    const [callState, setCallState] = useState<{ active: boolean; type: 'voice' | 'video' | null; user: any | null }>({
-        active: false,
-        type: null,
-        user: null,
-    });
     
     const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
     const [onlineUserUIDs, setOnlineUserUIDs] = useState<string[]>([]);
+    
+    // WebRTC and Call State
+    const webRtcManager = useRef<WebRTCManager | null>(null);
+    const [callState, setCallState] = useState<{
+        status: 'idle' | 'outgoing' | 'incoming' | 'connected';
+        type: 'voice' | 'video' | null;
+        peer: FoundUser | null;
+    }>({ status: 'idle', type: null, peer: null });
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+    const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
+
+    const broadcast = useBroadcastEvent();
+
+    const sendSignalingMessage = useCallback((data: SignalingData) => {
+        if (!callState.peer) return;
+        const message: SignalingData = {
+            ...data,
+            from: user!.uid,
+            to: callState.peer.uid
+        };
+        broadcast(message);
+    }, [broadcast, callState.peer, user]);
+    
+    const initializeWebRtcManager = useCallback(() => {
+        if (!user) return;
+        const manager = new WebRTCManager(
+            user.uid,
+            (stream) => setRemoteStream(stream),
+            (data) => sendSignalingMessage(data)
+        );
+        webRtcManager.current = manager;
+    }, [user, sendSignalingMessage]);
+
+    const cleanupWebRtc = useCallback(() => {
+        if (webRtcManager.current) {
+            webRtcManager.current.close();
+            webRtcManager.current = null;
+        }
+        setLocalStream(null);
+        setRemoteStream(null);
+        setCallState({ status: 'idle', type: null, peer: null });
+    }, []);
+
+    useEventListener((event) => {
+        const message = event.event as SignalingData;
+        if (message.to !== user?.uid) return;
+
+        const manager = webRtcManager.current;
+        if (!manager) return;
+        
+        switch (message.type) {
+            case 'offer':
+                const peerUser = onlineUsers.find(u => u.uid === message.from);
+                if (peerUser) {
+                    initializeWebRtcManager();
+                    setCallState({
+                        status: 'incoming',
+                        type: message.data.type,
+                        peer: peerUser,
+                    });
+                     // Store offer temporarily to answer later
+                    (webRtcManager.current! as any).offer = message.data.sdp;
+                }
+                break;
+            case 'answer':
+                manager.handleAnswer(message.data);
+                break;
+            case 'candidate':
+                if (callState.status !== 'idle') {
+                    manager.handleCandidate(message.data);
+                }
+                break;
+        }
+    });
+    
+    const startCall = useCallback(async (peer: FoundUser, type: 'voice' | 'video') => {
+        if (!user) return;
+        initializeWebRtcManager();
+        const manager = webRtcManager.current!;
+
+        setCallState({ status: 'outgoing', type, peer });
+
+        const stream = await manager.getMediaStream(type === 'video');
+        setLocalStream(stream);
+
+        const offer = await manager.createOffer();
+        sendSignalingMessage({
+            type: 'offer',
+            data: { sdp: offer, type },
+            from: user.uid,
+            to: peer.uid,
+        });
+
+    }, [user, initializeWebRtcManager, sendSignalingMessage]);
+    
+    const answerCall = useCallback(async () => {
+        const manager = webRtcManager.current;
+        if (!manager || callState.status !== 'incoming' || !(manager as any).offer) return;
+
+        const stream = await manager.getMediaStream(callState.type === 'video');
+        setLocalStream(stream);
+
+        const offerSdp = (manager as any).offer;
+        const answer = await manager.handleOffer({type: 'offer', sdp: offerSdp});
+
+        sendSignalingMessage({
+            type: 'answer',
+            data: answer,
+            from: user!.uid,
+            to: callState.peer!.uid,
+        });
+
+        setCallState(prev => ({...prev, status: 'connected'}));
+
+    }, [webRtcManager, callState, user, sendSignalingMessage]);
+    
+    const endCall = useCallback(() => {
+        cleanupWebRtc();
+        // Optionally send a 'hangup' signal
+    }, [cleanupWebRtc]);
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -205,8 +323,9 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             ydoc.destroy();
             newProvider.destroy();
             newEditor.destroy();
+            cleanupWebRtc();
         }
-    }, [user, documentId, initialData.content, room]);
+    }, [user, documentId, initialData.content, room, cleanupWebRtc]);
 
     useEffect(() => {
         if (!editor) return;
@@ -234,10 +353,15 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
 
     return (
         <div className="flex flex-col h-screen bg-background text-foreground overflow-hidden">
-            <CallPanel
-                callState={callState}
-                onEndCall={() => setCallState({ active: false, type: null, user: null })}
-            />
+             {callState.status !== 'idle' && (
+                <CallPanel
+                    callState={callState}
+                    onEndCall={endCall}
+                    onAcceptCall={answerCall}
+                    localStream={localStream}
+                    remoteStream={remoteStream}
+                />
+            )}
             <EditorHeader 
                 doc={initialData} 
                 editor={editor}
@@ -283,7 +407,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                             <TeamPanel 
                                 peopleWithAccess={peopleWithAccess}
                                 onlineUserUIDs={onlineUserUIDs}
-                                onStartCall={(user, type) => setCallState({ active: true, user, type })}
+                                onStartCall={startCall}
                             />
                         </TabsContent>
                     </Tabs>
