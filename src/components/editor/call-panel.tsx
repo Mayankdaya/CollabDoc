@@ -16,7 +16,7 @@ interface CallPanelProps {
     isVideoEnabled: boolean;
 }
 
-const VideoBox = ({ stream }: { stream: MediaStream }) => {
+const VideoBox = ({ stream, isMuted }: { stream: MediaStream, isMuted: boolean }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -25,7 +25,7 @@ const VideoBox = ({ stream }: { stream: MediaStream }) => {
         }
     }, [stream]);
 
-    return <video ref={videoRef} autoPlay muted className="w-full h-full object-cover rounded-md bg-black" />;
+    return <video ref={videoRef} autoPlay muted={isMuted} className="w-full h-full object-cover rounded-md bg-black" />;
 };
 
 
@@ -63,12 +63,12 @@ export default function CallPanel({
                 <div className="grid grid-cols-2 gap-2">
                     {localStream && (
                          <div className="aspect-video rounded-md overflow-hidden">
-                             <VideoBox stream={localStream} />
+                             <VideoBox stream={localStream} isMuted={true} />
                          </div>
                     )}
                     {remoteStreams.map(({ stream, connectionId }) => (
                          <div key={connectionId} className="aspect-video rounded-md overflow-hidden">
-                             <VideoBox stream={stream} />
+                             <VideoBox stream={stream} isMuted={false} />
                          </div>
                     ))}
                 </div>
