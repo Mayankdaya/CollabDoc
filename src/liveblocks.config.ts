@@ -1,6 +1,6 @@
 
-import { createClient } from "@liveblocks/client";
-import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+import { createClient, LiveObject } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
   publicApiKey: "pk_dev_W4eVr8avX7cJ_dC1Q1XKAhfY_2qiTOjSHCRgaeovMLrjAB0aHCDuoVZ_AETFGgik",
@@ -15,10 +15,11 @@ type Presence = {
 
 // Optionally, Storage represents the shared document that persists in the Room,
 // even after all users leave. Fields under Storage typically are LiveList, LiveMap, LiveObject.
-// type Storage = {
-//   // author: LiveObject<{ firstName: string, lastName: string }>,
-//   // ...
-// };
+type Storage = {
+    // callState: LiveObject<{
+    //     isCallActive: boolean;
+    // }>
+};
 
 // Optionally, UserMeta represents static/readonly metadata on each user, as
 // provided by your own custom auth back end (if used). Useful for data that
@@ -32,12 +33,12 @@ type Presence = {
 //   }
 // };
 
-// Optionally, the type of custom events broadcast and listened to in this
-// room.
-// type RoomEvent = {
-//   // type: "reaction",
-//   // ...
-// };
+type RoomEvent = 
+    | { type: "user-joined-call"; connectionId: number }
+    | { type: "user-left-call"; connectionId: number }
+    | { type: "offer"; offer: any; targetId: number; fromId: number }
+    | { type: "answer"; answer: any; targetId: number; fromId: number }
+    | { type: "ice-candidate"; candidate: any; targetId: number; fromId: number };
 
 // Optionally, when using Comments, ThreadMetadata represents metadata on
 // each thread. Can only contain booleans, numbers, and strings.
@@ -80,4 +81,4 @@ export const {
         useAddReaction,
         useRemoveReaction,
     }
-} = createRoomContext<Presence, any, any, any, ThreadMetadata>(client);
+} = createRoomContext<Presence, Storage, any, RoomEvent, ThreadMetadata>(client);

@@ -45,6 +45,8 @@ import {
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
+import { useCall } from '@/hooks/use-call';
+import CallPanel from './call-panel';
 
 function EditorLoading() {
   return (
@@ -75,6 +77,18 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     
     const [peopleWithAccess, setPeopleWithAccess] = useState<UserProfile[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
+
+    const {
+        isCallActive,
+        localStream,
+        remoteStreams,
+        toggleAudio,
+        toggleVideo,
+        startCall,
+        endCall,
+        isAudioEnabled,
+        isVideoEnabled,
+    } = useCall();
 
     const handleAutoSave = useCallback(
         async (currentContent: string) => {
@@ -236,6 +250,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
                 onPeopleListChange={fetchPeopleWithAccess}
+                onStartCall={startCall}
             />
             <EditorToolbar 
                 editor={editor} 
@@ -245,6 +260,17 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                 docName={docName}
                 doc={initialData}
             />
+             {isCallActive && (
+                <CallPanel
+                    localStream={localStream}
+                    remoteStreams={remoteStreams}
+                    onToggleAudio={toggleAudio}
+                    onToggleVideo={toggleVideo}
+                    onEndCall={endCall}
+                    isAudioEnabled={isAudioEnabled}
+                    isVideoEnabled={isVideoEnabled}
+                />
+            )}
             <ResizablePanelGroup direction="horizontal" className="flex-1 min-h-0">
                 <ResizablePanel defaultSize={75} id="editor-panel" className="flex flex-col overflow-hidden">
                      <div className="flex-1 overflow-auto p-4 sm:p-8 editor-page-background">

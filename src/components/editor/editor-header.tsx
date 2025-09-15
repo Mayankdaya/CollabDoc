@@ -2,9 +2,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronLeft, History, Loader2, Save } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { formatDistanceToNow } from 'date-fns';
+import { ChevronLeft, History, Loader2, Save, Phone } from 'lucide-react';
 import type { Editor } from '@tiptap/react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,9 +14,9 @@ import { UserMenu } from '../user-menu';
 import { updateDocument } from '@/app/documents/actions';
 import type { Document } from '@/app/documents/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { cn } from '@/lib/utils';
 import { Separator } from '../ui/separator';
 import { useAuth } from '@/hooks/use-auth';
+import { formatDistanceToNow } from 'date-fns';
 
 interface EditorHeaderProps {
   doc: Document;
@@ -30,9 +28,10 @@ interface EditorHeaderProps {
   lastSaved: string;
   lastSavedBy: string;
   onPeopleListChange: () => void;
+  onStartCall: () => void;
 }
 
-export default function EditorHeader({ doc, editor, onlineUsers, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange }: EditorHeaderProps) {
+export default function EditorHeader({ doc, editor, onlineUsers, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange, onStartCall }: EditorHeaderProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   
@@ -122,6 +121,9 @@ export default function EditorHeader({ doc, editor, onlineUsers, docName, setDoc
         
         <Separator orientation="vertical" className="h-8 mx-1 sm:mx-2" />
 
+        <Button variant="ghost" size="icon" onClick={onStartCall} title="Start Call">
+            <Phone className="h-5 w-5" />
+        </Button>
         <ShareDialog doc={doc} onCollaboratorAdded={onPeopleListChange} />
         <div className='hidden sm:block'>
             <UserMenu />
