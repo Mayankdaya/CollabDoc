@@ -1,0 +1,7 @@
+{"id":"03ddc1b2e950ba8c9883ece4251fd8a9","type":"flow","start":1757929384583,"name":"chatFlow","end":1757929386491.3044,"status":0}
+{"id":"14829c1fb905f384ac78f803f59235c1","type":"UNKNOWN","start":1757929386505,"name":"start response","end":1757929386505.1719,"status":0}
+{"id":"2d49935865eb1608550eee3bf82bd191","type":"UNKNOWN","start":1757929509789,"name":"GET /","end":1757929510088.5835,"status":0}
+{"id":"35ff944aaa8a89a409aa9b2d64b0cd8f","type":"UNKNOWN","start":1757929820775,"name":"GET /","end":1757929821009.9429,"status":0}
+{"id":"66aed5ce8dab7e01c51f6c5cb0a657f0","type":"UNKNOWN","start":1757929933736,"name":"GET /","end":1757929933955.2705,"status":0}
+{"id":"9d429ccd47a9063ea621fef96c54bf1b","type":"UNKNOWN","start":1757929977309,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757929977320.7935,"status":0}
+{"id":"083e65aacfc57c34d19a042c8ec98521","type":"UNKNOWN","start":1757929990557,"name":"POST /api/auth/route","end":1757929990780.7153,"status":0}
