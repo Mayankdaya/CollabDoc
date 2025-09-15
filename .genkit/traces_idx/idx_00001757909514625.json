@@ -163,3 +163,11 @@
 {"id":"110a7eef89dfc737f22074d5e3189131","type":"UNKNOWN","start":1757917794918,"name":"POST /documents/[id]","end":1757917795486.758,"status":0}
 {"id":"c78bdbc88079773fb4827be66cd36ab0","type":"UNKNOWN","start":1757917796101,"name":"POST /documents/[id]","end":1757917796705.7932,"status":0}
 {"id":"9efa15ef88c88a178253b928dae595a0","type":"UNKNOWN","start":1757917799354,"name":"POST /documents/[id]","end":1757917800389.6946,"status":0}
+{"id":"c9a084876a3b9b7ae68f488af17ebafb","type":"UNKNOWN","start":1757917910670,"name":"GET /documents/[id]","end":1757917911193.21,"status":0}
+{"id":"569fc7cdfd3c3d6b68db8d86e7d12ce4","type":"UNKNOWN","start":1757917947574,"name":"POST /api/auth/route","end":1757917947755.7812,"status":0}
+{"id":"762a28faf0726ee6626b9bc8d477748c","type":"UNKNOWN","start":1757918061049,"name":"POST /documents/[id]","end":1757918061795.341,"status":0}
+{"id":"5fead13eb5d8e3d8478a0f5b3a46fb90","type":"UNKNOWN","start":1757918093616,"name":"POST /documents/[id]","end":1757918094308.5742,"status":0}
+{"id":"4570aefa3d3b7fff94027bd8c98fd8c1","type":"UNKNOWN","start":1757918100988,"name":"POST /documents/[id]","end":1757918102177.0896,"status":0}
+{"id":"2239bcc4f2e31ce61931af93f8dad426","type":"UNKNOWN","start":1757918130588,"name":"GET /","end":1757918130923.5562,"status":0}
+{"id":"c8cd7a40327ecec26c72572dce288520","type":"UNKNOWN","start":1757918131517,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757918131566.6658,"status":0}
+{"id":"273c0ec3d6530e741a3f35d62a916dcd","type":"UNKNOWN","start":1757918148769,"name":"POST /api/auth/route","end":1757918148981.419,"status":0}
