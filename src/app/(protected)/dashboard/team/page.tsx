@@ -23,9 +23,9 @@ export default async function TeamPage() {
                                 {user.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || 'Avatar'} />}
                                 <AvatarFallback className="text-2xl">{user.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                             </Avatar>
-                            <h3 className="text-lg font-semibold">{user.displayName}</h3>
-                            <p className="text-sm text-muted-foreground mb-2">{user.email}</p>
-                            <Badge variant="secondary">Editor</Badge>
+                            <h3 className="text-lg font-semibold">{user.displayName || 'Unnamed User'}</h3>
+                            <p className="text-sm text-muted-foreground mb-2">{user.email || 'No Email'}</p>
+                            <Badge variant="secondary">Member</Badge>
                         </Card>
                     ))
                 ) : (

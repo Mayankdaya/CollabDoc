@@ -109,3 +109,8 @@
 {"id":"188300126df8dbce340f5082385bd8c3","type":"UNKNOWN","start":1757916370018,"name":"POST /documents/[id]","end":1757916370605.1426,"status":0}
 {"id":"40e908c8ca84026de56148de28389e0f","type":"UNKNOWN","start":1757916370822,"name":"POST /documents/[id]","end":1757916371391.051,"status":0}
 {"id":"35a02313d4e8bda0b46604aa092398d3","type":"UNKNOWN","start":1757916371893,"name":"POST /documents/[id]","end":1757916372724.7942,"status":0}
+{"id":"aa1980b796fd798edbe9d5ce96966bb7","type":"UNKNOWN","start":1757916418510,"name":"GET /documents/[id]","end":1757916418992.9004,"status":0}
+{"id":"d7fd8d36c9a244460901c02e79483173","type":"UNKNOWN","start":1757916424005,"name":"POST /api/auth/route","end":1757916424172.8594,"status":0}
+{"id":"55c95fcd00c8aaa1657e66602d03f891","type":"UNKNOWN","start":1757916429853,"name":"POST /documents/[id]","end":1757916430414.2366,"status":0}
+{"id":"59a70bdec280f8b98f72fc2890cd5bba","type":"UNKNOWN","start":1757916430720,"name":"POST /documents/[id]","end":1757916431269.8552,"status":0}
+{"id":"8e5b4f23aa81489fe00857894448781d","type":"UNKNOWN","start":1757916432734,"name":"POST /documents/[id]","end":1757916433813.0378,"status":0}

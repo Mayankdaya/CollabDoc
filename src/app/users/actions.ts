@@ -2,40 +2,40 @@
 "use server";
 
 import { db } from "@/lib/firebase";
-import { collection, getDocs, query, doc, getDoc, where } from "firebase/firestore";
+import { collection, getDocs, query } from "firebase/firestore";
 import { auth } from "@/lib/firebase-admin";
+import type { UserRecord } from "firebase-admin/auth";
 
 export interface UserProfile {
     uid: string;
-    displayName: string;
-    email: string;
-    photoURL?: string;
+    displayName: string | null;
+    email: string | null;
+    photoURL: string | null;
 }
 
 export async function getAllUsers(): Promise<UserProfile[]> {
     try {
-        // Fetch all users from Firebase Auth
-        const listUsersResult = await auth.listUsers(1000);
-        const authUsers = listUsersResult.users.map(userRecord => ({
+        const listUsersResult = await auth.listUsers(1000); // Fetches up to 1000 users
+        const authUsers: UserProfile[] = listUsersResult.users.map((userRecord: UserRecord) => ({
             uid: userRecord.uid,
-            displayName: userRecord.displayName || 'No Name',
-            email: userRecord.email || 'No Email',
-            photoURL: userRecord.photoURL,
+            displayName: userRecord.displayName || null,
+            email: userRecord.email || null,
+            photoURL: userRecord.photoURL || null,
         }));
 
-        // Fetch all users from Firestore 'users' collection
         const usersQuery = query(collection(db, 'users'));
         const querySnapshot = await getDocs(usersQuery);
-        const firestoreUsers = querySnapshot.docs.map(doc => doc.data() as UserProfile);
+        const firestoreUsers = new Map<string, UserProfile>();
+        querySnapshot.forEach(doc => {
+            const data = doc.data() as UserProfile;
+            if (data.uid) {
+                firestoreUsers.set(data.uid, data);
+            }
+        });
 
-        // Create a map for quick lookup of Firestore users
-        const firestoreUserMap = new Map<string, UserProfile>();
-        firestoreUsers.forEach(user => firestoreUserMap.set(user.uid, user));
-
-        // Merge Auth users with Firestore users, giving precedence to Firestore data
-        // if there's a display name mismatch or other differences.
+        // Merge auth users with firestore data, giving preference to firestore details if they exist
         const mergedUsers = authUsers.map(authUser => {
-            const firestoreUser = firestoreUserMap.get(authUser.uid);
+            const firestoreUser = firestoreUsers.get(authUser.uid);
             if (firestoreUser) {
                 return { ...authUser, ...firestoreUser };
             }
@@ -71,7 +71,6 @@ export async function getUsersForDocument(documentId: string): Promise<UserProfi
             return [];
         }
 
-        // Correctly query for all users in a single batch
         const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
         const usersSnapshot = await getDocs(usersQuery);
         
