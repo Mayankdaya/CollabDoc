@@ -41,7 +41,6 @@ import {
   LiveblocksProvider,
   RoomProvider,
   ClientSideSuspense,
-  useRoom,
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
@@ -63,7 +62,6 @@ interface EditorLayoutProps {
 }
 
 function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
-    const room = useRoom();
     const { user } = useAuth();
     const { toast } = useToast();
 
@@ -157,6 +155,9 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         let newEditor: EditorClass;
 
         if (!user) return;
+        
+        const room = (window as any).room;
+        if (!room) return;
 
         ydoc = new Y.Doc();
         newProvider = new LiveblocksYjsProvider(room, ydoc);
@@ -212,7 +213,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
             newProvider.destroy();
             newEditor.destroy();
         }
-    }, [user, documentId, initialData.content, room]);
+    }, [user, documentId, initialData.content]);
 
     useEffect(() => {
         if (!editor) return;
@@ -300,6 +301,9 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
 }
 
 export function EditorLayout({ documentId, initialData }: EditorLayoutProps) {
+  const room = useRoom();
+  (window as any).room = room;
+
   return (
     <LiveblocksProvider publicApiKey={"pk_dev_W4eVr8avX7cJ_dC1Q1XKAhfY_2qiTOjSHCRgaeovMLrjAB0aHCDuoVZ_AETFGgik"}>
       <RoomProvider id={documentId}>
