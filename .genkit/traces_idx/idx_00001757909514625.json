@@ -198,3 +198,8 @@
 {"id":"33d3e5ee1a6b698c04ee1c5a145b4e15","type":"UNKNOWN","start":1757918365771,"name":"RSC GET /dashboard","end":1757918366945.5732,"status":0}
 {"id":"130245fb66d102d202d458ee02f0cccd","type":"UNKNOWN","start":1757918368873,"name":"POST /dashboard","end":1757918370028.7754,"status":0}
 {"id":"0babc7c68e64a0dbadd59050497dbcd5","type":"UNKNOWN","start":1757918371609,"name":"POST /dashboard","end":1757918371977.5005,"status":0}
+{"id":"b433f1c2f7520b3d684424562fc4bd61","type":"UNKNOWN","start":1757918421255,"name":"RSC GET /documents/[id]","end":1757918422197.0325,"status":0}
+{"id":"623dca2a8b2069d0e7b49c1dfa720d2d","type":"UNKNOWN","start":1757918422601,"name":"RSC GET /documents/[id]","end":1757918423091.668,"status":0}
+{"id":"fce4063b85366873d55bc959d5ad970b","type":"UNKNOWN","start":1757918424190,"name":"POST /documents/[id]","end":1757918424839.1504,"status":0}
+{"id":"ab6adf753a35d8e9d7d1488d63f7fb1c","type":"UNKNOWN","start":1757918425745,"name":"POST /documents/[id]","end":1757918426410.9802,"status":0}
+{"id":"6caf09e32e55937d0fe56c9a462a74cf","type":"UNKNOWN","start":1757918432104,"name":"POST /documents/[id]","end":1757918433413.4739,"status":0}
