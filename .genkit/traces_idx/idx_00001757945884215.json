@@ -28,3 +28,10 @@
 {"id":"cb94e019e89ccb52940a7b6e59382e4b","type":"UNKNOWN","start":1757950996036,"name":"POST /documents/[id]","end":1757950996813.3542,"status":0}
 {"id":"5c26238512d020fae9bf0f4e3153ef94","type":"UNKNOWN","start":1757950998545,"name":"POST /documents/[id]","end":1757950999350.211,"status":0}
 {"id":"317c4baec01d632bf3207204f7fb9589","type":"UNKNOWN","start":1757950999454,"name":"POST /documents/[id]","end":1757951000227.6533,"status":0}
+{"id":"67205d2e527c0eef3b12bc1ca5866999","type":"UNKNOWN","start":1757951057240,"name":"GET /documents/[id]","end":1757951057642.924,"status":0}
+{"id":"ad8cbeff854e6216e741a39fa729d58a","type":"UNKNOWN","start":1757951068789,"name":"POST /api/auth/route","end":1757951068911.6367,"status":0}
+{"id":"181746bebf34cc0bcdb2eed5a3f62da2","type":"UNKNOWN","start":1757951084061,"name":"POST /documents/[id]","end":1757951084606.029,"status":0}
+{"id":"fecf6209b4a47ff5ce4cb308d05c8155","type":"UNKNOWN","start":1757951084765,"name":"POST /documents/[id]","end":1757951085281.62,"status":0}
+{"id":"34e3f5c9588f0a90f9c2eb2b40c941c3","type":"UNKNOWN","start":1757951086660,"name":"POST /documents/[id]","end":1757951087642.1365,"status":0}
+{"id":"f7134057bd43405376127478e90c6a44","type":"flow","start":1757951167253,"name":"chatFlow","end":1757951168343.9387,"status":2}
+{"id":"c3cfa9aea42675ccb346cfa95d863695","type":"UNKNOWN","start":1757951167074,"name":"POST /documents/[id]","end":1757951169707.6965,"status":2}
