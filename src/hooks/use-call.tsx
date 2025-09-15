@@ -90,7 +90,6 @@ export function useCall({ room }: { room: Room }) {
         if (!localStream || !self || self.connectionId === connectionId) return;
         
         // Prevent creating a new offer if a connection already exists.
-        // This is the key fix for the "stable" state error.
         if (peerConnections.current.has(connectionId)) {
             return;
         }
