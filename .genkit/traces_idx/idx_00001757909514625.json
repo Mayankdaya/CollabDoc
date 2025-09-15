@@ -179,3 +179,22 @@
 {"id":"f83d8515144f55ef8a511ccca0c6fa7d","type":"UNKNOWN","start":1757918173610,"name":"POST /documents/[id]","end":1757918174315.4033,"status":0}
 {"id":"4b90a02dae58178559ebcd781b8f95d8","type":"UNKNOWN","start":1757918174557,"name":"POST /documents/[id]","end":1757918175217.4033,"status":0}
 {"id":"ae78a4548dd01cd9514472e5c8874e28","type":"UNKNOWN","start":1757918176929,"name":"POST /documents/[id]","end":1757918178012.7942,"status":0}
+{"id":"c9a9168680097bda52517637aed2e0f9","type":"UNKNOWN","start":1757918228532,"name":"GET /","end":1757918228863.8938,"status":0}
+{"id":"6b059572c73d230644b86fd1d87e12b7","type":"UNKNOWN","start":1757918230193,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757918230248.0105,"status":0}
+{"id":"ae48cac8a9e6fcbad49cd7a6e86db12a","type":"UNKNOWN","start":1757918229342,"name":"GET /documents/[id]","end":1757918230376.0588,"status":0}
+{"id":"c271d3661915c99f2789dff9f4b25194","type":"UNKNOWN","start":1757918235595,"name":"GET /","end":1757918236317.9092,"status":0}
+{"id":"f2d9f51af2938cbe942a85289384efea","type":"UNKNOWN","start":1757918247570,"name":"POST /api/auth/route","end":1757918247746.198,"status":0}
+{"id":"862d89b8822e11f558d7dcb96483617c","type":"UNKNOWN","start":1757918265517,"name":"POST /documents/[id]","end":1757918266187.2932,"status":0}
+{"id":"f4a434569f3cd4cf6e2dfe0be5351628","type":"UNKNOWN","start":1757918266388,"name":"POST /documents/[id]","end":1757918266994.3748,"status":0}
+{"id":"b4ba4c2381d2f09259fed8d94775a53e","type":"UNKNOWN","start":1757918268578,"name":"POST /documents/[id]","end":1757918269630.3442,"status":0}
+{"id":"e2025b709727ab10441f1e6270c29547","type":"flow","start":1757918275409,"name":"chatFlow","end":1757918276112.0774,"status":2}
+{"id":"27c8565c6bcd7b8221284ada98de47a4","type":"UNKNOWN","start":1757918275147,"name":"POST /documents/[id]","end":1757918280611.8325,"status":2}
+{"id":"8f823bbe207e5772ed56f485dd90ee21","type":"UNKNOWN","start":1757918285673,"name":"RSC GET /dashboard/settings","end":1757918306566.0562,"status":0}
+{"id":"91873b72c87c7fc9379a62dc8ca65ce6","type":"UNKNOWN","start":1757918309092,"name":"GET /","end":1757918309572.9062,"status":0}
+{"id":"6f39747b45ec7a5f8820cb45d466a833","type":"UNKNOWN","start":1757918310983,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757918311072.3904,"status":0}
+{"id":"be067e3cadcd2c6ece9b47ba5117ba64","type":"UNKNOWN","start":1757918311525,"name":"GET /","end":1757918312024.876,"status":0}
+{"id":"59ba6c25c9a8746bb484144905a600f1","type":"UNKNOWN","start":1757918314134,"name":"GET /_next/image?url=https%3A%2F%2Fpicsum.photos%2F1200%2F800&w=3840&q=75","end":1757918314231.2842,"status":0}
+{"id":"bacad9307611db0336ef4ff44ce33418","type":"UNKNOWN","start":1757918350611,"name":"DELETE /api/auth/route","end":1757918350913.299,"status":0}
+{"id":"33d3e5ee1a6b698c04ee1c5a145b4e15","type":"UNKNOWN","start":1757918365771,"name":"RSC GET /dashboard","end":1757918366945.5732,"status":0}
+{"id":"130245fb66d102d202d458ee02f0cccd","type":"UNKNOWN","start":1757918368873,"name":"POST /dashboard","end":1757918370028.7754,"status":0}
+{"id":"0babc7c68e64a0dbadd59050497dbcd5","type":"UNKNOWN","start":1757918371609,"name":"POST /dashboard","end":1757918371977.5005,"status":0}
