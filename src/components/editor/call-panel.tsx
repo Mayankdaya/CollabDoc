@@ -1,7 +1,7 @@
 
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useDragControls } from "framer-motion";
 import { Mic, MicOff, Video, VideoOff, PhoneOff, GripVertical } from "lucide-react";
 import React, { useRef, useEffect } from "react";
 import { Button } from "../ui/button";
@@ -38,17 +38,22 @@ export default function CallPanel({
     isAudioEnabled,
     isVideoEnabled,
 }: CallPanelProps) {
-    const dragControlsRef = useRef(null);
+    const dragControls = useDragControls();
+
+    function startDrag(event: React.PointerEvent) {
+        dragControls.start(event, { snapToCursor: false });
+    }
+
     return (
         <motion.div
-            drag
+            drag="x"
+            dragControls={dragControls}
             dragListener={false}
             dragMomentum={false}
-            dragControls={dragControlsRef}
             className="absolute top-24 right-4 z-50 w-80 rounded-xl border bg-black/50 backdrop-blur-lg shadow-2xl text-white overflow-hidden"
         >
             <div 
-                onPointerDown={(e) => (dragControlsRef.current as any)?.start(e)}
+                onPointerDown={startDrag}
                 className="flex items-center justify-center p-2 cursor-grab bg-white/10"
             >
                 <GripVertical className="h-5 w-5 text-muted-foreground" />
