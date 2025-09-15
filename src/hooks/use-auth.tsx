@@ -24,14 +24,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const createUserDocument = async (user: User) => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    // Ensure we are saving all relevant, available info
-    const userData = {
-        uid: user.uid,
-        email: user.email,
-        displayName: user.displayName,
-        photoURL: user.photoURL,
-    };
-    await setDoc(userRef, userData, { merge: true });
+    const docSnap = await getDoc(userRef);
+
+    // Only set the document if it doesn't exist to avoid overwriting display name updates
+    if (!docSnap.exists()) {
+        const userData = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName,
+            photoURL: user.photoURL,
+        };
+        await setDoc(userRef, userData, { merge: true });
+    }
 };
 
 async function createSession(idToken: string) {
@@ -47,17 +51,21 @@ async function clearSession() {
     });
 }
 
-const managePresence = async (user: User) => {
-    const userStatusRef = doc(db, 'status', user.uid);
-    const userDoc = await getDoc(doc(db, 'users', user.uid));
+const managePresence = async (user: User | null) => {
+    if (!user) return;
+
+    const userDocRef = doc(db, 'users', user.uid);
+    const userDoc = await getDoc(userDocRef);
     const userData = userDoc.data();
 
+    const userStatusRef = doc(db, 'status', user.uid);
+    
     const isOnlineForFirestore = {
         state: 'online',
         last_changed: serverTimestamp(),
-        displayName: userData?.displayName,
-        photoURL: userData?.photoURL,
-        email: userData?.email,
+        displayName: userData?.displayName || user.displayName,
+        photoURL: userData?.photoURL || user.photoURL,
+        email: userData?.email || user.email,
         uid: user.uid,
     };
     
@@ -117,12 +125,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       await createUserDocument(updatedUser as User);
 
-      await auth.currentUser?.reload();
+      // Reload the user to get the updated profile on the client
+      await userCredential.user.reload();
       const refreshedUser = auth.currentUser;
       if (refreshedUser) {
-        setUser(refreshedUser);
-        const idToken = await refreshedUser.getIdToken(true);
-        await createSession(idToken);
+          setUser(refreshedUser);
+          const idToken = await refreshedUser.getIdToken(true);
+          await createSession(idToken);
+          await managePresence(refreshedUser);
       }
 
       router.push('/dashboard');
@@ -137,8 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithEmail = async ({ email, password }: SignInData) => {
     setLoading(true);
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      await createUserDocument(result.user);
+      await signInWithEmailAndPassword(auth, email, password);
       router.push('/dashboard');
     } catch (error) {
       console.error("Error signing in with email: ", error);
