@@ -4,16 +4,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
-
-interface FoundUser {
-    uid: string;
-    displayName: string;
-    email: string;
-    photoURL?: string | null;
-}
+import type { UserProfile } from '@/app/users/actions';
 
 interface TeamPanelProps {
-  peopleWithAccess: FoundUser[];
+  peopleWithAccess: UserProfile[];
   onlineUsers: any[];
   ownerId: string;
 }
@@ -31,6 +25,7 @@ export default function TeamPanel({ peopleWithAccess, onlineUsers, ownerId }: Te
       <ScrollArea className="flex-1">
         <div className="space-y-4 p-4">
           {peopleWithAccess.map((person) => {
+            if (!person) return null;
             const isOnline = onlineUserIds.has(person.uid);
             const isOwner = person.uid === ownerId;
 
@@ -38,7 +33,7 @@ export default function TeamPanel({ peopleWithAccess, onlineUsers, ownerId }: Te
               <div key={person.uid} className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
-                    {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName} />}
+                    {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName || undefined} />}
                     <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
                   </Avatar>
                   <div className="overflow-hidden">

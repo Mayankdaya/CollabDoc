@@ -10,7 +10,7 @@ import type { Editor } from '@tiptap/react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShareDialog, FoundUser } from './share-dialog';
+import { ShareDialog } from './share-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { UserMenu } from '../user-menu';
 import { updateDocument } from '@/app/documents/actions';
@@ -29,7 +29,7 @@ interface EditorHeaderProps {
   isSaving: boolean;
   lastSaved: string;
   lastSavedBy: string;
-  onPeopleListChange: (people: FoundUser[]) => void;
+  onPeopleListChange: () => void;
 }
 
 export default function EditorHeader({ doc, editor, onlineUsers, docName, setDocName, isSaving, lastSaved, lastSavedBy, onPeopleListChange }: EditorHeaderProps) {
@@ -121,7 +121,7 @@ export default function EditorHeader({ doc, editor, onlineUsers, docName, setDoc
         
         <Separator orientation="vertical" className="h-8 mx-1 sm:mx-2" />
 
-        <ShareDialog doc={doc} onPeopleListChange={onPeopleListChange} />
+        <ShareDialog doc={doc} onCollaboratorAdded={onPeopleListChange} />
         <div className='hidden sm:block'>
             <UserMenu />
         </div>

@@ -76,11 +76,21 @@ export async function getUsersForDocument(documentId: string): Promise<UserProfi
         if (allUserIds.length === 0) {
             return [];
         }
-
-        const usersQuery = query(collection(db, 'users'), where('uid', 'in', allUserIds));
-        const usersSnapshot = await getDocs(usersQuery);
         
-        const fetchedUsers = usersSnapshot.docs.map(d => d.data() as UserProfile);
+        const userChunks: string[][] = [];
+        for (let i = 0; i < allUserIds.length; i += 30) {
+            userChunks.push(allUserIds.slice(i, i + 30));
+        }
+
+        const userPromises = userChunks.map(chunk => 
+            getDocs(query(collection(db, 'users'), where('uid', 'in', chunk)))
+        );
+
+        const userSnapshots = await Promise.all(userPromises);
+        
+        const fetchedUsers = userSnapshots.flatMap(snapshot => 
+            snapshot.docs.map(d => d.data() as UserProfile)
+        );
 
         return fetchedUsers;
 

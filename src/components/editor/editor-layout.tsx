@@ -28,7 +28,7 @@ import { useAuth } from '@/hooks/use-auth';
 import * as Y from 'yjs';
 import type { Document as Doc } from '@/app/documents/actions';
 import { updateDocument } from '@/app/documents/actions';
-import { getUsersForDocument } from '@/app/users/actions';
+import { getUsersForDocument, UserProfile } from '@/app/users/actions';
 import { useToast } from '@/hooks/use-toast';
 import { EditorToolbar } from './editor-toolbar';
 import EditorHeader from './editor-header';
@@ -46,7 +46,6 @@ import {
 } from '@liveblocks/react/suspense';
 import { LiveblocksYjsProvider } from '@liveblocks/yjs';
 import { Loader2 } from 'lucide-react';
-import type { FoundUser } from './share-dialog';
 
 function EditorLoading() {
   return (
@@ -75,7 +74,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
     const [lastSaved, setLastSaved] = useState(initialData.lastModified);
     const [lastSavedBy, setLastSavedBy] = useState(initialData.lastModifiedBy);
     
-    const [peopleWithAccess, setPeopleWithAccess] = useState<FoundUser[]>([]);
+    const [peopleWithAccess, setPeopleWithAccess] = useState<UserProfile[]>([]);
     const [onlineUsers, setOnlineUsers] = useState<any[]>([]);
 
     const handleAutoSave = useCallback(
@@ -103,16 +102,17 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
         [documentId, user, toast]
     );
 
-    const handlePeopleListChange = useCallback((people: FoundUser[]) => {
-      setPeopleWithAccess(people);
-    }, []);
-
-    useEffect(() => {
+    const fetchPeopleWithAccess = useCallback(() => {
         if (!documentId) return;
         getUsersForDocument(documentId).then(users => {
             setPeopleWithAccess(users);
         });
     }, [documentId]);
+
+
+    useEffect(() => {
+        fetchPeopleWithAccess();
+    }, [fetchPeopleWithAccess]);
 
 
     useEffect(() => {
@@ -235,7 +235,7 @@ function EditorWithLiveblocks({ documentId, initialData }: EditorLayoutProps) {
                 isSaving={isSaving}
                 lastSaved={lastSaved}
                 lastSavedBy={lastSavedBy}
-                onPeopleListChange={handlePeopleListChange}
+                onPeopleListChange={fetchPeopleWithAccess}
             />
             <EditorToolbar 
                 editor={editor} 

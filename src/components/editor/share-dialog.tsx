@@ -26,93 +26,31 @@ import { useAuth } from '@/hooks/use-auth';
 import { Document, updateDocument } from '@/app/documents/actions';
 import { db } from '@/lib/firebase';
 import { onSnapshot, doc as firestoreDoc, getDoc, collection, query, where, getDocs, arrayUnion } from 'firebase/firestore';
+import { UserProfile, getUsersForDocument } from '@/app/users/actions';
 
 
 interface ShareDialogProps {
   doc: Document;
   children?: ReactNode;
-  onPeopleListChange?: (people: FoundUser[]) => void;
+  onCollaboratorAdded?: () => void;
 }
 
-export type FoundUser = {
-    uid: string;
-    displayName: string;
-    email: string;
-    photoURL?: string | null;
-}
-
-export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogProps) {
+export function ShareDialog({ doc, children, onCollaboratorAdded }: ShareDialogProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const [dbCollaborators, setDbCollaborators] = useState<FoundUser[]>([]);
-  const [owner, setOwner] = useState<FoundUser | null>(null);
+  const [peopleWithAccess, setPeopleWithAccess] = useState<UserProfile[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  
   const [isSearching, startSearching] = useTransition();
   const [isAdding, startAdding] = useTransition();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<FoundUser[]>([]);
+  const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
 
   useEffect(() => {
-    if (!doc.id) return;
-    const docRef = firestoreDoc(db, 'documents', doc.id);
-
-    const unsubscribe = onSnapshot(docRef, async (snap) => {
-      const docData = snap.data();
-      if (!docData) return;
-
-      const ownerId = docData.userId;
-      const collaboratorIds: string[] = docData.collaborators || [];
-      const allUserIds = [...new Set([ownerId, ...collaboratorIds].filter(Boolean))];
-
-      if (allUserIds.length > 0) {
-        try {
-          const userPromises = allUserIds.map(uid => getDoc(firestoreDoc(db, 'users', uid)));
-          const userDocs = await Promise.all(userPromises);
-          const fetchedUsers = userDocs.filter(d => d.exists()).map(d => d.data() as FoundUser);
-          
-          const ownerProfile = fetchedUsers.find(u => u.uid === ownerId) || null;
-          const collaboratorProfiles = fetchedUsers.filter(u => u.uid !== ownerId);
-          
-          setOwner(ownerProfile);
-          // Set all users, including owner, for the people list
-          setDbCollaborators(fetchedUsers);
-
-        } catch (e) {
-          console.error("Error fetching user profiles:", e);
-          setOwner(null);
-          setDbCollaborators([]);
-        }
-      } else {
-        // If no users, try to fetch at least the owner
-        if (ownerId) {
-             const ownerDoc = await getDoc(firestoreDoc(db, 'users', ownerId));
-             if (ownerDoc.exists()) {
-                const ownerData = ownerDoc.data() as FoundUser;
-                setOwner(ownerData);
-                setDbCollaborators([ownerData]);
-             }
-        } else {
-            setOwner(null);
-            setDbCollaborators([]);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [doc.id]);
-
-
-  const peopleWithAccess = useMemo(() => {
-    const allPeople = new Map<string, FoundUser>();
-    dbCollaborators.forEach(c => allPeople.set(c.uid, c));
-    return Array.from(allPeople.values());
-  }, [dbCollaborators]);
-
-  useEffect(() => {
-    if(onPeopleListChange) {
-        onPeopleListChange(peopleWithAccess);
+    if (isOpen && doc.id) {
+        getUsersForDocument(doc.id).then(setPeopleWithAccess);
     }
-  }, [peopleWithAccess, onPeopleListChange]);
-
+  }, [doc.id, isOpen]);
 
   const trigger = children ? (
     <DialogTrigger asChild>{children}</DialogTrigger>
@@ -135,20 +73,20 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
     }
     startSearching(async () => {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('email', '==', searchQuery));
+        const q = query(usersRef, where('email', '==', searchQuery.trim().toLowerCase()));
         const querySnapshot = await getDocs(q);
-        const users = querySnapshot.docs.map(doc => doc.data() as FoundUser);
+        const users = querySnapshot.docs.map(doc => doc.data() as UserProfile);
         setSearchResults(users);
     });
   }
 
-  const handleAddCollaborator = (collaborator: FoundUser) => {
+  const handleAddCollaborator = (collaborator: UserProfile) => {
      if (!user || !collaborator.uid) return;
      startAdding(async () => {
         try {
             const currentDoc = await getDoc(firestoreDoc(db, 'documents', doc.id));
             const currentCollaborators = currentDoc.data()?.collaborators || [];
-            if (currentCollaborators.includes(collaborator.uid)) {
+            if (currentCollaborators.includes(collaborator.uid) || doc.userId === collaborator.uid) {
                  toast({
                     variant: 'destructive',
                     title: 'User Already Added',
@@ -159,8 +97,7 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
 
             await updateDocument(doc.id, { collaborators: arrayUnion(collaborator.uid) }, { uid: user.uid, displayName: user.displayName });
             
-            // Manually update local state to reflect change immediately
-            setDbCollaborators(prev => [...prev, collaborator]);
+            setPeopleWithAccess(prev => [...prev, collaborator]);
 
             toast({
                 title: 'Collaborator Added',
@@ -168,6 +105,9 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
             });
             setSearchQuery('');
             setSearchResults([]);
+            if (onCollaboratorAdded) {
+                onCollaboratorAdded();
+            }
         } catch(error) {
             toast({
                 variant: 'destructive',
@@ -179,7 +119,7 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
   }
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       {trigger}
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
@@ -196,8 +136,8 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
                     onKeyDown={(e) => e.key === 'Enter' && handleSearchUsers()}
                 />
                 <Button onClick={handleSearchUsers} disabled={isSearching}>
-                    {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                    Invite
+                    {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    Search
                 </Button>
             </div>
         )}
@@ -221,12 +161,12 @@ export function ShareDialog({ doc, children, onPeopleListChange }: ShareDialogPr
         
         <div className="space-y-2">
             <Label>People with access</Label>
-             <div className="space-y-4">
+             <div className="space-y-4 max-h-48 overflow-y-auto">
                 {peopleWithAccess.map(person => (
-                     <div key={person.uid} className="flex items-center justify-between">
+                     <div key={person.uid} className="flex items-center justify-between pr-2">
                         <div className="flex items-center gap-2">
                             <Avatar className="h-8 w-8">
-                                {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName} />}
+                                {person.photoURL && <AvatarImage src={person.photoURL} alt={person.displayName || undefined} />}
                                 <AvatarFallback>{person.displayName?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                             </Avatar>
                             <div>
