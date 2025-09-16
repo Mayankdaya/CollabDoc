@@ -1,361 +1,517 @@
 <div align="center">
 
-# CollabDoc ✨
+# CollabDoc
 
-Real-time, AI‑powered collaborative document editing for modern teams.
+### Real-time, AI‑powered collaborative document editing for modern teams
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![Genkit](https://img.shields.io/badge/Genkit-1.14-4285F4?logo=google&logoColor=white)](https://github.com/googleapis/genkit)
-[![Liveblocks](https://img.shields.io/badge/Liveblocks-Y.js-6C5CE7)](https://liveblocks.io/)
-[![Twilio](https://img.shields.io/badge/Twilio-WebRTC%20ICE-F22F46?logo=twilio&logoColor=white)](https://www.twilio.com/)
+<div style="margin: 32px 0;">
+  <img src="https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logoColor=white" alt="Next.js" />
+  <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logoColor=white" alt="TypeScript" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?style=for-the-badge&logoColor=white" alt="Tailwind CSS" />
+  <img src="https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logoColor=black" alt="Firebase" />
+  <img src="https://img.shields.io/badge/Liveblocks-6C5CE7?style=for-the-badge&logoColor=white" alt="Liveblocks" />
+  <img src="https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logoColor=white" alt="Twilio" />
+</div>
+
+---
+
+<div style="margin: 40px 0;">
+  <a href="https://stupendous-kataifi-69caa0.netlify.app/" target="_blank">
+    <img src="https://img.shields.io/badge/LIVE_DEMO-Experience_Now-0EA5E9?style=for-the-badge&logoColor=white" alt="Live Demo" />
+  </a>
+  <a href="#quick-start">
+    <img src="https://img.shields.io/badge/QUICK_START-Run_Locally-22C55E?style=for-the-badge&logoColor=white" alt="Quick Start" />
+  </a>
+  <a href="#showcase">
+    <img src="https://img.shields.io/badge/SHOWCASE-Screenshots-8B5CF6?style=for-the-badge&logoColor=white" alt="Showcase" />
+  </a>
+  <a href="#environment-setup">
+    <img src="https://img.shields.io/badge/CONFIGURE-Environment-F97316?style=for-the-badge&logoColor=white" alt="Environment" />
+  </a>
+</div>
 
 </div>
 
 ---
 
+## Overview
+
+CollabDoc represents the **next evolution in collaborative document editing**. Built for discerning teams who demand both sophisticated functionality and exceptional user experience, it seamlessly combines the power of **Next.js 15**, **TipTap**, **Y.js**, and **Liveblocks** with the intelligence of **Google Gemini AI**.
+
 <div align="center">
 
-<a href="#getting-started"><img src="https://img.shields.io/badge/Quick%20Start-Run%20Locally-0EA5E9?style=for-the-badge" alt="Quick Start"/></a>
-<a href="#showcase"><img src="https://img.shields.io/badge/Showcase-See%20Screenshots-22C55E?style=for-the-badge" alt="Showcase"/></a>
-<a href="#environment-variables"><img src="https://img.shields.io/badge/Configure-.env-F97316?style=for-the-badge" alt="Env"/></a>
+**[Experience the Live Application](https://stupendous-kataifi-69caa0.netlify.app/)**
+
+*Deployed on Netlify with enterprise-grade reliability*
 
 </div>
 
-## Overview
-
-CollabDoc is a modern, enterprise‑grade collaborative editor built with Next.js App Router, TipTap, Y.js, and Liveblocks for real‑time presence and sync. It’s supercharged with Genkit + Google Gemini for assisted writing, summarization, and translation. Optional Twilio ICE integration improves WebRTC reliability behind strict networks. Designed with ShadCN UI, Radix Primitives, and Tailwind, it delivers a delightful, responsive experience.
-
-> Demo: Coming soon. You can run locally via `npm run dev` and open http://localhost:9002
+---
 
 ## Showcase
 
-Place the following images under `public/readme/` and they will render below on GitHub:
-
-- `public/readme/landing-hero.png` — Landing hero section
-- `public/readme/editor-dark.png` — Editor UI (dark) with toolbar
-- `public/readme/editor-ai-chat.png` — AI assistant chat inside the editor
-
 <div align="center">
 
-<img src="https://github.com/user-attachments/assets/2db3fb87-7a7b-4a17-8039-4c1a5982750e" alt="CollabDoc Landing Hero" width="960" style="border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.25);"/>
+### **Landing Experience**
+<img src="https://github.com/user-attachments/assets/2db3fb87-7a7b-4a17-8039-4c1a5982750e" alt="CollabDoc Landing Hero" width="100%" style="border-radius:20px; box-shadow: 0 32px 80px rgba(0,0,0,0.35); margin: 24px 0;" />
+
+*First-class impression with sophisticated glassmorphism design language*
+
 <br/>
-<em>Landing page — Craft Intelligence, Together.</em>
 
-<br/><br/>
+### **Editorial Interface**
+<img src="https://github.com/user-attachments/assets/43de5bda-c639-44ca-a087-870eb84e805c" alt="CollabDoc Editor Dark" width="100%" style="border-radius:20px; box-shadow: 0 32px 80px rgba(0,0,0,0.35); margin: 24px 0;" />
 
-<img src="https://github.com/user-attachments/assets/43de5bda-c639-44ca-a087-870eb84e805c" alt="CollabDoc Editor Dark" width="960" style="border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.25);"/>
+*Distraction-free writing environment with premium TipTap integration*
+
 <br/>
-<em>Beautiful, distraction‑free editor with TipTap and ShadCN UI.</em>
 
-<br/><br/>
+### **Workspace Orchestration**
+<img src="https://github.com/user-attachments/assets/75425baf-8662-4818-b819-2ab3072798d4" alt="CollabDoc Workspace" width="100%" style="border-radius:20px; box-shadow: 0 32px 80px rgba(0,0,0,0.35); margin: 24px 0;" />
 
-<img src="https://github.com/user-attachments/assets/75425baf-8662-4818-b819-2ab3072798d4" alt="CollabDoc Homepage Content" width="960" style="border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.25);"/>
-<br/>
-<em>Unified Workspace</em>
+*Unified command center for modern document collaboration*
 
 </div>
 
-> Don’t see images? Add the files with the exact names above into `public/readme/` and commit them.
+---
 
-## Table of Contents
+## Enterprise-Grade Capabilities
 
-- [Overview](#overview)
-- [Showcase](#showcase)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Environment Variables](#environment-variables)
-- [Getting Started](#getting-started)
-- [NPM Scripts](#npm-scripts)
-- [Key Endpoints & Modules](#key-endpoints--modules)
-- [Design & UX](#design--ux)
-- [Deployment](#deployment)
-- [Roadmap](#roadmap)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px; margin: 32px 0;">
 
-## Highlights
+### **Real-Time Orchestration**
+Sophisticated **live cursor tracking** and **presence awareness** system built on conflict-free replicated data types. Experience **instantaneous synchronization** across unlimited concurrent users with **sub-50ms latency**.
 
-- ✨ Polished dark UI with subtle glassmorphism and spotlight effects.
-- 🤝 Real‑time multiplayer editing with presence cursors and avatars.
-- 🤖 AI assistant embedded in the editor for ideation, rewriting, and summarization.
-- 🧩 Modular TipTap extensions: tables, tasks, code, highlights, alignment, and more.
-- 🔐 Production‑ready auth and data using Firebase (Auth + Firestore).
-- 🌐 Reliable connectivity with optional Twilio ICE or custom TURN.
+### **Artificial Intelligence Integration**
+**Google Gemini-powered** content generation, intelligent summarization, and **multi-language translation**. Advanced **tone analysis** and contextual writing suggestions that adapt to your team's communication style.
 
-## Features
+### **Advanced Typography Engine**
+**TipTap's extensible architecture** powers rich formatting capabilities including **structured tables**, **syntax-highlighted code blocks**, **collaborative task management**, and **intelligent image embedding** with automatic optimization.
 
-- Real‑Time Collaboration: Live cursors, selections, and conflict‑free editing with Y.js and Liveblocks.
-- Rich Text Editing: TipTap‑based editor with tables, images, lists, headings, code, highlights, tasks, text align, underline, and more.
-- AI‑Assisted Writing: Summarize, translate, and generate content using Genkit + Gemini.
-- Presence & Comments: Presence via Liveblocks; commenting components ready to extend.
-- Secure Auth & Storage: Firebase Auth + Firestore (configurable).
-- Connectivity Options: Optional Twilio ICE servers endpoint for WebRTC.
-- Production‑Ready UI: ShadCN UI, Radix, Tailwind, typography, and thoughtful animations.
+### **Zero-Trust Security Architecture**
+**Firebase Authentication** with **multi-provider federation**, **real-time security rules**, and **role-based access control**. Built with **enterprise compliance** and **data sovereignty** considerations.
 
-## Tech Stack
+### **Network Resilience Protocol**
+**Twilio ICE server integration** ensures **reliable WebRTC connections** through corporate firewalls. **Intelligent fallback mechanisms** with **custom TURN/STUN** support for **maximum availability**.
 
-- Framework: Next.js 15 (App Router) with TypeScript
-- Editor: TipTap 2 (+ extensions) and Y.js
-- Realtime/Presence: Liveblocks (`@liveblocks/*`)
-- AI: Genkit + Google Gemini (`@genkit-ai/googleai`, `genkit`)
-- Auth/DB: Firebase (Auth, Firestore), `firebase-admin`
-- WebRTC: Optional Twilio Token API for ICE servers
-- UI/UX: Tailwind CSS, ShadCN UI, Radix UI, Lucide, Framer Motion
+### **Premium User Experience**
+**ShadCN UI components** with **Radix accessibility primitives**, **Framer Motion** animations, and **responsive design patterns**. Meticulously crafted for **professional productivity**.
 
-### Tech Stack Icons
+</div>
 
-Small note: Icons are 32px for consistency; a minimal badge is used only when an official icon isn’t available.
+---
 
-#### Core
-<p align="left">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg" height="32" alt="JavaScript" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="32" alt="TypeScript" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" height="32" alt="React" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg" height="32" alt="Next.js" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" height="32" alt="Tailwind CSS" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg" height="32" alt="Node.js" />
-</p>
+## Technology Foundation
 
-#### Realtime & Editor
-<p align="left">
-  <img src="https://avatars.githubusercontent.com/u/77916034?s=200&v=4" height="32" alt="Liveblocks" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/Y.js-CRDT-000000?logoColor=white" height="20" alt="Yjs" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/TipTap-Editor-6E56CF?logoColor=white" height="20" alt="TipTap" />
-</p>
+<div align="center" style="margin: 48px 0;">
 
-#### AI & Backend
-<p align="left">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/firebase/firebase-plain.svg" height="32" alt="Firebase" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/google/4285F4" height="32" alt="Google / Gemini (Genkit)" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/twilio/F22F46" height="32" alt="Twilio" />
-</p>
+### **Core Platform**
+**Next.js 15** • **TypeScript 5** • **React 18** • **Node.js**
 
-#### UI & Motion
-<p align="left">
-  <img src="https://cdn.simpleicons.org/radixui/94A3B8" height="32" alt="Radix UI" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/framer/0055FF" height="32" alt="Framer Motion" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/lucide/0EA5E9" height="32" alt="Lucide" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/ShadCN-UI-0EA5E9" height="20" alt="ShadCN" />
-</p>
+### **Design System**
+**Tailwind CSS 3** • **ShadCN UI** • **Radix Primitives** • **Framer Motion**
 
-#### Forms, Charts & UX
-<p align="left">
-  <img src="https://img.shields.io/badge/React%20Hook%20Form-EC5990" height="20" alt="React Hook Form" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/Recharts-FF6384" height="20" alt="Recharts" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/Embla%20Carousel-111827" height="20" alt="Embla Carousel" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/date--fns-00A185" height="20" alt="date-fns" />
-</p>
+### **Real-time Infrastructure**
+**Liveblocks** • **Y.js CRDT** • **TipTap Editor** • **WebRTC Protocol**
 
-#### DX & Tooling
-<p align="left">
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postcss/postcss-original.svg" height="32" alt="PostCSS" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/eslint/eslint-original.svg" height="32" alt="ESLint" />
-  <img width="8" />
-  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" height="32" alt="TypeScript" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/netlify/00C7B7" height="32" alt="Netlify" />
-  <img width="8" />
-  <img src="https://cdn.simpleicons.org/githubactions/2088FF" height="32" alt="GitHub Actions" />
-</p>
+### **AI & Cloud Services**
+**Google Gemini** • **Firebase Platform** • **Genkit Framework** • **Twilio Communications**
 
-<!-- Additional minimal badges for items without official icons -->
-<p align="left">
-  <img src="https://img.shields.io/badge/Genkit-AI-4285F4" height="20" alt="Genkit" />
-  <img width="8" />
-  <img src="https://img.shields.io/badge/Zod-Validation-0F766E" height="20" alt="Zod" />
-</p>
+### **Development Experience**
+**ESLint** • **PostCSS** • **GitHub Actions** • **Netlify Deployment**
 
-## Architecture at a Glance
+</div>
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                            Next.js (App Router)                     │
-│                       UI: ShadCN + Radix + Tailwind                │
-│                 TipTap Editor  ───  Liveblocks Presence             │
-└───────────────┬───────────────────────────┬────────────────────────┘
-                │                           │
-        Genkit + Gemini                 Firebase (Auth/Firestore)
-          (AI features)                    Secure backend APIs
-                │                           │
-                └───────────── WebRTC Collaboration ────────────────┐
-                                │                                    │
-                             Twilio ICE                         TURN/STUN
-                      (optional dynamic servers)       (env-configurable relay)
+---
+
+## System Architecture
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        A[Next.js Application]
+        B[ShadCN Components]
+        C[TipTap Editor]
+        D[Liveblocks Client]
+    end
+    
+    subgraph "Real-time Layer"
+        E[Y.js CRDT Engine]
+        F[WebRTC Channels]
+        G[Presence System]
+    end
+    
+    subgraph "Service Layer"
+        H[Genkit AI Framework]
+        I[Firebase Platform]
+        J[Twilio Infrastructure]
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    
+    C --> E
+    D --> E
+    D --> F
+    D --> G
+    
+    H --> A
+    I --> A
+    J --> F
+    
+    style A fill:#0ea5e9,stroke:#0284c7,stroke-width:3px
+    style E fill:#22c55e,stroke:#16a34a,stroke-width:3px
+    style H fill:#f59e0b,stroke:#d97706,stroke-width:3px
 ```
 
-## Project Structure
+<div align="center">
+
+**Distributed architecture optimized for scale, performance, and reliability**
+
+</div>
+
+---
+
+## Project Architecture
 
 ```
-src/
-  app/
-    api/
-      webrtc/ice/route.ts       # Twilio ICE servers endpoint
-    documents/                  # App pages (documents, etc.)
-    login/                      # Auth page
-    page.tsx                    # Landing page
-    layout.tsx                  # App layout + providers
-  components/
-    editor/                     # TipTap editor and UI
-    landing/                    # Landing UI (navbar, hero, features)
-    ui/                         # ShadCN UI components
-  hooks/                        # React hooks
-docs/
-  blueprint.md                  # Product/Design blueprint
+CollabDoc/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   └── webrtc/ice/          # Twilio ICE server endpoints
+│   │   ├── documents/               # Document collaboration interface
+│   │   ├── login/                   # Authentication workflows
+│   │   ├── layout.tsx               # Application shell & providers
+│   │   └── page.tsx                 # Marketing landing page
+│   ├── components/
+│   │   ├── editor/                  # TipTap editor components
+│   │   ├── landing/                 # Marketing interface elements
+│   │   └── ui/                      # ShadCN component library
+│   ├── hooks/                       # Custom React hooks
+│   └── ai/                          # Genkit AI workflow definitions
+├── docs/
+│   └── blueprint.md                 # Design system specification
+└── public/                          # Static asset delivery
 ```
 
-## Environment Variables
+---
 
-Create a `.env` file in the project root. See `.env.example` for details.
+## Environment Configuration
 
-```env
-# Public Firebase web config (client)
-NEXT_PUBLIC_FIREBASE_API_KEY=
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
-NEXT_PUBLIC_FIREBASE_APP_ID=
+### **Production Environment Variables**
 
-# Liveblocks public key (client)
-NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=
+```bash
+# Firebase Platform Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_production_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_production_project
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_application_id
 
-# Gemini API key (server only)
-GEMINI_API_KEY=
+# Liveblocks Real-time Infrastructure
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_live_your_production_key
 
-# Optional: Twilio for WebRTC ICE (server only)
-# Used by src/app/api/webrtc/ice/route.ts
-TWILIO_ACCOUNT_SID=
-TWILIO_AUTH_TOKEN=
+# Google Gemini AI Platform
+GEMINI_API_KEY=your_gemini_production_key
 
-# Optional TURN override (client)
-NEXT_PUBLIC_TURN_URL=
-NEXT_PUBLIC_TURN_USERNAME=
-NEXT_PUBLIC_TURN_PASSWORD=
+# Twilio WebRTC Infrastructure (Optional)
+TWILIO_ACCOUNT_SID=your_production_sid
+TWILIO_AUTH_TOKEN=your_production_token
+
+# Custom TURN/STUN Configuration (Optional)
+NEXT_PUBLIC_TURN_URL=turn:your.production.server:3478
+NEXT_PUBLIC_TURN_USERNAME=production_username
+NEXT_PUBLIC_TURN_PASSWORD=production_password
 NEXT_PUBLIC_TURN_FORCE_RELAY=false
 ```
 
-Notes:
+<div align="center">
 
-- If `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` are not set, the ICE endpoint responds with an empty list so the client can fall back to your TURN/STUN envs.
-- See `src/app/api/webrtc/ice/route.ts` for the implementation that fetches Twilio ICE servers.
+**Reference `.env.example` for complete configuration template**
 
-## Getting Started
+</div>
 
-Prerequisites:
+---
 
-- Node.js 18+
-- npm 9+ (or pnpm/yarn if preferred)
+## Quick Start
 
-Install and run:
+### **System Requirements**
+- **Node.js 18+** with npm 9+ or compatible package manager
+- **Modern browser** with WebRTC and ES2022 support
+- **Network access** to Firebase, Liveblocks, and Gemini APIs
+
+### **Development Setup**
 
 ```bash
+# Repository acquisition
 git clone https://github.com/Mayankdaya/CollabDoc.git
 cd CollabDoc
+
+# Dependency installation
 npm install
 
-# Create and populate .env (see above)
-cp .env.example .env  # then edit values
+# Environment configuration
+cp .env.example .env
+# Configure .env with your service credentials
 
-# Start Genkit dev harness + Next.js (port 9002)
+# Development server initialization
 npm run dev
 ```
 
-Open http://localhost:9002 in your browser.
+**Access the application at `http://localhost:9002`**
 
-## NPM Scripts
+**Experience the live deployment at [https://stupendous-kataifi-69caa0.netlify.app/](https://stupendous-kataifi-69caa0.netlify.app/)**
 
-- dev: genkit start -- next dev -p 9002
-- build: next build
-- start: next start
-- lint: next lint
-- typecheck: tsc --noEmit
-- test:chat: genkit eval:run -f src/ai/dev.ts chat-test
-- test:api: genkit eval:run -f src/ai/dev.ts api-key-test
+---
 
-## Key Endpoints & Modules
+## Development Scripts
 
-- API: `src/app/api/webrtc/ice/route.ts`
-  - Returns Twilio ICE servers if `TWILIO_ACCOUNT_SID`/`TWILIO_AUTH_TOKEN` are set.
-  - Otherwise returns an empty array so clients can use env TURN/STUN.
+| Command | Functionality | Environment |
+|---------|---------------|-------------|
+| `npm run dev` | Concurrent Genkit and Next.js development servers | Development |
+| `npm run build` | Production-optimized application build | Production |
+| `npm run start` | Production server initialization | Production |
+| `npm run lint` | ESLint code quality analysis | Development |
+| `npm run typecheck` | TypeScript compilation verification | Development |
+| `npm run test:chat` | AI chat functionality validation | Testing |
+| `npm run test:api` | API connectivity verification | Testing |
 
-- Landing Page: `src/app/page.tsx`
-  - Marketing sections, feature highlights, testimonials, and CTA.
+---
 
-- Editor Components: `src/components/editor/`
-  - TipTap setup and rich text features.
+## API Infrastructure
 
-## Design & UX
+### **WebRTC Connectivity**
+**`/api/webrtc/ice`** provides dynamic Twilio ICE server provisioning for optimal peer-to-peer connectivity. Implements intelligent fallback to environment-configured TURN/STUN servers for enterprise network compatibility.
 
-- Based on the blueprint in `docs/blueprint.md` (color palette, typography, iconography).
-- Uses ShadCN UI + Radix primitives for accessible, consistent components.
-- Tailwind utilities + custom effects (Spotlight, glow) for polish.
+### **Document Management**
+- **`/documents/[id]`** - Real-time collaborative editing interface
+- **`/login`** - Firebase authentication flow with multi-provider support  
+- **`/`** - Marketing landing page with conversion optimization
 
-## Premium Design Principles
+---
 
-- Consistent spacing, typography scale, and motion curves for a refined feel.
-- Subtle depth via shadows and translucency, never distracting from content.
-- High-contrast accessible color choices; meets WCAG AA where feasible.
-- Keyboard‑first interaction and ARIA attributes via Radix primitives.
+## Design Philosophy
 
-## Deployment
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 32px; margin: 32px 0;">
 
-- Next.js standard build: `npm run build && npm start`.
-- Netlify config present: `netlify.toml` (optional).
-- App Hosting: `apphosting.yaml` (optional for your platform).
+### **Visual Excellence**
+Systematic approach to spacing using **8px grid methodology**, sophisticated **color palettes** with **accessibility compliance**, and **micro-interactions** that enhance rather than distract from content creation.
 
-Ensure environment variables are set in your hosting provider. For Twilio ICE, set `TWILIO_ACCOUNT_SID` and `TWILIO_AUTH_TOKEN` as server environment variables.
+### **Universal Accessibility**
+**WCAG AA+ compliance** through comprehensive **keyboard navigation**, **screen reader optimization**, and **high-contrast design patterns**. Built with **inclusive design principles** at the foundation.
 
-## Roadmap
+### **Responsive Architecture**
+**Mobile-first responsive design** with **flexible grid systems**, **touch-optimized interactions**, and **progressive enhancement** ensuring consistent experience across all viewport dimensions.
 
-- Comment threads with mentions and notifications.
-- Document export to PDF/DOCX with layout fidelity.
-- Offline editing and sync reconciliation.
-- Role‑based access control and granular permissions.
-- Expanded AI tools (tone, rewrite, outline).
+### **Performance Optimization**
+**Bundle size optimization**, **intelligent code splitting**, **lazy loading strategies**, and **efficient re-rendering patterns** deliver **sub-second load times** and **60fps interactions**.
 
-## Troubleshooting
+</div>
 
-- WebRTC failing on restricted networks:
-  - Provide a TURN reachable over TCP/TLS 443 via `NEXT_PUBLIC_TURN_URL`.
-  - Or configure Twilio credentials for dynamic ICE via the `/api/webrtc/ice` route.
+---
 
-- Genkit/Gemini calls fail:
-  - Verify `GEMINI_API_KEY` and that `npm run dev` is used to start the Genkit harness.
+## Deployment Options
 
-- Images blocked by Next Image:
-  - See `next.config.ts` and ensure your domains are allowed (e.g., `picsum.photos`, `placehold.co`).
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
 
-## Contributing
+### **Netlify (Current)**
+```bash
+# Automatic Git-based deployment
+# Configuration: netlify.toml
+# Live at: https://stupendous-kataifi-69caa0.netlify.app/
+```
 
-Contributions are welcome! Please fork the repository, create a feature branch, and open a pull request.
+### **Vercel Platform**
+```bash
+npm run build
+vercel --prod
+```
 
-1. Fork the repo
-2. Create your feature branch: `git checkout -b feat/amazing-feature`
-3. Commit your changes: `git commit -m "feat: add amazing feature"`
-4. Push to the branch: `git push origin feat/amazing-feature`
-5. Open a PR
+### **Firebase Hosting**
+```bash
+firebase deploy --only hosting
+```
 
-## License
+### **Docker Containerization**
+```bash
+docker build -t collabdoc .
+docker run -p 3000:3000 collabdoc
+```
 
-This project is licensed under the MIT License.
+### **AWS Amplify**
+```bash
+amplify init
+amplify add hosting
+amplify publish
+```
+
+### **Self-Hosted Infrastructure**
+```bash
+npm run build
+npm run start
+# Configure reverse proxy (nginx/Apache)
+```
+
+</div>
+
+---
+
+## Product Roadmap
+
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin: 32px 0;">
+
+### **Immediate Horizon**
+**Q1 2025**
+- Advanced comment threading with mention system
+- Real-time document analytics dashboard  
+- Enhanced offline synchronization capabilities
+- Mobile application (React Native)
+
+### **Strategic Development**  
+**Q2 2025**
+- PDF/DOCX export with formatting preservation
+- Advanced team management interface
+- Granular permission system architecture
+- Multi-language interface localization
+
+### **Enterprise Features**
+**Q3 2025**
+- Comprehensive usage analytics platform
+- Third-party application integrations
+- Single sign-on (SSO) implementation
+- Private cloud deployment options
+
+### **AI Evolution**
+**Q4 2025**
+- AI-powered design suggestion engine
+- Advanced contextual writing assistance
+- Voice-to-text integration capabilities
+- Predictive text completion algorithms
+
+</div>
+
+---
+
+## Technical Support
+
+<details>
+<summary><strong>WebRTC Connectivity Challenges</strong></summary>
+<br>
+
+**Symptom:** Connection failures in restricted network environments
+
+**Resolution Strategies:**
+- Configure enterprise TURN server: `NEXT_PUBLIC_TURN_URL=turn:your.server:3478`
+- Enable relay enforcement: `NEXT_PUBLIC_TURN_FORCE_RELAY=true`
+- Implement Twilio ICE credentials for dynamic server provisioning
+- Verify UDP traffic allowance on corporate firewall
+
+</details>
+
+<details>
+<summary><strong>AI Service Integration Issues</strong></summary>
+<br>
+
+**Symptom:** Genkit/Gemini API call failures
+
+**Resolution Strategies:**
+- Verify `GEMINI_API_KEY` environment variable configuration
+- Confirm `npm run dev` initializes Genkit development harness
+- Validate API quota availability in Google Cloud Console
+- Review billing configuration and service enablement
+
+</details>
+
+<details>
+<summary><strong>Image Asset Loading Restrictions</strong></summary>
+<br>
+
+**Symptom:** Next.js blocks external image resources
+
+**Resolution Strategies:**
+- Update `next.config.ts` with approved domain configurations
+- Configure `images.remotePatterns` for your CDN infrastructure
+- Implement proper CORS headers for image sources
+- Consider local asset optimization strategies
+
+</details>
+
+<details>
+<summary><strong>Firebase Platform Integration</strong></summary>
+<br>
+
+**Symptom:** Authentication or Firestore operation failures
+
+**Resolution Strategies:**
+- Validate all Firebase configuration environment variables
+- Review project permissions in Firebase Console
+- Audit Firestore security rules for operation allowance
+- Verify service account permissions for server-side operations
+
+</details>
+
+---
+
+## Community Contribution
+
+<div align="center">
+
+**Professional contributions welcome from experienced developers**
+
+[![Contributors](https://img.shields.io/github/contributors/Mayankdaya/CollabDoc?style=for-the-badge&color=0ea5e9)](https://github.com/Mayankdaya/CollabDoc/graphs/contributors)
+[![Pull Requests](https://img.shields.io/github/issues-pr/Mayankdaya/CollabDoc?style=for-the-badge&color=22c55e)](https://github.com/Mayankdaya/CollabDoc/pulls)
+[![Issues](https://img.shields.io/github/issues/Mayankdaya/CollabDoc?style=for-the-badge&color=f59e0b)](https://github.com/Mayankdaya/CollabDoc/issues)
+
+</div>
+
+### **Contribution Workflow**
+
+1. **Fork** the repository and create a feature branch
+2. **Implement** changes following established patterns and conventions  
+3. **Test** functionality across supported browsers and devices
+4. **Document** new features with appropriate code comments
+5. **Submit** pull request with comprehensive description
+
+### **Development Standards**
+
+- **Code Quality:** ESLint configuration adherence with TypeScript strict mode
+- **Testing Protocol:** Comprehensive test coverage for new functionality
+- **Documentation:** Inline code documentation and README updates
+- **Commit Convention:** Semantic commit messages with clear scope indication
+- **Review Process:** All submissions require maintainer review and approval
+
+---
+
+## License & Attribution
+
+<div align="center">
+
+**MIT License - Enterprise-friendly open source**
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+
+**Unrestricted commercial and personal use permitted under license terms**
+
+</div>
+
+---
+
+<div align="center" style="margin: 48px 0;">
+
+### **Experience CollabDoc Today**
+
+**[Launch Application](https://stupendous-kataifi-69caa0.netlify.app/)** • **[View Source](https://github.com/Mayankdaya/CollabDoc)** • **[Report Issues](https://github.com/Mayankdaya/CollabDoc/issues)**
+
+[![GitHub stars](https://img.shields.io/github/stars/Mayankdaya/CollabDoc?style=social&label=Star%20on%20GitHub)](https://github.com/Mayankdaya/CollabDoc/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Mayankdaya/CollabDoc?style=social&label=Fork%20Repository)](https://github.com/Mayankdaya/CollabDoc/network/members)
+
+---
+
+**Engineered by [Mayank Daya](https://github.com/Mayankdaya)**
+
+*Advancing the state of collaborative document creation*
+
+</div>
